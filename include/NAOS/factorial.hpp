@@ -7,7 +7,7 @@
 #ifndef CPPBASE_FACTORIAL_HPP
 #define CPPBASE_FACTORIAL_HPP
 
-namespace cppbase
+namespace naos
 {
 
 //! Compute factorial.
@@ -19,6 +19,6 @@ namespace cppbase
  */
 const int computeFactorial( const int integerNumber );
 
-} // namespace cppbase
+} // namespace naos
 
 #endif // CPPBASE_FACTORIAL_HPP

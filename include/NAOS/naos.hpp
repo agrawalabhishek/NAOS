@@ -4,4 +4,4 @@
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
 
-#include <cppbase/factorial.hpp>
+#include <naos/factorial.hpp>

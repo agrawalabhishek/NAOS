@@ -7,9 +7,9 @@
 #include <sstream>
 #include <stdexcept>
 
-#include "cppbase/factorial.hpp"
+#include "NAOS/factorial.hpp"
 
-namespace cppbase
+namespace naos
 {
 
 //! Compute factorial.
@@ -26,4 +26,4 @@ const int computeFactorial( const int integerNumber )
 }
 
 
-} // namespace cppbase
+} // namespace naos
