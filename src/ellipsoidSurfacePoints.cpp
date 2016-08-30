@@ -60,6 +60,7 @@ const void computeEllipsoidSurfacePoints( const double alpha,
     double xCoordinate = 0.0;
     double yCoordinate = 0.0;
     double zCoordinate = 0.0;
+    const double tolerance = 1.0e-10;
 
     for( azimuth = 0.0; azimuth < 360.0; azimuth = azimuth + stepSizeAzimuth )
     {
@@ -70,6 +71,17 @@ const void computeEllipsoidSurfacePoints( const double alpha,
             yCoordinate = beta * std::sin( azimuth * naos::PI / 180.0 )
                                     * std::sin( elevation * naos::PI / 180.0 );
             zCoordinate = gamma * std::cos( elevation * naos::PI / 180.0 );
+
+            // Perform a sanity-check here using the ellipsoidal equation from [1]
+            double sum = ( xCoordinate * xCoordinate ) / ( alpha * alpha )
+                            + ( yCoordinate * yCoordinate ) / ( beta * beta )
+                                + ( zCoordinate * zCoordinate ) / ( gamma * gamma );
+            if( std::abs( sum - 1.0 ) > tolerance )
+            {
+                std::ostringstream errorMessage;
+                errorMessage << "ERROR: ellipsoidal equation sanity check failed!" << std::endl;
+                throw std::runtime_error( errorMessage.str( ) );
+            }
 
             fileHandle << xCoordinate << ",";
             fileHandle << yCoordinate << ",";
