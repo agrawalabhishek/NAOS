@@ -36,6 +36,9 @@ temp
 debug
 external
 
+# output data directories
+data
+
 # Project files
 *.sublime*
 
