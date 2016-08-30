@@ -1,36 +1,21 @@
 /*
- * Copyright (c) <year> <author> (<email>)
+ * Copyright (c) 2016 Abhishek Agrawal (abhishek.agrawal@protonmail.com)
  * Distributed under the MIT License.
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
 
 #include <cstdlib>
 #include <iostream>
-#include <stdexcept>
+#include <sstream>
+#include <fsream>
 
-#include "NAOS/factorial.hpp"
+#include "NAOS/ellipsoidSurfacePoints.hpp"
 
 int main( const int numberOfInputs, const char* inputArguments[ ] )
 {
-	try
-	{
-		const int factorial = naos::computeFactorial( 10 );
-		std::cout << "10! = " << factorial << std::endl;
-	}
-	catch( std::exception& error )
-	{
-		std::cout << error.what( ) << std::endl;
-	}
+    std::ostringstream ellipsoidSurfacePointsFile;
+    ellipsoidSurfacePointsFile << "../../data/ellipsoidSurfacePoints.csv";
+    naos::computeEllipsoidSurfacePoints( 12.0, 8.0, 5.0, 1.0, 1.0 , ellipsoidSurfacePointsFile );
 
-	try
-	{
-		const int factorial = naos::computeFactorial( -5 );
-		std::cout << "5! = " << factorial << std::endl;
-	}
-	catch( std::exception& error )
-	{
-		std::cout << error.what( ) << std::endl;
-	}
-
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
