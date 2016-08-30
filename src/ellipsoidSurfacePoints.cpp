@@ -25,8 +25,8 @@ namespace naos
  * @param[in] alpha                 Largest semi-axis of the ellipsoid [km]
  * @param[in] beta                  Intermediate semi-axis of the ellipsoid [km]
  * @param[in] gamma                 Smallest semi-axis of the ellipsoid [km]
- * @param[in] stepSizeLatitude      Step size for succession in Latitude [deg]
- * @param[in] stepSizeLongitude     Step size for succession in Longitude [deg]
+ * @param[in] stepSizeAzimuth       Step size for succession in Azimuth [deg]
+ * @param[in] stepSizeElevation     Step size for succession in Elevation [deg]
  * @param[in] outputFile            CSV file name that will store the calculated surface
  *                                  coordinates. Specify file name with its location relative to
  *                                  the 'bin' folder. Also specify the '.csv' extension.
@@ -34,8 +34,8 @@ namespace naos
 const void computeEllipsoidSurfacePoints( const double alpha,
                                           const double beta,
                                           const double gamma,
-                                          const double stepSizeLatitude,
-                                          const double stepSizeLongitude,
+                                          const double stepSizeAzimuth,
+                                          const double stepSizeElevation,
                                           const std::ostringstream &outputFile )
 {
     std::ofstream fileHandle;
@@ -55,21 +55,21 @@ const void computeEllipsoidSurfacePoints( const double alpha,
     }
 
 
-    double latitude = 0.0;
-    double longitude = 0.0;
+    double azimuth = 0.0;
+    double elevation = 0.0;
     double xCoordinate = 0.0;
     double yCoordinate = 0.0;
     double zCoordinate = 0.0;
 
-    for( latitude = 0.0; latitude < 360.0; latitude = latitude + stepSizeLatitude )
+    for( azimuth = 0.0; azimuth < 360.0; azimuth = azimuth + stepSizeAzimuth )
     {
-        for( longitude = 0.0; longitude <= 180.0; longitude = longitude + stepSizeLongitude )
+        for( elevation = 0.0; elevation <= 180.0; elevation = elevation + stepSizeElevation )
         {
-            xCoordinate = alpha * std::cos( latitude * naos::PI / 180.0 )
-                                    * std::sin( longitude * naos::PI / 180.0 );
-            yCoordinate = beta * std::sin( latitude * naos::PI / 180.0 )
-                                    * std::sin( longitude * naos::PI / 180.0 );
-            zCoordinate = gamma * std::cos( longitude * naos::PI / 180.0 );
+            xCoordinate = alpha * std::cos( azimuth * naos::PI / 180.0 )
+                                    * std::sin( elevation * naos::PI / 180.0 );
+            yCoordinate = beta * std::sin( azimuth * naos::PI / 180.0 )
+                                    * std::sin( elevation * naos::PI / 180.0 );
+            zCoordinate = gamma * std::cos( elevation * naos::PI / 180.0 );
 
             fileHandle << xCoordinate << ",";
             fileHandle << yCoordinate << ",";

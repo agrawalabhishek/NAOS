@@ -17,8 +17,8 @@ namespace naos
 * @param[in] alpha                 Largest semi-axis of the ellipsoid [km]
 * @param[in] beta                  Intermediate semi-axis of the ellipsoid [km]
 * @param[in] gamma                 Smallest semi-axis of the ellipsoid [km]
-* @param[in] stepSizeLatitude      Step size for succession in Latitude [deg]
-* @param[in] stepSizeLongitude     Step size for succession in Longitude [deg]
+* @param[in] stepSizeAzimuth       Step size for succession in azimuth [deg]
+* @param[in] stepSizeElevation     Step size for succession in elevation [deg]
 * @param[in] outputFile            CSV file name that will store the calculated surface
 *                                  coordinates. Specify file name with its location relative to
 *                                  the 'bin' folder. Also specify the '.csv' extension.
@@ -26,8 +26,8 @@ namespace naos
 const void computeEllipsoidSurfacePoints( const double alpha,
                                           const double beta,
                                           const double gamma,
-                                          const double stepSizeLatitude,
-                                          const double stepSizeLongitude,
+                                          const double stepSizeAzimuth,
+                                          const double stepSizeElevation,
                                           const std::ostringstream &outputFile );
 } // namespace naos
 
