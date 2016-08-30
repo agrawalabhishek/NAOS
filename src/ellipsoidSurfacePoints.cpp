@@ -36,7 +36,7 @@ const void computeEllipsoidSurfacePoints( const double alpha,
                                           const double gamma,
                                           const double stepSizeLatitude,
                                           const double stepSizeLongitude,
-                                          const std::ostringstream outputFile )
+                                          const std::ostringstream &outputFile )
 {
     std::ofstream fileHandle;
     fileHandle.precision( 15 );
@@ -44,7 +44,7 @@ const void computeEllipsoidSurfacePoints( const double alpha,
     if( !fileHandle.is_open( ) )
     {
         std::ostringstream errorMessage;
-        errorMessage << "ERROR: file unable to open in function computeEllipsoidSurfacePoints()"
+        errorMessage << "ERROR: file unable to open in function computeEllipsoidSurfacePoints()";
         throw std::runtime_error( errorMessage.str( ) );
     }
     else
@@ -59,7 +59,7 @@ const void computeEllipsoidSurfacePoints( const double alpha,
     double longitude = 0.0;
     double xCoordinate = 0.0;
     double yCoordinate = 0.0;
-    double ZCoordinate = 0.0;
+    double zCoordinate = 0.0;
 
     for( latitude = 0.0; latitude < 360.0; latitude = latitude + stepSizeLatitude )
     {

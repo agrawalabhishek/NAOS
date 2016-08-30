@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
-#include <fsream>
+#include <fstream>
 
 #include "NAOS/ellipsoidSurfacePoints.hpp"
 

@@ -28,7 +28,7 @@ const void computeEllipsoidSurfacePoints( const double alpha,
                                           const double gamma,
                                           const double stepSizeLatitude,
                                           const double stepSizeLongitude,
-                                          const std::ostringstream outputFile );
+                                          const std::ostringstream &outputFile );
 } // namespace naos
 
 #endif // NAOS_ELLIPSOID_SURFACE_POINTS_HPP
