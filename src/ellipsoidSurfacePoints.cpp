@@ -51,18 +51,21 @@ const void computeEllipsoidSurfacePoints( const double alpha,
     {
         fileHandle << "X" << ",";
         fileHandle << "Y" << ",";
-        fileHandle << "Z" << std::endl;
+        fileHandle << "Z" << ",";
+        fileHandle << "longitude" << ",";
+        fileHandle << "latitude" << ",";
+        fileHandle << "range" << std::endl;
     }
-
 
     double azimuth = 0.0;
     double elevation = 0.0;
     double xCoordinate = 0.0;
     double yCoordinate = 0.0;
     double zCoordinate = 0.0;
+    double range = 0.0;
     const double tolerance = 1.0e-10;
 
-    for( azimuth = 0.0; azimuth < 360.0; azimuth = azimuth + stepSizeAzimuth )
+    for( azimuth = 0.0; azimuth <= 360.0; azimuth = azimuth + stepSizeAzimuth )
     {
         for( elevation = 0.0; elevation <= 180.0; elevation = elevation + stepSizeElevation )
         {
@@ -71,6 +74,10 @@ const void computeEllipsoidSurfacePoints( const double alpha,
             yCoordinate = beta * std::sin( azimuth * naos::PI / 180.0 )
                                     * std::sin( elevation * naos::PI / 180.0 );
             zCoordinate = gamma * std::cos( elevation * naos::PI / 180.0 );
+
+            range = std::sqrt( xCoordinate * xCoordinate
+                             + yCoordinate * yCoordinate
+                             + zCoordinate * zCoordinate );
 
             // Perform a sanity-check here using the ellipsoidal equation from [1]
             double sum = ( xCoordinate * xCoordinate ) / ( alpha * alpha )
@@ -85,7 +92,10 @@ const void computeEllipsoidSurfacePoints( const double alpha,
 
             fileHandle << xCoordinate << ",";
             fileHandle << yCoordinate << ",";
-            fileHandle << zCoordinate << std::endl;
+            fileHandle << zCoordinate << ",";
+            fileHandle << azimuth << ",";
+            fileHandle << elevation << ",";
+            fileHandle << range << std::endl;
         }
     }
     fileHandle.close( );
