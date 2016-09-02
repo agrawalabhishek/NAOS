@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <string>
 
 #include "NAOS/ellipsoidSurfacePoints.hpp"
 #include "NAOS/cubicRoot.hpp"
@@ -31,7 +32,16 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     std::cout << "max Real Root Test 2 = " << maxRealRootTest2 << std::endl;
 
     // Test evaluate gravitational acceleration using previously computed surface points.
-
+    std::ifstream ellipsoidSurfacePoints;
+    ellipsoidSurfacePoints.open( "../../data/ellipsoidSurfacePoints.csv" );
+    std::string headers;
+    std::getline( ellipsoidSurfacePoints, headers );
+    std::cout << headers << std::endl;
+    double xCoordinate = 0.0;
+    std::string numberString;
+    std::getline( ellipsoidSurfacePoints, numberString, ',' );
+    xCoordinate = std::stod( numberString );
+    std::cout << xCoordinate << std::endl;
 
     return EXIT_SUCCESS;
 }
