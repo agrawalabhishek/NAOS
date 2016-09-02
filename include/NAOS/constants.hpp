@@ -7,8 +7,13 @@
 #ifndef NAOS_CONSTANTS_HPP
 #define NAOS_CONSTANTS_HPP
 
+#include <vector>
+
 namespace naos
 {
+    typedef std::vector< double > Vector6;
+    typedef std::vector< double > Vector3;
+
     //! Gravitational constant [m^3 s^-2]
     const static double GRAVITATIONAL_CONSTANT = 6.67259e-11;
 

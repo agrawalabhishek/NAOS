@@ -11,6 +11,8 @@
 
 #include "NAOS/ellipsoidSurfacePoints.hpp"
 #include "NAOS/cubicRoot.hpp"
+#include "NAOS/constants.hpp"
+#include "NAOS/ellipsoidGravitationalAcceleration.hpp"
 
 int main( const int numberOfInputs, const char* inputArguments[ ] )
 {
@@ -27,6 +29,9 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                                                                    ( -11.0 / 2.0 ),
                                                                    ( -3.0 ) );
     std::cout << "max Real Root Test 2 = " << maxRealRootTest2 << std::endl;
+
+    // Test evaluate gravitational acceleration using previously computed surface points.
+
 
     return EXIT_SUCCESS;
 }
