@@ -110,7 +110,7 @@ if(BUILD_MAIN)
   if(NOT GSL_FOUND)
     add_dependencies(${TEST_NAME} gsl-lib)
   endif(NOT GSL_FOUND)
-  target_link_libraries(${MAIN_NAME} ${GSL_LIBRARIES})
+  target_link_libraries(${MAIN_NAME} ${LIB_NAME} ${GSL_LIBRARIES})
 endif(BUILD_MAIN)
 
 if(BUILD_DOXYGEN_DOCS)
