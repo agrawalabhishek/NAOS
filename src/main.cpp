@@ -31,8 +31,8 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     const double gravitationalParameter = naos::GRAVITATIONAL_CONSTANT * mass;
 
     // Generate surface coordinates for the Asteroid
-    const double stepSizeAzimuthDegree = 1.0;
-    const double stepSizeElevationDegree = 1.0;
+    const double stepSizeAzimuthDegree = 10.0;
+    const double stepSizeElevationDegree = 10.0;
     naos::computeEllipsoidSurfacePoints( alpha, beta, gamma,
                                          stepSizeAzimuthDegree, stepSizeElevationDegree,
                                          ellipsoidSurfacePointsFile );
@@ -53,7 +53,6 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     // Extract the column headers first from the surface points file
     std::string headers;
     std::getline( ellipsoidSurfacePoints, headers );
-    std::cout << headers << std::endl;
 
     // Extract numeric data, calculate the gravitational acceleration at all those points and save
     // it in a CSV file

@@ -6,8 +6,12 @@
 
 #include <cstdlib>
 #include <cmath>
+#include <stdexcept>
+#include <sstream>
+#include <iostream>
 #include <gsl/gsl_sf_ellint.h>
 #include <gsl/gsl_mode.h>
+#include <gsl/gsl_errno.h>
 
 #include "NAOS/cubicRoot.hpp"
 #include "NAOS/constants.hpp"
@@ -66,9 +70,23 @@ namespace naos
                                     - ( yCoordinateSquare * gammaSquare * betaSquare )
                                     - ( zCoordinateSquare * alphaSquare * betaSquare );
 
-    const double lambda = naos::computeMaxRealCubicRoot( coefficientA2,
-                                                         coefficientA1,
-                                                         coefficientA0 );
+    // Perform a check on the sign of phi(r,0) to determine the value of lambda [3].
+    int phi = ( xCoordinateSquare / alphaSquare )
+                 + ( yCoordinateSquare / betaSquare )
+                 + ( zCoordinateSquare / gammaSquare ) - 1;
+    double lambda;
+    if( phi <= 0 )
+    {
+        // The case where the point is on the surface or inside the ellipsoid.
+        lambda = 0;
+    }
+    else
+    {
+        // The case where the point is outside the ellipsoid.
+        lambda = naos::computeMaxRealCubicRoot( coefficientA2,
+                                                coefficientA1,
+                                                coefficientA0 );
+    }
 
     // Note: For the sake of clarity between the code and the equations in the reference documents,
     // all vectors will have their 0th element as zero, so that the usable indices start from 1
@@ -135,13 +153,55 @@ namespace naos
     const double d12_Uz = a_Uz[ 1 ] * b_Uz[ 2 ] - a_Uz[ 2 ] * b_Uz[ 1 ];
     const double d13_Uz = a_Uz[ 1 ] * b_Uz[ 3 ] - a_Uz[ 3 ] * b_Uz[ 1 ];
 
+    // Set default error handler of GSL off to manually handle GSL errors.
+    gsl_set_error_handler_off( );
+
     // Evaluate Ux.
+    gsl_sf_result result_Ux;
+    int status_Ux = gsl_sf_ellint_RD_e( U12_Ux * U12_Ux,
+                                        U13_Ux * U13_Ux,
+                                        U14_Ux * U14_Ux,
+                                        GSL_PREC_DOUBLE,
+                                        &result_Ux );
+    // Checking the status of evaluation, a non-zero status is an error
+    if( status_Ux != GSL_SUCCESS )
+    {
+        std::cout << std::endl;
+        std::cout << "Error in ellipsoid gravitational acceleration computation!" << std::endl;
+        std::cout << "Parameteric values that resulted in the error:" << std::endl;
+        std::cout << "x Coordinate = " << xCoordinate << std::endl;
+        std::cout << "y Coordinate = " << yCoordinate << std::endl;
+        std::cout << "z Coordinate = " << zCoordinate << std::endl;
+        std::cout << "a_Ux = ";
+        for( int i = 1; i <=4; i++ )
+        {
+            std::cout << a_Ux[ i ] << ",";
+        }
+        std::cout << std::endl;
+        std::cout << "b_Ux = ";
+        for( int i = 1; i <=4; i++ )
+        {
+            std::cout << b_Ux[ i ] << ",";
+        }
+        std::cout << std::endl;
+        std::cout << "Y_Ux = ";
+        for( int i = 1; i <=4; i++ )
+        {
+            std::cout << Y_Ux[ i ] << ",";
+        }
+        std::cout << std::endl;
+        std::cout << "U12_Ux = " << U12_Ux << std::endl;
+        std::cout << "U13_Ux = " << U13_Ux << std::endl;
+        std::cout << "U14_Ux = " << U14_Ux << std::endl;
+        std::cout << "lambda = " << lambda << std::endl;
+
+        std::string errorMessage;
+        errorMessage = gsl_strerror( status_Ux );
+        throw std::runtime_error( errorMessage );
+    }
     const double Ux = ( -3.0 * gravParameter * xCoordinate / 2.0 )
-                        * ( 2.0 / 3.0 ) * d12_Ux * d13_Ux
-                        * gsl_sf_ellint_RD( U12_Ux * U12_Ux,
-                                            U13_Ux * U13_Ux,
-                                            U14_Ux * U14_Ux,
-                                            GSL_PREC_DOUBLE );
+                        * ( 2.0 / 3.0 ) * d12_Ux * d13_Ux * result_Ux.val;
+
     // Evaluate Uy.
     const double Uy = ( -3.0 * gravParameter * yCoordinate / 2.0 )
                         * ( 2.0 / 3.0 ) * d12_Uy * d13_Uy
@@ -149,6 +209,7 @@ namespace naos
                                             U13_Uy * U13_Uy,
                                             U14_Uy * U14_Uy,
                                             GSL_PREC_DOUBLE );
+
     // Evaluate Uz.
     const double Uz = ( -3.0 * gravParameter * zCoordinate / 2.0 )
                         * ( 2.0 / 3.0 ) * d12_Uz * d13_Uz
@@ -170,4 +231,5 @@ namespace naos
 /*!
  * [1] Orbital motion around strongly perturbed environments. Author: Daniel J. Scheeres.
  * [2] A Table of elliptic integrals of the second kind. Author: B.C. Carlson.
+ * [3] Dynamics about uniformly rotating tri-axial ellipsoids. Author: Daniel J. Scheeres.
  */
