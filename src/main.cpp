@@ -70,9 +70,8 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     ellipsoidSurfaceAccelerationFile << "Ux" << "," << "Uy" << "," << "Uz" << ",";
     ellipsoidSurfaceAccelerationFile << "U" << "," << "latitude" << "," << "longitude" << std::endl;
 
-    while( !ellipsoidSurfacePoints.eof( ) )
+    while( std::getline( ellipsoidSurfacePoints, numberString, ',' ) )
     {
-        std::getline( ellipsoidSurfacePoints, numberString, ',' );
         xCoordinate = std::stod( numberString );
 
         std::getline( ellipsoidSurfacePoints, numberString, ',' );
