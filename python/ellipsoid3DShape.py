@@ -93,12 +93,12 @@ r = np.sqrt( x**2 + y**2 + z**2 )
 # plt.show()
 
 # **************** Method - 3 ******************************** #
-x1 = np.linspace( x.min(), x.max() )
-y1 = np.linspace( y.min(), y.max() )
-xx, yy = np.meshgrid( x1, y1 )
-zz = griddata( ( x, y ), z, ( xx, yy ), method='cubic' )
-ax.plot_surface( xx, yy, zz, rstride=5, cstride=5, cmap=cm.jet, linewidth=0.1, antialiased=False )
-plt.show()
+# x1 = np.linspace( x.min(), x.max() )
+# y1 = np.linspace( y.min(), y.max() )
+# xx, yy = np.meshgrid( x1, y1 )
+# zz = griddata( ( x, y ), z, ( xx, yy ), method='cubic' )
+# ax.plot_surface( xx, yy, zz, rstride=5, cstride=5, cmap=cm.jet, linewidth=0.1, antialiased=False )
+# plt.show()
 
 # **************** Method - 4 ******************************** #
 # x1 = np.linspace( x.min(), x.max(), len( data['X'].unique() ) )
@@ -113,6 +113,14 @@ plt.show()
 # zz = griddata( ( x, y ), z, ( xx, yy ), method='cubic' )
 # ax.plot_surface( xx, yy, zz, rstride=5, cstride=5, cmap=cm.jet, linewidth=0.1, antialiased=False )
 # plt.show()
+
+x1 = np.linspace( 0, x.max() )
+y1 = np.linspace( 0, y.max() )
+xx, yy = np.meshgrid( x1, y1 )
+temp = 7000.0**2 * ( 1.0 - ( ( xx**2 / 20000.0**2 ) + ( yy**2 / 7000.0**2 ) ) )
+zz = np.sqrt( temp )
+ax.plot_surface( xx, yy, zz, rstride=2, cstride=2, cmap=cm.jet, linewidth=0.1, antialiased=False )
+plt.show()
 
 # Stop timer
 end_time = time.time( )
