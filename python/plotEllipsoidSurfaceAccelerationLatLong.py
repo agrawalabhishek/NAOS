@@ -110,6 +110,11 @@ plt.show()
 # heatmap = plt.pcolor( x, y, z, cmap=cm.jet )
 # plt.show()
 
+# fig = plt.figure()
+# ax1 = fig.gca( projection = '3d' )
+# heatmap = ax1.plot_surface( y, x, z, cmap=cm.jet )
+# plt.show()
+
 # Stop timer
 end_time = time.time( )
 

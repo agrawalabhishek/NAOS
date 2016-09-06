@@ -9,12 +9,6 @@ See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 import csv
 from pprint import pprint
 
-# Numerical
-import numpy as np
-import pandas as pd
-from scipy.interpolate import griddata
-import math
-
 # 3D visualization special package
 import mayavi
 from mayavi import mlab
@@ -49,6 +43,12 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import axes3d
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import matplotlib.tri as tri
+
+# Numerical
+import numpy as np
+import pandas as pd
+from scipy.interpolate import griddata
+import math
 
 # Operations
 # Read data in csv file. data returned as a panda series.
@@ -130,6 +130,17 @@ r = np.sqrt( x**2 + y**2 + z**2 )
 # zz = z.reshape( -1, cols )
 # ax.plot_surface( xx, yy, zz, rstride=2, cstride=2, cmap=cm.jet, linewidth=0.1, antialiased=False )
 # plt.show()
+
+# **************** Method - 8 ******************************** #
+# find number of unique data points
+numberOfLatitudes = len( data['latitude'].unique() )
+numberOfLongitudes = len( data['longitude'].unique() )
+# make 2D arrays without changing data
+yy = y.reshape( numberOfLatitudes, numberOfLongitudes )
+xx = x.reshape( numberOfLatitudes, numberOfLongitudes )
+zz = z.reshape( numberOfLatitudes, numberOfLongitudes )
+ax.plot_surface( yy, xx, zz )
+plt.show()
 
 # Stop timer
 end_time = time.time( )
