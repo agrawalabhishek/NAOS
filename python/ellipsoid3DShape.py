@@ -63,12 +63,10 @@ ax.set_zlabel('z [km]')
 ax.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
 
 x = data['X'].values
-# print x[1:100]
 y = data['Y'].values
-# print y
 z = data['Z'].values
-# print z
-r = np.sqrt( x**2 + y**2 + z**2 )
+latitude = data['latitude'].values
+longitude = data['longitude'].values
 
 # **************** trisurf, scatter and wireframe ************ #
 # triang = tri.Triangulation( x, y )
@@ -133,14 +131,14 @@ r = np.sqrt( x**2 + y**2 + z**2 )
 
 # **************** Method - 8 ******************************** #
 # find number of unique data points
-numberOfLatitudes = len( data['latitude'].unique() )
-numberOfLongitudes = len( data['longitude'].unique() )
+# numberOfLatitudes = len( data['latitude'].unique() )
+# numberOfLongitudes = len( data['longitude'].unique() )
 # make 2D arrays without changing data
-yy = y.reshape( numberOfLatitudes, numberOfLongitudes )
-xx = x.reshape( numberOfLatitudes, numberOfLongitudes )
-zz = z.reshape( numberOfLatitudes, numberOfLongitudes )
-ax.plot_surface( yy, xx, zz )
-plt.show()
+# yy = y.reshape( numberOfLatitudes, numberOfLongitudes )
+# xx = x.reshape( numberOfLatitudes, numberOfLongitudes )
+# zz = z.reshape( numberOfLatitudes, numberOfLongitudes )
+# ax.plot_surface( xx, yy, zz )
+# plt.show()
 
 # Stop timer
 end_time = time.time( )
