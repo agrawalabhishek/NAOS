@@ -141,10 +141,13 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     naos::Vector3 particleSurfaceVelocity( 3 );
     particleSurfaceVelocity = naos::crossProduct< naos::Vector3 > ( particlePosition, W );
 
-    // Get the initial velocity of the particle, 2 times the linear surface velocity.
-    initialStateVector[ naos::xVelocityIndex ] = 2 * particleSurfaceVelocity[ 0 ];
-    initialStateVector[ naos::yVelocityIndex ] = 2 * particleSurfaceVelocity[ 1 ];
-    initialStateVector[ naos::zVelocityIndex ] = 2 * particleSurfaceVelocity[ 2 ];
+    // Get the initial velocity of the particle.
+    // initialStateVector[ naos::xVelocityIndex ] = 20 * particleSurfaceVelocity[ 0 ];
+    // initialStateVector[ naos::yVelocityIndex ] = 20 * particleSurfaceVelocity[ 1 ];
+    // initialStateVector[ naos::zVelocityIndex ] = 20 * particleSurfaceVelocity[ 2 ];
+    initialStateVector[ naos::xVelocityIndex ] = 1.0;
+    initialStateVector[ naos::yVelocityIndex ] = 1.0;
+    initialStateVector[ naos::zVelocityIndex ] = 1.0;
 
     // Specify the step size value [s]
     double stepSize = 0.01;
@@ -230,7 +233,9 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
             eomOrbiterUREFile << nextStateVector[ naos::zVelocityIndex ] << ",";
             eomOrbiterUREFile << tNext << std::endl;
             std::cout << std::endl;
+            std::cout << "Houston, we've got a problem!" << std::endl;
             std::cout << "Particle at or inside the ellipsoidal surface" << std::endl;
+            std::cout << "Event occurence at: " << tNext << " seconds" << std::endl;
             break;
         }
 
