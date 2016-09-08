@@ -4,7 +4,6 @@
 
 # Set project source files.
 set(SRC
-  "${SRC_PATH}/factorial.cpp"
   "${SRC_PATH}/ellipsoidSurfacePoints.cpp"
   "${SRC_PATH}/cubicRoot.cpp"
   "${SRC_PATH}/ellipsoidGravitationalAcceleration.cpp"
