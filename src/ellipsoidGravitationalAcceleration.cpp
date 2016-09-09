@@ -67,13 +67,13 @@ namespace naos
 
     const double coefficientA0 = ( alphaSquare * betaSquare * gammaSquare )
                                     - ( xCoordinateSquare * gammaSquare * betaSquare )
-                                    - ( yCoordinateSquare * gammaSquare * betaSquare )
+                                    - ( yCoordinateSquare * alphaSquare * gammaSquare )
                                     - ( zCoordinateSquare * alphaSquare * betaSquare );
 
     // Perform a check on the sign of phi(r,0) to determine the value of lambda [3].
     int phi = ( xCoordinateSquare / alphaSquare )
                  + ( yCoordinateSquare / betaSquare )
-                 + ( zCoordinateSquare / gammaSquare ) - 1;
+                 + ( zCoordinateSquare / gammaSquare ) - 1.0;
     double lambda;
     if( phi <= 0 )
     {
@@ -194,6 +194,7 @@ namespace naos
         std::cout << "U13_Ux = " << U13_Ux << std::endl;
         std::cout << "U14_Ux = " << U14_Ux << std::endl;
         std::cout << "lambda = " << lambda << std::endl;
+        std::cout << "Phi =  " << phi << std::endl;
 
         std::string errorMessage;
         errorMessage = gsl_strerror( status_Ux );
