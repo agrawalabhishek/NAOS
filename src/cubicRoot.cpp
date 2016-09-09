@@ -7,6 +7,10 @@
 #include <cstdlib>
 #include <cmath>
 #include <algorithm>
+#include <string>
+#include <sstream>
+#include <stdexcept>
+#include <iostream>
 
 #include "NAOS/cubicRoot.hpp"
 #include "NAOS/constants.hpp"
@@ -72,6 +76,21 @@ namespace naos
         // Find the maximum real root from all three.
         maxRealRoot = std::max( realRoot1, realRoot2 );
         maxRealRoot = std::max( maxRealRoot, realRoot3 );
+    }
+
+    // Check sign of maxRealRoot
+    if( maxRealRoot < 0.0 )
+    {
+        // throw an exception
+        std::ostringstream errorMessage;
+        std::cout << std::endl;
+        errorMessage << "ERROR: Negative Lambda value obtained!" << std::endl;
+        std::cout << errorMessage.str( ) << std::endl;
+        std::cout << "Coefficient A2 = " << a2 << std::endl;
+        std::cout << "Coefficient A1 = " << a1 << std::endl;
+        std::cout << "Coefficient A0 = " << a0 << std::endl;
+        std::cout << "Max Real Root = " << maxRealRoot << std::endl;
+        // throw std::runtime_error( errorMessage.str( ) );
     }
 
     // Return the max real root.
