@@ -145,16 +145,16 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     // initialStateVector[ naos::xVelocityIndex ] = 20 * particleSurfaceVelocity[ 0 ];
     // initialStateVector[ naos::yVelocityIndex ] = 20 * particleSurfaceVelocity[ 1 ];
     // initialStateVector[ naos::zVelocityIndex ] = 20 * particleSurfaceVelocity[ 2 ];
-    initialStateVector[ naos::xVelocityIndex ] = 1.0;
-    initialStateVector[ naos::yVelocityIndex ] = 1.0;
-    initialStateVector[ naos::zVelocityIndex ] = 1.0;
+    initialStateVector[ naos::xVelocityIndex ] = 6.0;
+    initialStateVector[ naos::yVelocityIndex ] = 10.0;
+    initialStateVector[ naos::zVelocityIndex ] = 6.0;
 
     // Specify the step size value [s]
     double stepSize = 0.01;
 
     // Specify the integration time limits [s]
     const double tStart = 0.0;
-    const double tEnd = 1000.0;
+    const double tEnd = 100000.0;
     double tCurrent = tStart;
 
     // Save initial values in the CSV file
