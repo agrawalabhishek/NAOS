@@ -62,13 +62,13 @@ t = data[ 't' ].values
 
 ## Set up the figure
 fig = plt.figure( )
-# ax1 = fig.add_subplot( 211, projection = '3d' )
-# ax2 = fig.add_subplot( 212, frameon = False )
-gs = gridspec.GridSpec( 2, 1, height_ratios = [ 2.5, 1 ] )
-ax1 = plt.subplot( gs[ 0 ], projection = '3d' )
-ax2 = plt.subplot( gs[ 1 ] )
+plt.suptitle( "Particle trajectory projection around asteroid Eros (Body fixed frame)" )
+ax1 = fig.add_subplot( 221 )
+ax2 = fig.add_subplot( 222 )
+ax3 = fig.add_subplot( 223 )
+ax4 = fig.add_subplot( 224, frameon=False )
 
-## Plot the ellipsoidal shape of the asteroid
+## ellipsoidal shape model parameters for the asteroid
 alpha = 20000.0
 beta = 7000.0
 gamma = 7000.0
@@ -81,38 +81,78 @@ ellipsoid_x = alpha * np.outer(np.cos(u), np.sin(v))
 ellipsoid_y = beta * np.outer(np.sin(u), np.sin(v))
 ellipsoid_z = gamma * np.outer(np.ones(np.size(u)), np.cos(v))
 
-newColor = colors.cnames["slategray"]
-surf = ax1.plot_surface( ellipsoid_x, ellipsoid_y, ellipsoid_z,
-                         rstride=5, cstride=5 )
-# surf.set_facecolor( ( 0, 0, 1, 0.5 ) )
-surf.set_facecolor( newColor )
-surf.set_linewidth( 0.1 )
+## Common format parameters
+ellipsoidColor = colors.cnames["slategray"]
+trajectoryColor = colors.cnames["purple"]
+textColor = colors.cnames["black"]
+startColor = colors.cnames["darkgreen"]
+endColor = colors.cnames["darkred"]
 
+###############################################################
+######################## XY Projection ########################
+
+ax1.plot( ellipsoid_x, ellipsoid_y, color=ellipsoidColor )
 ax1.hold( True )
 
-## Plot 3D trajectory of the orbiting particle
-ax1.plot( x, y, z, zdir = 'z', color=colors.cnames["purple"] )
+ax1.plot( x, y, color=trajectoryColor )
 
 ## indicate starting point
-# ax1.scatter( x[0], y[0], z[0], 'g^' )
-ax1.text( x[0], y[0], z[0], 'start', size=10, zorder=1, color=colors.cnames["black"] )
+ax1.text( x[0], y[0], 'start', size=12, color=startColor )
 
 ## indicate ending point
 endIndex = np.size( x )
-# ax1.scatter( x[endIndex - 1], y[endIndex - 1], z[endIndex - 1], 'k^' )
-ax1.text( x[endIndex-1], y[endIndex-1], z[endIndex-1],
-          'end', size=10, zorder=1,
-          color=colors.cnames["black"] )
+ax1.text( x[endIndex-1], y[endIndex-1], 'end', size=12, color=endColor )
 
 ## format axis and title
 ax1.set_xlabel('x [m]')
 ax1.set_ylabel('y [m]')
-ax1.set_zlabel('z [m]')
 ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
-ax1.set_title( 'Particle trajectory around asteroid Eros (Body fixed frame)' )
+ax1.grid()
 
-## Plot the metadata (initial state vector)
-ax2.axis( 'off' )
+###############################################################
+######################## YZ Projection ########################
+
+ax2.plot( ellipsoid_y, ellipsoid_z, color=ellipsoidColor )
+ax2.hold( True )
+
+ax2.plot( y, z, color=trajectoryColor )
+
+## indicate starting point
+ax2.text( y[0], z[0], 'start', size=12, color=startColor, rotation='vertical', va='top' )
+
+## indicate ending point
+ax2.text( y[endIndex-1], z[endIndex-1], 'end', size=12, color=endColor, rotation='vertical' )
+
+## format axis and title
+ax2.set_xlabel('y [m]')
+ax2.set_ylabel('z [m]')
+ax2.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
+ax2.grid()
+
+###############################################################
+######################## XZ Projection ########################
+
+ax3.plot( ellipsoid_x, ellipsoid_z, color=ellipsoidColor )
+ax3.hold( True )
+
+ax3.plot( x, z, color=trajectoryColor )
+
+## indicate starting point
+ax3.text( x[0], z[0], 'start', size=12, color=startColor, rotation='vertical', va='top' )
+
+## indicate ending point
+ax3.text( x[endIndex-1], z[endIndex-1], 'end', size=12, color=endColor, rotation='vertical' )
+
+## format axis and title
+ax3.set_xlabel('x [m]')
+ax3.set_ylabel('z [m]')
+ax3.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
+ax3.grid()
+
+###############################################################
+######################## MetaData #############################
+
+ax4.axis( 'off' )
 metadata_table = []
 metadata_table.append( [ "Initial X coordinate", x[0], "[m]" ] )
 metadata_table.append( [ "Initial Y coordinate", y[0], "[m]" ] )
@@ -121,16 +161,23 @@ metadata_table.append( [ "Initial X velocity", vx[0], "[m/s]" ] )
 metadata_table.append( [ "Initial Y velocity", vy[0], "[m/s]" ] )
 metadata_table.append( [ "Initial Z velocity", vz[0], "[m/s]" ] )
 metadata_table.append( [ "Simulation time", t[endIndex-1], "[s]" ] )
-table = ax2.table( cellText = metadata_table, colLabels = None, cellLoc = 'center', loc = 'center' )
+table = ax4.table( cellText = metadata_table, colLabels = None, cellLoc = 'center', loc = 'center' )
 table_properties = table.properties( )
 table_cells = table_properties[ 'child_artists' ]
-for cell in table_cells: cell.set_height( 0.15 )
+for cell in table_cells: cell.set_height( 0.10 )
 cell_dict = table.get_celld( )
 for row in xrange( 0, 7 ): cell_dict[ ( row, 2 ) ].set_width( 0.1 )
 
-
 ####################################################################################################
 ###################################### Inertial Frame ##############################################
+
+## Set up the figure
+fig = plt.figure( )
+plt.suptitle( "Particle trajectory projection around asteroid Eros (Inertial frame)" )
+ax1 = fig.add_subplot( 221 )
+ax2 = fig.add_subplot( 222 )
+ax3 = fig.add_subplot( 223 )
+ax4 = fig.add_subplot( 224, frameon=False )
 
 ## Plot (all of above) with respect to an inertial frame
 xInertial = np.zeros( endIndex )
@@ -144,49 +191,79 @@ for i in range(0, endIndex):
     yInertial[i] = x[i]*np.sin(phi_Z) + y[i]*np.cos(phi_Z)
     zInertial[i] = z[i]
 
-## Set up the figure
-fig = plt.figure( )
-gs = gridspec.GridSpec( 2, 1, height_ratios = [ 2.5, 1 ] )
-ax3 = plt.subplot( gs[ 0 ], projection = '3d' )
-ax4 = plt.subplot( gs[ 1 ] )
+###############################################################
+######################## XY Projection ########################
 
-newColor = colors.cnames["slategray"]
-surf = ax3.plot_surface( ellipsoid_x, ellipsoid_y, ellipsoid_z,
-                         rstride=5, cstride=5 )
-# surf.set_facecolor( ( 0, 0, 1, 0.5 ) )
-surf.set_facecolor( newColor )
-surf.set_linewidth( 0.1 )
+ax1.plot( ellipsoid_x, ellipsoid_y, color=ellipsoidColor )
+ax1.hold( True )
 
-ax3.hold( True )
-
-## Plot 3D trajectory of the orbiting particle
-ax3.plot( xInertial, yInertial, zInertial, zdir = 'z', color=colors.cnames["purple"])
+ax1.plot( xInertial, yInertial, color=trajectoryColor )
 
 ## indicate starting point
-ax3.text( xInertial[0], yInertial[0], zInertial[0],
-          'start', size=10, zorder=1,
-          color=colors.cnames["black"] )
+ax1.text( xInertial[0], yInertial[0], 'start', size=12, color=startColor )
 
 ## indicate ending point
 endIndex = np.size( xInertial )
-ax3.text( xInertial[endIndex-1],
-          yInertial[endIndex-1],
-          zInertial[endIndex-1],
-          'end', size=10, zorder=1, color=colors.cnames["black"] )
+ax1.text( xInertial[endIndex-1], yInertial[endIndex-1], 'end', size=12, color=endColor )
+
+## format axis and title
+ax1.set_xlabel('x [m]')
+ax1.set_ylabel('y [m]')
+ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
+ax1.grid()
+
+###############################################################
+######################## YZ Projection ########################
+
+ax2.plot( ellipsoid_y, ellipsoid_z, color=ellipsoidColor )
+ax2.hold( True )
+
+ax2.plot( yInertial, zInertial, color=trajectoryColor )
+
+## indicate starting point
+ax2.text( yInertial[0], zInertial[0],
+          'start', size=12, color=startColor, rotation='vertical', va='top' )
+
+## indicate ending point
+ax2.text( yInertial[endIndex-1], zInertial[endIndex-1],
+          'end', size=12, color=endColor, rotation='vertical' )
+
+## format axis and title
+ax2.set_xlabel('y [m]')
+ax2.set_ylabel('z [m]')
+ax2.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
+ax2.grid()
+
+###############################################################
+######################## XZ Projection ########################
+
+ax3.plot( ellipsoid_x, ellipsoid_z, color=ellipsoidColor )
+ax3.hold( True )
+
+ax3.plot( xInertial, zInertial, color=trajectoryColor )
+
+## indicate starting point
+ax3.text( xInertial[0], zInertial[0],
+          'start', size=12, color=startColor, rotation='vertical', va='top' )
+
+## indicate ending point
+ax3.text( xInertial[endIndex-1], zInertial[endIndex-1],
+          'end', size=12, color=endColor, rotation='vertical' )
 
 ## format axis and title
 ax3.set_xlabel('x [m]')
-ax3.set_ylabel('y [m]')
-ax3.set_zlabel('z [m]')
+ax3.set_ylabel('z [m]')
 ax3.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
-ax3.set_title( 'Particle trajectory around asteroid Eros (Inertial Frame)' )
+ax3.grid()
 
-## Plot the metadata (initial state vector)
+###############################################################
+######################## MetaData #############################
+
 ax4.axis( 'off' )
 metadata_table = []
-metadata_table.append( [ "Initial X coordinate", xInertial[0], "[m]" ] )
-metadata_table.append( [ "Initial Y coordinate", yInertial[0], "[m]" ] )
-metadata_table.append( [ "Initial Z coordinate", zInertial[0], "[m]" ] )
+metadata_table.append( [ "Initial X coordinate", x[0], "[m]" ] )
+metadata_table.append( [ "Initial Y coordinate", y[0], "[m]" ] )
+metadata_table.append( [ "Initial Z coordinate", z[0], "[m]" ] )
 metadata_table.append( [ "Initial X velocity", vx[0], "[m/s]" ] )
 metadata_table.append( [ "Initial Y velocity", vy[0], "[m/s]" ] )
 metadata_table.append( [ "Initial Z velocity", vz[0], "[m/s]" ] )
@@ -194,13 +271,12 @@ metadata_table.append( [ "Simulation time", t[endIndex-1], "[s]" ] )
 table = ax4.table( cellText = metadata_table, colLabels = None, cellLoc = 'center', loc = 'center' )
 table_properties = table.properties( )
 table_cells = table_properties[ 'child_artists' ]
-for cell in table_cells: cell.set_height( 0.15 )
+for cell in table_cells: cell.set_height( 0.10 )
 cell_dict = table.get_celld( )
 for row in xrange( 0, 7 ): cell_dict[ ( row, 2 ) ].set_width( 0.1 )
 
 ## Show the plot
 plt.tight_layout( )
-plt.grid( )
 plt.show( )
 
 # Stop timer
