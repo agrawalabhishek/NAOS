@@ -51,6 +51,7 @@ start_time = time.time( )
 ## Operations
 # Read data in csv file. data returned as a panda series.
 data = pd.read_csv( '../data/ellipsoidSurfaceAcceleration.csv' )
+# data = pd.read_csv( '../data/nondimensionalellipsoidSurfaceAcceleration.csv' )
 Ux = data['Ux'].values
 Uy = data['Uy'].values
 Uz = data['Uz'].values
