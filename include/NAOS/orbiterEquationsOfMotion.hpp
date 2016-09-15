@@ -15,10 +15,10 @@ namespace naos
 {
 //! Equations of motion for spacecraft or particle around a uniformly rotating ellipsoid (URE)
 /*!
- * A struct defining the discretized equations of motion (EOM) for an orbiter around a single
+ * A struct defining the NON-DIMENSIONAL equations of motion (EOM) for an orbiter around a single
  * uniformly rotating triaxial ellipsoid. The equations can be integrated numerically in a seperate
- * routine. The system is modular in the sense that the user can provide the value of the constant
- * i.e. the rotation rate (about the z axis in this case), in the main without editing the
+ * routine. The system is modular in the sense that the user can provide the value of the
+ * gravitational acceleration, in the main without editing the
  * equations here in the struct. The EOMs are defined in the body fixed principal axis frame.
  * 't' denotes time, 'X' is the state vector, 'dXdt' is the time derivative of the state vector.
  *
@@ -32,15 +32,12 @@ namespace naos
  */
 struct eomOrbiterURE
 {
-    const double Wz; // rotation rate about the principal axis Z
     const double Ux;
     const double Uy;
     const double Uz;
     // Default constructor with member initializer list
-    eomOrbiterURE( const double wValue,
-                   Vector3 gravAcceleration )
-                    : Wz( wValue ),
-                      Ux( gravAcceleration[ naos::xPositionIndex ] ),
+    eomOrbiterURE( Vector3 gravAcceleration )
+                    : Ux( gravAcceleration[ naos::xPositionIndex ] ),
                       Uy( gravAcceleration[ naos::yPositionIndex ] ),
                       Uz( gravAcceleration[ naos::zPositionIndex ] )
     { }
@@ -49,8 +46,8 @@ struct eomOrbiterURE
         dXdt[ naos::xPositionIndex ] = X[ naos::xVelocityIndex ];
         dXdt[ naos::yPositionIndex ] = X[ naos::yVelocityIndex ];
         dXdt[ naos::zPositionIndex ] = X[ naos::zVelocityIndex ];
-        dXdt[ naos::xVelocityIndex ] = Ux + Wz * X[ naos::yVelocityIndex ];
-        dXdt[ naos::yVelocityIndex ] = Uy - Wz * X[ naos::xVelocityIndex ];
+        dXdt[ naos::xVelocityIndex ] = Ux + 2.0 * X[ naos::yVelocityIndex ];
+        dXdt[ naos::yVelocityIndex ] = Uy - 2.0 * X[ naos::xVelocityIndex ];
         dXdt[ naos::zVelocityIndex ] = Uz;
     }
 };
