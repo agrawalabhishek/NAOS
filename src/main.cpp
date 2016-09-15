@@ -18,13 +18,10 @@
 #include "NAOS/orbiterEquationsOfMotion.hpp"
 #include "NAOS/rk4.hpp"
 #include "NAOS/basicMath.hpp"
+#include "NAOS/computeEllipsoidSurfaceGravitationalAcceleration.hpp"
 
 int main( const int numberOfInputs, const char* inputArguments[ ] )
 {
-    // Open file to store points data for the surface of an ellipsoid.
-    std::ostringstream ellipsoidSurfacePointsFile;
-    ellipsoidSurfacePointsFile << "../../data/ellipsoidSurfacePoints.csv";
-
     // Physical parameters for Asteroid Eros, all in SI units, modelled as an ellipsoid.
     const double alpha = 20.0 * 1.0e3;
     const double beta = 7.0 * 1.0e3;
@@ -36,8 +33,11 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     const double Wy = 0.0; // rotational rate around principal y axis [rad/s]
     const double Wz = 0.00033118202125129593; // rotational rate around principal z axis [rad/s]
     naos::Vector3 W { Wx, Wy, Wz };
+    const double Wmagnitude = std::sqrt( Wx * Wx + Wy * Wy + Wz * Wz );
 
     // Generate surface coordinates for the Asteroid
+    std::ostringstream ellipsoidSurfacePointsFile;
+    ellipsoidSurfacePointsFile << "../../data/ellipsoidSurfacePoints.csv";
     const double stepSizeAzimuthDegree = 10.0;
     const double stepSizeElevationDegree = 10.0;
     naos::computeEllipsoidSurfacePoints( alpha, beta, gamma,
@@ -53,70 +53,13 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                                                                    ( -3.0 ) );
     std::cout << "max Real Root Test 2 = " << maxRealRootTest2 << std::endl;
 
-    // Test evaluation of gravitational acceleration using previously computed surface points.
-    std::ifstream ellipsoidSurfacePoints;
-    ellipsoidSurfacePoints.open( "../../data/ellipsoidSurfacePoints.csv" );
+    // Compute gravitational acceleration on the surface of the ellipsoidal asteroid
+    naos::computeEllipsoidSurfaceGravitationalAcceleration( alpha, beta, gamma,
+                                                            gravitationalParameter );
 
-    // Extract the column headers first from the surface points file
-    std::string headers;
-    std::getline( ellipsoidSurfacePoints, headers );
-
-    // Extract numeric data, calculate the gravitational acceleration at all those points and save
-    // it in a CSV file
-    double xCoordinate = 0.0;
-    double yCoordinate = 0.0;
-    double zCoordinate = 0.0;
-    double latitude = 0.0;
-    double longitude = 0.0;
-    double range = 0.0;
-    std::string numberString;
-    naos::Vector3 gravitationalAcceleration { 0.0, 0.0, 0.0 };
-
-    std::ofstream ellipsoidSurfaceAccelerationFile;
-    ellipsoidSurfaceAccelerationFile.open( "../../data/ellipsoidSurfaceAcceleration.csv" );
-    ellipsoidSurfaceAccelerationFile << "Ux" << "," << "Uy" << "," << "Uz" << ",";
-    ellipsoidSurfaceAccelerationFile << "U" << "," << "latitude" << "," << "longitude" << std::endl;
-
-    while( std::getline( ellipsoidSurfacePoints, numberString, ',' ) )
-    {
-        xCoordinate = std::stod( numberString );
-
-        std::getline( ellipsoidSurfacePoints, numberString, ',' );
-        yCoordinate = std::stod( numberString );
-
-        std::getline( ellipsoidSurfacePoints, numberString, ',' );
-        zCoordinate = std::stod( numberString );
-
-        std::getline( ellipsoidSurfacePoints, numberString, ',' );
-        latitude = std::stod( numberString );
-
-        std::getline( ellipsoidSurfacePoints, numberString, ',' );
-        longitude = std::stod( numberString );
-
-        std::getline( ellipsoidSurfacePoints, numberString );
-        range = std::stod( numberString );
-
-        naos::computeEllipsoidGravitationalAcceleration( alpha, beta, gamma,
-                                                         gravitationalParameter,
-                                                         xCoordinate,
-                                                         yCoordinate,
-                                                         zCoordinate,
-                                                         gravitationalAcceleration );
-
-        ellipsoidSurfaceAccelerationFile << gravitationalAcceleration[ 0 ] << ",";
-        ellipsoidSurfaceAccelerationFile << gravitationalAcceleration[ 1 ] << ",";
-        ellipsoidSurfaceAccelerationFile << gravitationalAcceleration[ 2 ] << ",";
-
-        double accelerationMagnitude =
-                    std::sqrt( gravitationalAcceleration[ 0 ] * gravitationalAcceleration[ 0 ]
-                             + gravitationalAcceleration[ 1 ] * gravitationalAcceleration[ 1 ]
-                             + gravitationalAcceleration[ 2 ] * gravitationalAcceleration[ 2 ] );
-
-        ellipsoidSurfaceAccelerationFile << accelerationMagnitude << ",";
-        ellipsoidSurfaceAccelerationFile << latitude << "," << longitude << std::endl;
-    }
-    ellipsoidSurfacePoints.close( );
-    ellipsoidSurfaceAccelerationFile.close( );
+    // Compute normalized gravitational acceleration values for the surface of the asteroid
+    naos::computeNonDimensionalEllipsoidSurfaceGravitationalAcceleration( alpha, beta, gamma,
+                                                                          density, Wmagnitude );
 
     // Use RK4 integrator to evaluate the equations of motion for an orbiter around a uniformly
     // rotating triaxial ellipsoid (URE). Store the solutions for the entire time of integration in
@@ -142,19 +85,19 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     particleSurfaceVelocity = naos::crossProduct< naos::Vector3 > ( particlePosition, W );
 
     // Get the initial velocity of the particle.
-    // initialStateVector[ naos::xVelocityIndex ] = 20 * particleSurfaceVelocity[ 0 ];
-    // initialStateVector[ naos::yVelocityIndex ] = 20 * particleSurfaceVelocity[ 1 ];
-    // initialStateVector[ naos::zVelocityIndex ] = 20 * particleSurfaceVelocity[ 2 ];
-    initialStateVector[ naos::xVelocityIndex ] = 6.0;
-    initialStateVector[ naos::yVelocityIndex ] = 10.0;
-    initialStateVector[ naos::zVelocityIndex ] = 6.0;
+    // initialStateVector[ naos::xVelocityIndex ] = 50.0 * particleSurfaceVelocity[ 0 ];
+    // initialStateVector[ naos::yVelocityIndex ] = 50.0 * particleSurfaceVelocity[ 1 ];
+    // initialStateVector[ naos::zVelocityIndex ] = 50.0 * particleSurfaceVelocity[ 2 ];
+    initialStateVector[ naos::xVelocityIndex ] = 0.1;
+    initialStateVector[ naos::yVelocityIndex ] = 0.1;
+    initialStateVector[ naos::zVelocityIndex ] = 0.0;
 
     // Specify the step size value [s]
     double stepSize = 0.01;
 
     // Specify the integration time limits [s]
     const double tStart = 0.0;
-    const double tEnd = 100000.0;
+    const double tEnd = 1000.0;
     double tCurrent = tStart;
 
     // Save initial values in the CSV file
@@ -188,25 +131,44 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
         // Evaluate gravitational acceleration values at the current state values
         naos::Vector3 currentGravAcceleration( 3 );
-        naos::computeEllipsoidGravitationalAcceleration( alpha, beta, gamma,
-                                                         gravitationalParameter,
-                                                         currentStateVector[ naos::xPositionIndex ],
-                                                         currentStateVector[ naos::yPositionIndex ],
-                                                         currentStateVector[ naos::zPositionIndex ],
-                                                         currentGravAcceleration );
+        naos::computeNonDimensionalEllipsoidGravitationalAcceleration(
+            alpha,
+            beta,
+            gamma,
+            density,
+            Wmagnitude,
+            currentStateVector[ naos::xPositionIndex ],
+            currentStateVector[ naos::yPositionIndex ],
+            currentStateVector[ naos::zPositionIndex ],
+            currentGravAcceleration );
 
         // Create an object of the struct containing the equations of motion (in this case the eom
         // for an orbiter around a uniformly rotating tri-axial ellipsoid) and initialize it to the
-        // values of the constant angular rate of the ellipsoidal asteroid and the current
-        // gravitational accelerations
-        naos::eomOrbiterURE derivatives( Wz, currentGravAcceleration );
+        // values of the ellipsoidal asteroid's current gravitational accelerations
+        naos::eomOrbiterURE derivatives( currentGravAcceleration );
 
         // Run an instance of RK4 integrator to evaluate the state at the next time value
-        naos::rk4< naos::Vector6, naos::eomOrbiterURE > ( currentStateVector,
+        // The input state vector should be normalized
+        naos::Vector6 currentStateVectorNormalized( 6 );
+        for( int i = 0; i < 3; i++ )
+        {
+            currentStateVectorNormalized[ i ] = currentStateVector[ i ] / alpha;
+            currentStateVectorNormalized[ i + 3 ] = currentStateVector[ i + 3 ]
+                                                        / ( alpha * Wmagnitude );
+        }
+        naos::Vector6 nextStateVectorNormalized( 6 );
+        naos::rk4< naos::Vector6, naos::eomOrbiterURE > ( currentStateVectorNormalized,
                                                           tCurrent,
                                                           stepSize,
-                                                          nextStateVector,
+                                                          nextStateVectorNormalized,
                                                           derivatives );
+        // Dimensionalize the integrated state
+        for( int i = 0; i < 3; i++ )
+        {
+            nextStateVector[ i ] = nextStateVectorNormalized[ i ] * alpha;
+            nextStateVectorNormalized[ i + 3 ] = nextStateVectorNormalized[ i + 3 ]
+                                                    * ( alpha * Wmagnitude );
+        }
 
         // Check if the new state is valid or not i.e. the particle/orbiter is not
         // inside the surface of the asteroid. If it is then terminate the outer loop. Evaluate the
