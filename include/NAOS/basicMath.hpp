@@ -7,8 +7,7 @@
 #ifndef BASIC_MATH_HPP
 #define BASIC_MATH_HPP
 
-#include <stdexcept>
-#include <cmath>
+#include "NAOS/constants.hpp"
 
 namespace naos
 {
@@ -33,6 +32,34 @@ Vector3 crossProduct( const Vector3 &vector1, const Vector3 &vector2 )
 
     return result;
 }
+
+//! Convert degrees to radians
+/*!
+ * convert degrees to radians
+ *
+ * @param[in] degreeAngle   angle in degrees
+ * @return    radAngle      angle in radians
+ */
+ template< typename Real >
+ Real convertDegreeToRadians( const Real degreeAngle )
+ {
+    Real result = degreeAngle * naos::PI / 180.0;
+    return result;
+ }
+
+//! Convert radians to degrees
+/*!
+ * convert radians to degrees
+ *
+ * @param[in] radAngle      angle in radians
+ * @return    degreeAngle   angle in degrees
+ */
+ template< typename Real >
+ Real convertRadiansToDegree( const Real radAngle )
+ {
+    Real result = radAngle * 180.0 / naos::PI;
+    return result;
+ }
 
 } // namespace naos
 

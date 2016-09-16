@@ -7,6 +7,7 @@
 #ifndef NAOS_HPP
 #define NAOS_HPP
 
+#include <naos/basicAstro.hpp>
 #include <naos/basicMath.hpp>
 #include <naos/constants.hpp>
 #include <naos/cubicRoot.hpp>
