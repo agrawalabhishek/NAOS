@@ -13,7 +13,8 @@
 #include <naos/cubicRoot.hpp>
 #include <naos/ellipsoidGravitationalAcceleration.hpp>
 #include <naos/ellipsoidSurfacePoints.hpp>
-#include <naos/executeEllipsoidSurfaceGravitationalAcceleration.hpp>
+#include <naos/computeEllipsoidSurfaceGravitationalAcceleration.hpp>
+#include <naos/executeOrbiterAroundURE.hpp>
 #include <naos/factorial.hpp>
 #include <naos/orbiterEquationsOfMotion.hpp>
 #include <naos/rk4.hpp>
