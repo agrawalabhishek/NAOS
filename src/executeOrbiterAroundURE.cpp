@@ -37,12 +37,8 @@ namespace naos
                                      const double density,
                                      std::vector< double > Wvector,
                                      const double Wmagnitude,
-                                     const double semiMajor,
-                                     const double eccentricity,
-                                     const double inclination,
-                                     const double RAAN,
-                                     const double AOP,
-                                     const double TA,
+                                     const bool initialVectorIsCartesian,
+                                     const std::vector< double > &initialVector,
                                      const double integrationStepSize,
                                      const double startTime,
                                      const double endTime,
@@ -56,28 +52,39 @@ namespace naos
     eomOrbiterUREFile << "x" << "," << "y" << "," << "z" << ",";
     eomOrbiterUREFile << "vx" << "," << "vy" << "," << "vz" << "," << "t" << std::endl;
 
-    // specify initial orbital elements, from which the initial state vector will later be derived
-    Vector6 keplerElements( 6 );
-    keplerElements[ 0 ] = semiMajor;
-    keplerElements[ 1 ] = eccentricity;
-    keplerElements[ 2 ] = inclination;
-    keplerElements[ 3 ] = RAAN;
-    keplerElements[ 4 ] = AOP;
-    keplerElements[ 5 ] = TA;
-
-    // Specify initial values for the state vector of the orbiter in SI units.
+    // get the initial state from the input arguments
     Vector6 initialStateVector( 6 );
-    initialStateVector = convertKeplerianElementsToCartesianCoordinates< Vector6 >(
-                            keplerElements,
-                            gravParameter );
-    // get velocity in the body frame
-    Vector3 positionVector { initialStateVector[ xPositionIndex ],
-                             initialStateVector[ yPositionIndex ],
-                             initialStateVector[ zPositionIndex ] };
-    Vector3 coriolisTerm = crossProduct< Vector3 >( Wvector, positionVector );
-    initialStateVector[ xVelocityIndex ] = initialStateVector[ xVelocityIndex ] - coriolisTerm[ 0 ];
-    initialStateVector[ yVelocityIndex ] = initialStateVector[ yVelocityIndex ] - coriolisTerm[ 1 ];
-    initialStateVector[ zVelocityIndex ] = initialStateVector[ zVelocityIndex ] - coriolisTerm[ 2 ];
+    if( initialVectorIsCartesian == false )
+    {
+        Vector6 keplerElements( 6 );
+        for( int i = 0; i < 6; i++ )
+        {
+            keplerElements[ i ] = initialVector[ i ];
+        }
+
+        // Specify initial values for the state vector of the orbiter in SI units.
+        initialStateVector = convertKeplerianElementsToCartesianCoordinates< Vector6 >(
+                                keplerElements,
+                                gravParameter );
+
+        // get velocity in the body frame
+        Vector3 positionVector { initialStateVector[ xPositionIndex ],
+                                 initialStateVector[ yPositionIndex ],
+                                 initialStateVector[ zPositionIndex ] };
+
+        Vector3 coriolisTerm = crossProduct< Vector3 >( Wvector, positionVector );
+
+        initialStateVector[ xVelocityIndex ] = initialStateVector[ xVelocityIndex ]
+                                                - coriolisTerm[ 0 ];
+        initialStateVector[ yVelocityIndex ] = initialStateVector[ yVelocityIndex ]
+                                                - coriolisTerm[ 1 ];
+        initialStateVector[ zVelocityIndex ] = initialStateVector[ zVelocityIndex ]
+                                                - coriolisTerm[ 2 ];
+    }
+    else
+    {
+        initialStateVector = initialVector;
+    }
 
     // Specify the step size value [s]
     double stepSize = integrationStepSize;

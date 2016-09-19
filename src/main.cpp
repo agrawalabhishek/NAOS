@@ -66,12 +66,14 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     // compute orbit trajectory around a URE for given initial conditions
     std::ostringstream orbiterAroundUREFilePath;
     orbiterAroundUREFilePath << "../../data/eomOrbiterURESolution.csv";
-    const double semiMajor = 24000.0;
+    const double semiMajor = 23180.0;
     const double eccentricity = 0.1;
     const double inclination = 10.0;
     const double RAAN = 50.0;
     const double AOP = 100.0;
     const double TA = 5.0;
+    naos::Vector6 initialVector { semiMajor, eccentricity, inclination, RAAN, AOP, TA };
+    const bool initialVectorIsCartesian = false;
     const double integrationStepSize = 0.01;
     const double startTime = 0.0;
     const double endTime = 1000.0;
@@ -83,12 +85,8 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                                    density,
                                    W,
                                    Wmagnitude,
-                                   semiMajor,
-                                   eccentricity,
-                                   inclination,
-                                   RAAN,
-                                   AOP,
-                                   TA,
+                                   initialVectorIsCartesian,
+                                   initialVector,
                                    integrationStepSize,
                                    startTime,
                                    endTime,
