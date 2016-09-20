@@ -35,19 +35,23 @@ struct eomOrbiterURE
     const double Ux;
     const double Uy;
     const double Uz;
+    const double Wz;
     // Default constructor with member initializer list
-    eomOrbiterURE( Vector3 gravAcceleration )
+    eomOrbiterURE( Vector3 gravAcceleration, double angularVelocity )
                     : Ux( gravAcceleration[ naos::xPositionIndex ] ),
                       Uy( gravAcceleration[ naos::yPositionIndex ] ),
-                      Uz( gravAcceleration[ naos::zPositionIndex ] )
+                      Uz( gravAcceleration[ naos::zPositionIndex ] ),
+                      Wz( angularVelocity )
     { }
     void operator() ( const double t, Vector6 &X, Vector6 &dXdt )
     {
         dXdt[ naos::xPositionIndex ] = X[ naos::xVelocityIndex ];
         dXdt[ naos::yPositionIndex ] = X[ naos::yVelocityIndex ];
         dXdt[ naos::zPositionIndex ] = X[ naos::zVelocityIndex ];
-        dXdt[ naos::xVelocityIndex ] = Ux + 2.0 * X[ naos::yVelocityIndex ];
-        dXdt[ naos::yVelocityIndex ] = Uy - 2.0 * X[ naos::xVelocityIndex ];
+        dXdt[ naos::xVelocityIndex ] = Ux + 2.0 * Wz * X[ naos::yVelocityIndex ]
+                                        + Wz * Wz * X[ naos::xPositionIndex ];
+        dXdt[ naos::yVelocityIndex ] = Uy - 2.0 * Wz * X[ naos::xVelocityIndex ]
+                                        + Wz* Wz * X[ naos::yPositionIndex ];
         dXdt[ naos::zVelocityIndex ] = Uz;
     }
 };
