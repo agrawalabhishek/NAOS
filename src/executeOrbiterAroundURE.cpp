@@ -19,6 +19,7 @@
 #include "NAOS/rk4.hpp"
 #include "NAOS/basicMath.hpp"
 #include "NAOS/basicAstro.hpp"
+#include "NAOS/normalizedPotentialURE.hpp"
 
 namespace naos
 {
@@ -65,7 +66,8 @@ namespace naos
     std::ofstream eomOrbiterUREFile;
     eomOrbiterUREFile.open( filePath.str( ) );
     eomOrbiterUREFile << "x" << "," << "y" << "," << "z" << ",";
-    eomOrbiterUREFile << "vx" << "," << "vy" << "," << "vz" << "," << "t" << std::endl;
+    eomOrbiterUREFile << "vx" << "," << "vy" << "," << "vz" << "," << "t" << "," << "jacobian";
+    eomOrbiterUREFile << std::endl;
 
     // get the initial state from the input arguments
     Vector6 initialStateVector( 6 );
@@ -109,6 +111,29 @@ namespace naos
     const double tEnd = endTime;
     double tCurrent = tStart;
 
+    // calculate initial jacobian
+    double xVelocityStarSquare = ( initialStateVector[ xVelocityIndex ] / ( Wmagnitude * alpha ) )
+                                * ( initialStateVector[ xVelocityIndex ] / ( Wmagnitude * alpha ) );
+    double yVelocityStarSquare = ( initialStateVector[ yVelocityIndex ] / ( Wmagnitude * alpha ) )
+                                * ( initialStateVector[ yVelocityIndex ] / ( Wmagnitude * alpha ) );
+    double zVelocityStarSquare = ( initialStateVector[ zVelocityIndex ] / ( Wmagnitude * alpha ) )
+                                * ( initialStateVector[ zVelocityIndex ] / ( Wmagnitude * alpha ) );
+    double kineticEnergy = ( 1.0 / 2.0 )
+                            * ( xVelocityStarSquare * yVelocityStarSquare * zVelocityStarSquare );
+
+    Vector3 positionVector { initialStateVector[ xPositionIndex ],
+                             initialStateVector[ yPositionIndex ],
+                             initialStateVector[ zPositionIndex ] };
+    double potentialEnergy = -1.0 * computeNormalizedPotentialURE< Vector3 >(
+                                        positionVector,
+                                        alpha,
+                                        beta,
+                                        gamma,
+                                        density,
+                                        Wmagnitude );
+
+    double jacobian = -1.0 * ( kineticEnergy + potentialEnergy );
+
     // Save initial values in the CSV file
     eomOrbiterUREFile << initialStateVector[ xPositionIndex ] << ",";
     eomOrbiterUREFile << initialStateVector[ yPositionIndex ] << ",";
@@ -116,7 +141,8 @@ namespace naos
     eomOrbiterUREFile << initialStateVector[ xVelocityIndex ] << ",";
     eomOrbiterUREFile << initialStateVector[ yVelocityIndex ] << ",";
     eomOrbiterUREFile << initialStateVector[ zVelocityIndex ] << ",";
-    eomOrbiterUREFile << tCurrent << std::endl;
+    eomOrbiterUREFile << tCurrent << ",";
+    eomOrbiterUREFile << jacobian << std::endl;
 
     // Define a vector to store latest/current state values in the integration loop
     Vector6 currentStateVector = initialStateVector;
@@ -210,6 +236,30 @@ namespace naos
             break;
         }
 
+        // calculate the jacobian after each integration step
+        xVelocityStarSquare = nextStateVectorNormalized[ xVelocityIndex ]
+                            * nextStateVectorNormalized[ xVelocityIndex ];
+        yVelocityStarSquare = nextStateVectorNormalized[ yVelocityIndex ]
+                            * nextStateVectorNormalized[ yVelocityIndex ];
+        zVelocityStarSquare = nextStateVectorNormalized[ zVelocityIndex ]
+                            * nextStateVectorNormalized[ zVelocityIndex ];
+        kineticEnergy = ( 1.0 / 2.0 )
+                            * ( xVelocityStarSquare * yVelocityStarSquare * zVelocityStarSquare );
+
+        positionVector = { nextStateVector[ xPositionIndex ],
+                           nextStateVector[ yPositionIndex ],
+                           nextStateVector[ zPositionIndex ] };
+
+        potentialEnergy = -1.0 * computeNormalizedPotentialURE< Vector3 >(
+                                            positionVector,
+                                            alpha,
+                                            beta,
+                                            gamma,
+                                            density,
+                                            Wmagnitude );
+
+        jacobian = -1.0 * ( kineticEnergy + potentialEnergy );
+
         // Store the integrated state values in the CSV file
         eomOrbiterUREFile << nextStateVector[ xPositionIndex ] << ",";
         eomOrbiterUREFile << nextStateVector[ yPositionIndex ] << ",";
@@ -217,7 +267,8 @@ namespace naos
         eomOrbiterUREFile << nextStateVector[ xVelocityIndex ] << ",";
         eomOrbiterUREFile << nextStateVector[ yVelocityIndex ] << ",";
         eomOrbiterUREFile << nextStateVector[ zVelocityIndex ] << ",";
-        eomOrbiterUREFile << tNext << std::endl;
+        eomOrbiterUREFile << tNext << ",";
+        eomOrbiterUREFile << jacobian << std::endl;
 
         // save the new state values in the vector of current state values. these will be used in
         // the next loop iteration

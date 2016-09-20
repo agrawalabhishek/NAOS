@@ -76,7 +76,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     const bool initialVectorIsCartesian = false;
     const double integrationStepSize = 0.01;
     const double startTime = 0.0;
-    const double endTime = 1000.0;
+    const double endTime = 10.0;
 
     naos::executeOrbiterAroundURE( alpha,
                                    beta,

@@ -18,5 +18,6 @@
 #include <naos/factorial.hpp>
 #include <naos/orbiterEquationsOfMotion.hpp>
 #include <naos/rk4.hpp>
+#include <naos/normalizedPotentialURE.hpp>
 
 #endif NAOS_HPP
