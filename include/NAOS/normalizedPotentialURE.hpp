@@ -69,7 +69,7 @@ double computeNormalizedPotentialURE(
     const double yStarSquare        = yStar * yStar;
     const double zStarSquare        = zStar * zStar;
 
-    // Get the coefficients for the polynomila to solve for Lambda (lower integration limit)
+    // Get the coefficients for the polynomial to solve for Lambda (lower integration limit)
     const double coefficientA2 = 1.0 + betaStarSquare + gammaStarSquare
                                     - xStarSquare - yStarSquare - zStarSquare;
 

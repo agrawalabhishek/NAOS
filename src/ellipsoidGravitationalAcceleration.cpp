@@ -269,9 +269,9 @@ namespace naos
     // cube of alpha, intermediate term used in some places
     const double alphaCube = alpha * alpha * alpha;
 
-    const double mStar             = ( 4.0 * naos::PI / 3.0 ) * density * 1.0
-                                        * betaStar * gammaStar * alphaCube;
-    const double gravParameterStar = naos::GRAVITATIONAL_CONSTANT * mStar;
+    const double mass = ( 4.0 * naos::PI / 3.0 ) * density * alpha * beta * gamma;
+
+    const double gravParameter = naos::GRAVITATIONAL_CONSTANT * mass;
 
     const double betaStarSquare     = betaStar * betaStar;
     const double gammaStarSquare    = gammaStar * gammaStar;
@@ -426,11 +426,11 @@ namespace naos
     }
 
     // Evaluate Ux normalized
-    const double UxStar = xStar - ( 3.0 * gravParameterStar * xStar / ( 2.0 * alphaCube * w * w ) )
+    const double UxStar = xStar - ( 3.0 * gravParameter * xStar / ( 2.0 * alphaCube * w * w ) )
                             * ( 2.0 / 3.0 ) * d12_Ux * d13_Ux * result_Ux.val;
 
     // Evaluate Uy normalized
-    const double UyStar = yStar - ( 3.0 * gravParameterStar * yStar / ( 2.0 * alphaCube * w * w ) )
+    const double UyStar = yStar - ( 3.0 * gravParameter * yStar / ( 2.0 * alphaCube * w * w ) )
                             * ( 2.0 / 3.0 ) * d12_Uy * d13_Uy
                             * gsl_sf_ellint_RD( U12_Uy * U12_Uy,
                                                 U13_Uy * U13_Uy,
@@ -438,7 +438,7 @@ namespace naos
                                                 GSL_PREC_DOUBLE );
 
     // Evaluate Uz normalized
-    const double UzStar = ( -3.0 * gravParameterStar * zStar / ( 2.0 * alphaCube * w * w ) )
+    const double UzStar = ( -3.0 * gravParameter * zStar / ( 2.0 * alphaCube * w * w ) )
                             * ( 2.0 / 3.0 ) * d12_Uz * d13_Uz
                             * gsl_sf_ellint_RD( U12_Uz * U12_Uz,
                                                 U13_Uz * U13_Uz,
