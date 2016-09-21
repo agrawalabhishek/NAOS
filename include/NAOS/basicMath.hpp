@@ -33,6 +33,27 @@ Vector3 crossProduct( const Vector3 &vector1, const Vector3 &vector2 )
     return result;
 }
 
+//! Compute vector dot product
+/*!
+ * Compute dot product of two vectors, each with 3 elements.
+ *
+ * @tparam Vector3      Template paramter for a 3 element vector
+ * @param[in] vector1   A 3 element vector
+ * @param[in] vector2   A 3 element vector
+ * @return result       The resulting vector from a dot product
+ */
+template< typename Vector3 >
+double dotProduct( const Vector3 &vector1, const Vector3 &vector2 )
+{
+    double result = 0.0;
+    // Compute dot product.
+    result = vector1[ 0 ] * vector2[ 0 ]
+                + vector1[ 1 ] * vector2[ 1 ]
+                + vector1[ 2 ] * vector2[ 2 ];
+
+    return result;
+}
+
 //! Convert degrees to radians
 /*!
  * convert degrees to radians

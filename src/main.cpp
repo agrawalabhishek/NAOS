@@ -47,15 +47,6 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                                          stepSizeAzimuthDegree, stepSizeElevationDegree,
                                          ellipsoidSurfacePointsFile );
 
-    // Test functionality of the maximum real root for a cubic polynomial, compare results with
-    // wolfram alpha.
-    const double maxRealRootTest1 = naos::computeMaxRealCubicRoot( -7.0, 4.0, 12.0 );
-    std::cout << "max Real Root Test 1 = " << maxRealRootTest1 << std::endl;
-    const double maxRealRootTest2 = naos::computeMaxRealCubicRoot( ( 3.0 / 2.0 ),
-                                                                   ( -11.0 / 2.0 ),
-                                                                   ( -3.0 ) );
-    std::cout << "max Real Root Test 2 = " << maxRealRootTest2 << std::endl;
-
     // Compute gravitational acceleration on the surface of the ellipsoidal asteroid
     naos::computeEllipsoidSurfaceGravitationalAcceleration( alpha, beta, gamma,
                                                             gravitationalParameter );
