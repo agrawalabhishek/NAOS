@@ -21,4 +21,5 @@ set(TEST_SRC
   "${TEST_SRC_PATH}/testNaos.cpp"
   "${TEST_SRC_PATH}/testConvertKeplerToCartesian.cpp"
   "${TEST_SRC_PATH}/testCrossProduct.cpp"
+  "${TEST_SRC_PATH}/testMaxRealCubicRoot.cpp"
 )
