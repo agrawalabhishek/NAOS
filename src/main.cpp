@@ -21,6 +21,7 @@
 #include "NAOS/basicAstro.hpp"
 #include "NAOS/computeEllipsoidSurfaceGravitationalAcceleration.hpp"
 #include "NAOS/executeOrbiterAroundURE.hpp"
+#include "NAOS/ellipsoidPotential.hpp"
 
 int main( const int numberOfInputs, const char* inputArguments[ ] )
 {
@@ -59,14 +60,10 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     naos::computeEllipsoidSurfaceGravitationalAcceleration( alpha, beta, gamma,
                                                             gravitationalParameter );
 
-    // Compute normalized gravitational acceleration values for the surface of the asteroid
-    naos::computeNonDimensionalEllipsoidSurfaceGravitationalAcceleration( alpha, beta, gamma,
-                                                                          density, Wmagnitude );
-
     // compute orbit trajectory around a URE for given initial conditions
     std::ostringstream orbiterAroundUREFilePath;
     orbiterAroundUREFilePath << "../../data/eomOrbiterURESolution.csv";
-    const double semiMajor = 23180.0;
+    const double semiMajor = 23000.0;
     const double eccentricity = 0.1;
     const double inclination = 10.0;
     const double RAAN = 50.0;
@@ -76,7 +73,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     const bool initialVectorIsCartesian = false;
     const double integrationStepSize = 0.01;
     const double startTime = 0.0;
-    const double endTime = 10.0;
+    const double endTime = 10000.0;
 
     naos::executeOrbiterAroundURE( alpha,
                                    beta,

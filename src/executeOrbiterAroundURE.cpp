@@ -11,15 +11,13 @@
 #include <string>
 #include <cmath>
 
-#include "NAOS/ellipsoidSurfacePoints.hpp"
-#include "NAOS/cubicRoot.hpp"
 #include "NAOS/constants.hpp"
 #include "NAOS/ellipsoidGravitationalAcceleration.hpp"
 #include "NAOS/orbiterEquationsOfMotion.hpp"
 #include "NAOS/rk4.hpp"
 #include "NAOS/basicMath.hpp"
 #include "NAOS/basicAstro.hpp"
-#include "NAOS/normalizedPotentialURE.hpp"
+#include "NAOS/ellipsoidPotential.hpp"
 
 namespace naos
 {
@@ -111,28 +109,32 @@ namespace naos
     const double tEnd = endTime;
     double tCurrent = tStart;
 
-    // calculate initial jacobian
-    double xVelocityStarSquare = ( initialStateVector[ xVelocityIndex ] / ( Wmagnitude * alpha ) )
-                                * ( initialStateVector[ xVelocityIndex ] / ( Wmagnitude * alpha ) );
-    double yVelocityStarSquare = ( initialStateVector[ yVelocityIndex ] / ( Wmagnitude * alpha ) )
-                                * ( initialStateVector[ yVelocityIndex ] / ( Wmagnitude * alpha ) );
-    double zVelocityStarSquare = ( initialStateVector[ zVelocityIndex ] / ( Wmagnitude * alpha ) )
-                                * ( initialStateVector[ zVelocityIndex ] / ( Wmagnitude * alpha ) );
-    double kineticEnergy = ( 1.0 / 2.0 )
-                            * ( xVelocityStarSquare * yVelocityStarSquare * zVelocityStarSquare );
+    // Calculate the initial jacobian
+    double xVelocitySquare = initialStateVector[ xVelocityIndex ]
+                                * initialStateVector[ xVelocityIndex ];
+    double yVelocitySquare = initialStateVector[ yVelocityIndex ]
+                                * initialStateVector[ yVelocityIndex ];
+    double zVelocitySquare = initialStateVector[ zVelocityIndex ]
+                                * initialStateVector[ zVelocityIndex ];
 
-    Vector3 positionVector { initialStateVector[ xPositionIndex ],
-                             initialStateVector[ yPositionIndex ],
-                             initialStateVector[ zPositionIndex ] };
-    double potentialEnergy = -1.0 * computeNormalizedPotentialURE< Vector3 >(
-                                        positionVector,
-                                        alpha,
-                                        beta,
-                                        gamma,
-                                        density,
-                                        Wmagnitude );
+    double xPositionSquare = initialStateVector[ xPositionIndex ]
+                                * initialStateVector[ xPositionIndex ];
+    double yPositionSquare = initialStateVector[ yPositionIndex ]
+                                * initialStateVector[ yPositionIndex ];
 
-    double jacobian = -1.0 * ( kineticEnergy + potentialEnergy );
+    double wSquare = Wmagnitude * Wmagnitude;
+
+    double gravPotential = 0.0;
+    naos::computeEllipsoidGravitationalPotential< double >( alpha, beta, gamma,
+                                                  gravParameter,
+                                                  initialStateVector[ xPositionIndex ],
+                                                  initialStateVector[ yPositionIndex ],
+                                                  initialStateVector[ zPositionIndex ],
+                                                  gravPotential );
+
+    double jacobian = 0.5 * ( xVelocitySquare + yVelocitySquare + zVelocitySquare )
+                        - 0.5 * wSquare * ( xPositionSquare + yPositionSquare )
+                        - gravPotential;
 
     // Save initial values in the CSV file
     eomOrbiterUREFile << initialStateVector[ xPositionIndex ] << ",";
@@ -166,12 +168,11 @@ namespace naos
 
         // Evaluate gravitational acceleration values at the current state values
         Vector3 currentGravAcceleration( 3 );
-        computeNonDimensionalEllipsoidGravitationalAcceleration(
+        computeEllipsoidGravitationalAcceleration(
             alpha,
             beta,
             gamma,
-            density,
-            Wmagnitude,
+            gravParameter,
             currentStateVector[ xPositionIndex ],
             currentStateVector[ yPositionIndex ],
             currentStateVector[ zPositionIndex ],
@@ -180,30 +181,14 @@ namespace naos
         // Create an object of the struct containing the equations of motion (in this case the eom
         // for an orbiter around a uniformly rotating tri-axial ellipsoid) and initialize it to the
         // values of the ellipsoidal asteroid's current gravitational accelerations
-        eomOrbiterURE derivatives( currentGravAcceleration );
+        eomOrbiterURE derivatives( currentGravAcceleration, Wmagnitude );
 
         // Run an instance of RK4 integrator to evaluate the state at the next time value
-        // The input state vector should be normalized
-        Vector6 currentStateVectorNormalized( 6 );
-        for( int i = 0; i < 3; i++ )
-        {
-            currentStateVectorNormalized[ i ] = currentStateVector[ i ] / alpha;
-            currentStateVectorNormalized[ i + 3 ] = currentStateVector[ i + 3 ]
-                                                        / ( alpha * Wmagnitude );
-        }
-        Vector6 nextStateVectorNormalized( 6 );
-        rk4< Vector6, eomOrbiterURE > ( currentStateVectorNormalized,
-                                                          tCurrent,
-                                                          stepSize,
-                                                          nextStateVectorNormalized,
-                                                          derivatives );
-        // Dimensionalize the integrated state
-        for( int i = 0; i < 3; i++ )
-        {
-            nextStateVector[ i ] = nextStateVectorNormalized[ i ] * alpha;
-            nextStateVector[ i + 3 ] = nextStateVectorNormalized[ i + 3 ]
-                                                    * ( alpha * Wmagnitude );
-        }
+        rk4< Vector6, eomOrbiterURE > ( currentStateVector,
+                                        tCurrent,
+                                        stepSize,
+                                        nextStateVector,
+                                        derivatives );
 
         // Check if the new state is valid or not i.e. the particle/orbiter is not
         // inside the surface of the asteroid. If it is then terminate the outer loop. Evaluate the
@@ -218,6 +203,34 @@ namespace naos
                             + yCoordinateSquare / ( beta * beta )
                             + zCoordinateSquare / ( gamma * gamma )
                             - 1.0;
+
+        // calculate the jacobian after each integration step
+        xVelocitySquare = nextStateVector[ xVelocityIndex ]
+                            * nextStateVector[ xVelocityIndex ];
+        yVelocitySquare = nextStateVector[ yVelocityIndex ]
+                            * nextStateVector[ yVelocityIndex ];
+        zVelocitySquare = nextStateVector[ zVelocityIndex ]
+                            * nextStateVector[ zVelocityIndex ];
+
+        xPositionSquare = nextStateVector[ xPositionIndex ]
+                            * nextStateVector[ xPositionIndex ];
+        yPositionSquare = nextStateVector[ yPositionIndex ]
+                            * nextStateVector[ yPositionIndex ];
+
+        wSquare = Wmagnitude * Wmagnitude;
+
+        gravPotential = 0.0;
+        naos::computeEllipsoidGravitationalPotential< double >( alpha, beta, gamma,
+                                                      gravParameter,
+                                                      nextStateVector[ xPositionIndex ],
+                                                      nextStateVector[ yPositionIndex ],
+                                                      nextStateVector[ zPositionIndex ],
+                                                      gravPotential );
+
+        jacobian = 0.5 * ( xVelocitySquare + yVelocitySquare + zVelocitySquare )
+                            - 0.5 * wSquare * ( xPositionSquare + yPositionSquare )
+                            - gravPotential;
+
         if( phiCheck <= 0.0 )
         {
             // point is either inside or on the surface of the ellipsoid, so terminate the
@@ -228,37 +241,14 @@ namespace naos
             eomOrbiterUREFile << nextStateVector[ xVelocityIndex ] << ",";
             eomOrbiterUREFile << nextStateVector[ yVelocityIndex ] << ",";
             eomOrbiterUREFile << nextStateVector[ zVelocityIndex ] << ",";
-            eomOrbiterUREFile << tNext << std::endl;
+            eomOrbiterUREFile << tNext << ",";
+            eomOrbiterUREFile << jacobian << std::endl;
             std::cout << std::endl;
             std::cout << "Houston, we've got a problem!" << std::endl;
             std::cout << "Particle at or inside the ellipsoidal surface" << std::endl;
             std::cout << "Event occurence at: " << tNext << " seconds" << std::endl;
             break;
         }
-
-        // calculate the jacobian after each integration step
-        xVelocityStarSquare = nextStateVectorNormalized[ xVelocityIndex ]
-                            * nextStateVectorNormalized[ xVelocityIndex ];
-        yVelocityStarSquare = nextStateVectorNormalized[ yVelocityIndex ]
-                            * nextStateVectorNormalized[ yVelocityIndex ];
-        zVelocityStarSquare = nextStateVectorNormalized[ zVelocityIndex ]
-                            * nextStateVectorNormalized[ zVelocityIndex ];
-        kineticEnergy = ( 1.0 / 2.0 )
-                            * ( xVelocityStarSquare * yVelocityStarSquare * zVelocityStarSquare );
-
-        positionVector = { nextStateVector[ xPositionIndex ],
-                           nextStateVector[ yPositionIndex ],
-                           nextStateVector[ zPositionIndex ] };
-
-        potentialEnergy = -1.0 * computeNormalizedPotentialURE< Vector3 >(
-                                            positionVector,
-                                            alpha,
-                                            beta,
-                                            gamma,
-                                            density,
-                                            Wmagnitude );
-
-        jacobian = -1.0 * ( kineticEnergy + potentialEnergy );
 
         // Store the integrated state values in the CSV file
         eomOrbiterUREFile << nextStateVector[ xPositionIndex ] << ",";

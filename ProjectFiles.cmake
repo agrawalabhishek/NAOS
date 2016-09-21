@@ -4,7 +4,6 @@
 
 # Set project source files.
 set(SRC
-  "${SRC_PATH}/factorial.cpp"
   "${SRC_PATH}/ellipsoidSurfacePoints.cpp"
   "${SRC_PATH}/cubicRoot.cpp"
   "${SRC_PATH}/ellipsoidGravitationalAcceleration.cpp"
@@ -21,6 +20,5 @@ set(MAIN_SRC
 set(TEST_SRC
   "${TEST_SRC_PATH}/testNaos.cpp"
   "${TEST_SRC_PATH}/testConvertKeplerToCartesian.cpp"
-  "${TEST_SRC_PATH}/testFactorial.cpp"
   "${TEST_SRC_PATH}/testCrossProduct.cpp"
 )

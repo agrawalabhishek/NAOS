@@ -12,12 +12,11 @@
 #include <naos/constants.hpp>
 #include <naos/cubicRoot.hpp>
 #include <naos/ellipsoidGravitationalAcceleration.hpp>
+#include <naos/ellipsoidPotential.hpp>
 #include <naos/ellipsoidSurfacePoints.hpp>
 #include <naos/computeEllipsoidSurfaceGravitationalAcceleration.hpp>
 #include <naos/executeOrbiterAroundURE.hpp>
-#include <naos/factorial.hpp>
 #include <naos/orbiterEquationsOfMotion.hpp>
 #include <naos/rk4.hpp>
-#include <naos/normalizedPotentialURE.hpp>
 
 #endif NAOS_HPP
