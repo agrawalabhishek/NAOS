@@ -7,6 +7,8 @@
 #ifndef BASIC_MATH_HPP
 #define BASIC_MATH_HPP
 
+#include <cmath>
+
 #include "NAOS/constants.hpp"
 
 namespace naos
@@ -50,6 +52,27 @@ double dotProduct( const Vector3 &vector1, const Vector3 &vector2 )
     result = vector1[ 0 ] * vector2[ 0 ]
                 + vector1[ 1 ] * vector2[ 1 ]
                 + vector1[ 2 ] * vector2[ 2 ];
+
+    return result;
+}
+
+//! Compute vector norm
+/*!
+ * Compute norm of a vector of 3 elements.
+ *
+ * @tparam Vector3      Template paramter for a 3 element vector
+ * @param[in] vector1   A 3 element vector
+ * @return result       The resulting norm of the vector
+ */
+template< typename Vector3 >
+double vectorNorm( const Vector3 &vector1 )
+{
+    double result = 0.0;
+    // Compute Norm.
+    double xSquare = vector1[ 0 ] * vector1[ 0 ];
+    double ySquare = vector1[ 1 ] * vector1[ 1 ];
+    double zSquare = vector1[ 2 ] * vector1[ 2 ];
+    result = std::sqrt( xSquare + ySquare + zSquare );
 
     return result;
 }
