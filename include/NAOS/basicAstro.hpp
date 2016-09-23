@@ -9,6 +9,7 @@
 
 #include <cmath>
 #include <limits>
+#include <iostream>
 
 #include "NAOS/basicMath.hpp"
 #include "NAOS/constants.hpp"
@@ -98,6 +99,149 @@ Vector6 convertKeplerianElementsToCartesianCoordinates(
                                                     + rotation32 * yVelocityPerifocal;
 
     return cartesianElements;
+}
+
+//! Convert Cartesian coordinates to orbital elements
+/*!
+ * Convert a set of cartesian position and velocity (defined in the inertial frame) to orbital
+ * elements. The equations were obtained from DA Vallodo's book - fundamentals of astrodynamics and
+ * applications.
+ *
+ * @param[in] cartesianElements     6 element vector containing position and velocity of the orbiter
+ * @param[in] gravParameter         the gravitational parameter of the central body
+ * @param[in/out] orbitalElements   output vector containing the final orbital elements in the
+ *                                  following order:
+ *                                  semi-major axis / semi-latus rectum (semiMajor/ semiLatus)
+ *                                  eccentricity
+ *                                  inclination
+ *                                  Right ascension of ascending node (RAAN)
+ *                                  argument of periapsis (AOP)
+ *                                  true anomaly (TA)
+ */
+template< typename Vector6 >
+void convertCartesianCoordinatesToKeplerianElements(
+    const Vector6 &cartesianElements,
+    const double gravParameter,
+    Vector6 &orbitalElements )
+{
+    // get position and velocity vectors
+    std::vector< double > position( 3 );
+    position[ 0 ] = cartesianElements[ xPositionIndex ];
+    position[ 1 ] = cartesianElements[ yPositionIndex ];
+    position[ 2 ] = cartesianElements[ zPositionIndex ];
+    double positionMagnitude = vectorNorm( position );
+    std::vector < double > positionUnitVector( 3 );
+    for( int i = 0; i <= 2; i++ )
+    {
+        positionUnitVector[ i ] = position[ i ] / positionMagnitude;
+    }
+
+    std::vector< double > velocity( 3 );
+    velocity[ 0 ] = cartesianElements[ xVelocityIndex ];
+    velocity[ 1 ] = cartesianElements[ yVelocityIndex ];
+    velocity[ 2 ] = cartesianElements[ zVelocityIndex ];
+    double velocityMagnitude = vectorNorm( velocity );
+    std::vector < double > velocityUnitVector( 3 );
+    for( int i = 0; i <= 2; i++ )
+    {
+        velocityUnitVector[ i ] = velocity[ i ] / velocityMagnitude;
+    }
+
+    // get the angular momentum vector
+    std::vector< double > angularMomentum( 3 );
+    angularMomentum = crossProduct( position, velocity );
+
+    // get the node vector
+    std::vector< double > node( 3 );
+    std::vector< double > zUnitVector = { 0.0, 0.0, 1.0 };
+    node = crossProduct( zUnitVector, angularMomentum );
+
+    // get the eccentricity vector
+    std::vector< double > eccentricityVector( 3 );
+    std::vector< double > tempVector = crossProduct( velocity, angularMomentum );
+    for( int i = 0; i <= 2; i++ )
+    {
+        eccentricityVector[ i ] = tempVector[ i ] / gravParameter - positionUnitVector[ i ];
+    }
+
+    // get the specific mechanical energy
+    double specificMechanicalEnergy = velocityMagnitude * velocityMagnitude / 2.0
+                                        - gravParameter / positionMagnitude;
+
+    // calculate eccentricity from the eccentricity vector
+    const double eccentricity = vectorNorm( eccentricityVector );
+    orbitalElements[ 1 ] = eccentricity;
+
+    // calculate the semiAxis or semiLatus depending on the eccentricity value
+    const double tolerance = 10.0 * std::numeric_limits< double >::epsilon( );
+    if( std::fabs( eccentricity - 1.0 ) < tolerance )
+    {
+        // case of a parabolic orbit, so semiLatus is calculated
+        double semiLatus = vectorNorm( angularMomentum ) * vectorNorm( angularMomentum )
+                             / gravParameter;
+        orbitalElements[ 0 ] = semiLatus;
+    }
+    else
+    {
+        double semiAxis = -1.0 * gravParameter / ( 2 * specificMechanicalEnergy );
+        orbitalElements[ 0 ] = semiAxis;
+    }
+
+    // calculate the inclination
+    double inclinationRadians = std::acos( angularMomentum[ 2 ] / vectorNorm( angularMomentum ) );
+    double inclination = convertRadiansToDegree( inclinationRadians );
+    orbitalElements[ 2 ] = inclination;
+
+    // calculate the right ascenion of ascending node
+    if( inclination < tolerance )
+    {
+        // orbit is circular hence RAAN = 0
+        double RAAN = 0.0;
+        orbitalElements[ 3 ] = RAAN;
+    }
+    else
+    {
+        double RAAN = std::acos( node[ 0 ] / vectorNorm( node ) );
+        RAAN = convertRadiansToDegree( RAAN );
+        // quadrant check
+        if( node[ 1 ] < 0 )
+        {
+            RAAN = 360.0 - RAAN;
+        }
+        orbitalElements[ 3 ] = RAAN;
+    }
+
+    // calculate the argument of periapsis
+    if( eccentricity < tolerance )
+    {
+        // orbit is circular hence AOP = 0
+        double AOP = 0.0;
+        orbitalElements[ 4 ] = AOP;
+    }
+    else
+    {
+        double AOP = std::acos( dotProduct( node, eccentricityVector )
+                        / ( vectorNorm( node ) * vectorNorm( eccentricityVector ) ) );
+        std::cout << AOP << std::endl;
+        AOP = convertRadiansToDegree( AOP );
+        // quadrant check
+        if( eccentricityVector[ 2 ] < 0 )
+        {
+            AOP = 360.0 - AOP;
+        }
+        orbitalElements[ 4 ] = AOP;
+    }
+
+    // calculate the true anomaly
+    double TA = std::acos( dotProduct( eccentricityVector, position )
+                    / ( vectorNorm( eccentricityVector ) * vectorNorm( position ) ) );
+    TA = convertRadiansToDegree( TA );
+    // quadrant check
+    if( dotProduct( position, velocity ) < 0 )
+    {
+        TA = 360.0 - TA;
+    }
+    orbitalElements[ 5 ] = TA;
 }
 
 } // namespace naos
