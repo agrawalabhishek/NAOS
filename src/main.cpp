@@ -54,7 +54,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     // compute orbit trajectory around a URE for given initial conditions
     std::ostringstream orbiterAroundUREFilePath;
     orbiterAroundUREFilePath << "../../data/eomOrbiterURESolution.csv";
-    const double semiMajor = 23000.0;
+    const double semiMajor = 24000.0;
     const double eccentricity = 0.1;
     const double inclination = 10.0;
     const double RAAN = 50.0;
