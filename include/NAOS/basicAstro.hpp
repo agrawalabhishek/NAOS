@@ -222,7 +222,6 @@ void convertCartesianCoordinatesToKeplerianElements(
     {
         double AOP = std::acos( dotProduct( node, eccentricityVector )
                         / ( vectorNorm( node ) * vectorNorm( eccentricityVector ) ) );
-        std::cout << AOP << std::endl;
         AOP = convertRadiansToDegree( AOP );
         // quadrant check
         if( eccentricityVector[ 2 ] < 0 )

@@ -70,8 +70,8 @@ ax4 = fig.add_subplot( 224, frameon=False )
 
 ## ellipsoidal shape model parameters for the asteroid
 alpha = 20000.0
-beta = 7000.0
-gamma = 7000.0
+beta = 20000.0
+gamma = 20000.0
 Wz = 0.00033118202125129593
 
 u = np.linspace(0, 2 * np.pi, 100)

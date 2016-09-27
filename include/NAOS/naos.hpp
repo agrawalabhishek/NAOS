@@ -16,6 +16,7 @@
 #include <naos/ellipsoidSurfacePoints.hpp>
 #include <naos/computeEllipsoidSurfaceGravitationalAcceleration.hpp>
 #include <naos/executeOrbiterAroundURE.hpp>
+#include <naos/misc.hpp>
 #include <naos/orbiterEquationsOfMotion.hpp>
 #include <naos/rk4.hpp>
 

@@ -18,6 +18,7 @@
 #include "NAOS/basicMath.hpp"
 #include "NAOS/basicAstro.hpp"
 #include "NAOS/ellipsoidPotential.hpp"
+#include "NAOS/misc.hpp"
 
 namespace naos
 {
@@ -64,7 +65,9 @@ namespace naos
     std::ofstream eomOrbiterUREFile;
     eomOrbiterUREFile.open( filePath.str( ) );
     eomOrbiterUREFile << "x" << "," << "y" << "," << "z" << ",";
-    eomOrbiterUREFile << "vx" << "," << "vy" << "," << "vz" << "," << "t" << "," << "jacobian";
+    eomOrbiterUREFile << "vx" << "," << "vy" << "," << "vz" << "," << "t" << ",";
+    eomOrbiterUREFile << "jacobian" << "," << "semiMajor" << "," << "eccentricity" << ",";
+    eomOrbiterUREFile << "inclination" << "," << "RAAN" << "," << "AOP" << "," << "TA";
     eomOrbiterUREFile << std::endl;
 
     // get the initial state from the input arguments
@@ -81,6 +84,8 @@ namespace naos
         initialStateVector = convertKeplerianElementsToCartesianCoordinates< Vector6 >(
                                 keplerElements,
                                 gravParameter );
+        // std::cout << "Inertial frame cartesian coordinates (at t=0):";
+        // printVector( initialStateVector, 6 );
 
         // get velocity in the body frame
         Vector3 positionVector { initialStateVector[ xPositionIndex ],
@@ -100,6 +105,43 @@ namespace naos
     {
         initialStateVector = initialVector;
     }
+    // std::cout << "Body frame cartesian coordinates (at t=0):";
+    // printVector( initialStateVector, 6 );
+
+    // convert the initial state vector in body frame to inertial frame and obtain orbital elements
+    double phiAngle = Wmagnitude * startTime;
+    phiAngle = mod360( phiAngle );
+    phiAngle = convertDegreeToRadians( phiAngle );
+
+    double xInertial = initialStateVector[ xPositionIndex ] * std::cos( phiAngle )
+                        - initialStateVector[ yPositionIndex ] * std::sin( phiAngle );
+    double yInertial = initialStateVector[ xPositionIndex ] * std::sin( phiAngle )
+                        + initialStateVector[ yPositionIndex ] * std::cos( phiAngle );
+    double zInertial = initialStateVector[ zPositionIndex ];
+
+    Vector3 positionVector = { initialStateVector[ xPositionIndex ],
+                               initialStateVector[ yPositionIndex ],
+                               initialStateVector[ zPositionIndex ] };
+    Vector3 wCrossR( 3 );
+    wCrossR = crossProduct( Wvector, positionVector );
+    double vxInertial = initialStateVector[ xVelocityIndex ] + wCrossR[ 0 ];
+    double vyInertial = initialStateVector[ yVelocityIndex ] + wCrossR[ 1 ];
+    double vzInertial = initialStateVector[ zVelocityIndex ] + wCrossR[ 2 ];
+
+    Vector6 orbitalElements( 6 );
+    Vector6 inertialCartesianElements = { xInertial,
+                                          yInertial,
+                                          zInertial,
+                                          vxInertial,
+                                          vyInertial,
+                                          vzInertial };
+    // std::cout << "Inertial cartesian coordinates, obtained from rotating body frame coordinates";
+    // printVector( inertialCartesianElements, 6 );
+    convertCartesianCoordinatesToKeplerianElements( inertialCartesianElements,
+                                                    gravParameter,
+                                                    orbitalElements );
+    // std::cout << "orbital elements from inertial coordinates at t=0:";
+    // printVector( orbitalElements, 6 );
 
     // Specify the step size value [s]
     double stepSize = integrationStepSize;
@@ -144,7 +186,13 @@ namespace naos
     eomOrbiterUREFile << initialStateVector[ yVelocityIndex ] << ",";
     eomOrbiterUREFile << initialStateVector[ zVelocityIndex ] << ",";
     eomOrbiterUREFile << tCurrent << ",";
-    eomOrbiterUREFile << jacobian << std::endl;
+    eomOrbiterUREFile << jacobian << ",";
+    eomOrbiterUREFile << orbitalElements[ 0 ] << ",";
+    eomOrbiterUREFile << orbitalElements[ 1 ] << ",";
+    eomOrbiterUREFile << orbitalElements[ 2 ] << ",";
+    eomOrbiterUREFile << orbitalElements[ 3 ] << ",";
+    eomOrbiterUREFile << orbitalElements[ 4 ] << ",";
+    eomOrbiterUREFile << orbitalElements[ 5 ] << std::endl;
 
     // Define a vector to store latest/current state values in the integration loop
     Vector6 currentStateVector = initialStateVector;
@@ -189,6 +237,35 @@ namespace naos
                                         stepSize,
                                         nextStateVector,
                                         derivatives );
+
+        // convert the next state vector in body frame to inertial frame
+        phiAngle = Wmagnitude * tCurrent;
+        phiAngle = mod360( phiAngle );
+        phiAngle = convertDegreeToRadians( phiAngle );
+
+        xInertial = nextStateVector[ xPositionIndex ] * std::cos( phiAngle )
+                            - nextStateVector[ yPositionIndex ] * std::sin( phiAngle );
+        yInertial = nextStateVector[ xPositionIndex ] * std::sin( phiAngle )
+                            + nextStateVector[ yPositionIndex ] * std::cos( phiAngle );
+        zInertial = nextStateVector[ zPositionIndex ];
+
+        positionVector = { nextStateVector[ xPositionIndex ],
+                           nextStateVector[ yPositionIndex ],
+                           nextStateVector[ zPositionIndex ] };
+        wCrossR = crossProduct( Wvector, positionVector );
+        vxInertial = nextStateVector[ xVelocityIndex ] + wCrossR[ 0 ];
+        vyInertial = nextStateVector[ yVelocityIndex ] + wCrossR[ 1 ];
+        vzInertial = nextStateVector[ zVelocityIndex ] + wCrossR[ 2 ];
+
+        inertialCartesianElements = { xInertial,
+                                      yInertial,
+                                      zInertial,
+                                      vxInertial,
+                                      vyInertial,
+                                      vzInertial };
+        convertCartesianCoordinatesToKeplerianElements( inertialCartesianElements,
+                                                        gravParameter,
+                                                        orbitalElements );
 
         // Check if the new state is valid or not i.e. the particle/orbiter is not
         // inside the surface of the asteroid. If it is then terminate the outer loop. Evaluate the
@@ -242,8 +319,13 @@ namespace naos
             eomOrbiterUREFile << nextStateVector[ yVelocityIndex ] << ",";
             eomOrbiterUREFile << nextStateVector[ zVelocityIndex ] << ",";
             eomOrbiterUREFile << tNext << ",";
-            eomOrbiterUREFile << jacobian << std::endl;
-            std::cout << std::endl;
+            eomOrbiterUREFile << jacobian << ",";
+            eomOrbiterUREFile << orbitalElements[ 0 ] << ",";
+            eomOrbiterUREFile << orbitalElements[ 1 ] << ",";
+            eomOrbiterUREFile << orbitalElements[ 2 ] << ",";
+            eomOrbiterUREFile << orbitalElements[ 3 ] << ",";
+            eomOrbiterUREFile << orbitalElements[ 4 ] << ",";
+            eomOrbiterUREFile << orbitalElements[ 5 ] << std::endl;
             std::cout << "Houston, we've got a problem!" << std::endl;
             std::cout << "Particle at or inside the ellipsoidal surface" << std::endl;
             std::cout << "Event occurence at: " << tNext << " seconds" << std::endl;
@@ -258,7 +340,13 @@ namespace naos
         eomOrbiterUREFile << nextStateVector[ yVelocityIndex ] << ",";
         eomOrbiterUREFile << nextStateVector[ zVelocityIndex ] << ",";
         eomOrbiterUREFile << tNext << ",";
-        eomOrbiterUREFile << jacobian << std::endl;
+        eomOrbiterUREFile << jacobian << ",";
+        eomOrbiterUREFile << orbitalElements[ 0 ] << ",";
+        eomOrbiterUREFile << orbitalElements[ 1 ] << ",";
+        eomOrbiterUREFile << orbitalElements[ 2 ] << ",";
+        eomOrbiterUREFile << orbitalElements[ 3 ] << ",";
+        eomOrbiterUREFile << orbitalElements[ 4 ] << ",";
+        eomOrbiterUREFile << orbitalElements[ 5 ] << std::endl;
 
         // save the new state values in the vector of current state values. these will be used in
         // the next loop iteration

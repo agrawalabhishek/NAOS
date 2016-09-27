@@ -105,6 +105,20 @@ double vectorNorm( const Vector3 &vector1 )
     return result;
  }
 
+//! calculate mod 360 of an angle
+/*!
+ * calculate the mod 360 of an angle
+ *
+ * @param[in] degreeAngle   angle in degrees
+ * @return    result        mod 360 of the angle
+ */
+ template< typename Real >
+ Real mod360( const Real degreeAngle )
+ {
+    Real result = std::fmod( degreeAngle, 360.0 );
+    return result;
+ }
+
 } // namespace naos
 
 #endif // BASIC_MATH_HPP
