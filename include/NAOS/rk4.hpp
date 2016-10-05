@@ -110,6 +110,15 @@ void rk4(
  * to compute gravitational acceleration values for the current state
  * vector and then perform the step integration using RK4 routine.
  *
+ * @param[in] alpha             largest semi axis of the ellipsoid
+ * @param[in] beta              intermediate semi axis of the ellipsoid
+ * @param[in] gamma             smallest semi axis of the ellipsoid
+ * @param[in] gravParameter     gravitational parameter of the ellipsoid
+ * @param[in] Wmagnitude        angular velcotiy magnitude of the ellipsoid
+ * @param[in] Xcurrent          current known state vector value
+ * @param[in] t                 time
+ * @param[in] stepSize          step size of integration
+ * @param[in] Xnext             next or integrated state vector
  */
 template< typename Vector, class orbiterEquationsOfMotion >
 void rk4Integrator(
