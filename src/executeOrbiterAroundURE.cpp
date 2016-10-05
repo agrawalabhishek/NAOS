@@ -214,29 +214,20 @@ namespace naos
             stepSize = tEnd - tCurrent;
         }
 
-        // Evaluate gravitational acceleration values at the current state values
-        Vector3 currentGravAcceleration( 3 );
-        computeEllipsoidGravitationalAcceleration(
-            alpha,
-            beta,
-            gamma,
-            gravParameter,
-            currentStateVector[ xPositionIndex ],
-            currentStateVector[ yPositionIndex ],
-            currentStateVector[ zPositionIndex ],
-            currentGravAcceleration );
-
-        // Create an object of the struct containing the equations of motion (in this case the eom
-        // for an orbiter around a uniformly rotating tri-axial ellipsoid) and initialize it to the
-        // values of the ellipsoidal asteroid's current gravitational accelerations
-        eomOrbiterURE derivatives( currentGravAcceleration, Wmagnitude );
-
-        // Run an instance of RK4 integrator to evaluate the state at the next time value
-        rk4< Vector6, eomOrbiterURE > ( currentStateVector,
-                                        tCurrent,
-                                        stepSize,
-                                        nextStateVector,
-                                        derivatives );
+        // Integrate the EOMs using the rk4 integrator. The gravitational accelerations are
+        // evaluated within the driver function in the rk4Integrator routine, but is seperate
+        // from the integration algorithm itself. This black box functionality ensures, that
+        // any other integrator can be plugged in here in place of rk4, without making any changes
+        // to the code before or after this function call.
+        rk4Integrator< Vector6, eomOrbiterURE >( alpha,
+                                                 beta,
+                                                 gamma,
+                                                 gravParameter,
+                                                 Wmagnitude,
+                                                 currentStateVector,
+                                                 tCurrent,
+                                                 stepSize,
+                                                 nextStateVector );
 
         // convert the next state vector in body frame to inertial frame
         phiAngle = Wmagnitude * tCurrent;

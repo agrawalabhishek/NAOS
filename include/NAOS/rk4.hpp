@@ -9,6 +9,9 @@
 
 #include <vector>
 
+#include "NAOS/constants.hpp"
+#include "NAOS/ellipsoidGravitationalAcceleration.hpp"
+
 namespace naos
 {
 
@@ -16,8 +19,7 @@ namespace naos
 /*!
  * The classic RK4 integrator routine to integrate a set of
  * first order differential equations. The equations have to be provided in a seperate header file
- * in a struct. See orbiterEquationsOfMotion.hpp for an example. Addaptive step size control will
- * be applied from the outside, before calling the rk4 function.
+ * in a struct. See orbiterEquationsOfMotion.hpp for an example.
  *
  * @param[in] Xcurrent      currently known state vector value i.e. before the integration
  * @param[in] t             current time value for which the state vector is known
@@ -101,6 +103,53 @@ void rk4(
                         + ( 1.0 / 3.0 ) * K3[ i ]
                         + ( 1.0 / 6.0 ) * K4[ i ];
     }
+}
+
+//! RK4 integrator wrapper
+/*!
+ * to compute gravitational acceleration values for the current state
+ * vector and then perform the step integration using RK4 routine.
+ *
+ */
+template< typename Vector, class orbiterEquationsOfMotion >
+void rk4Integrator(
+    const double alpha,
+    const double beta,
+    const double gamma,
+    const double gravParameter,
+    const double Wmagnitude,
+    Vector &Xcurrent,
+    const double t,
+    const double stepSize,
+    Vector &Xnext )
+{
+    // Evaluate gravitational acceleration values at the current state values
+    Vector currentGravAcceleration( 3 );
+    computeEllipsoidGravitationalAcceleration(
+        alpha,
+        beta,
+        gamma,
+        gravParameter,
+        Xcurrent[ xPositionIndex ],
+        Xcurrent[ yPositionIndex ],
+        Xcurrent[ zPositionIndex ],
+        currentGravAcceleration );
+
+    // Create an object of the struct containing the equations of motion (in this case the eom
+    // for an orbiter around a uniformly rotating tri-axial ellipsoid) and initialize it to the
+    // values of the ellipsoidal asteroid's current gravitational accelerations
+    orbiterEquationsOfMotion derivatives( currentGravAcceleration, Wmagnitude );
+
+    // run the step integrator for using rk4 routine
+    Vector integratedState = Xcurrent;
+    rk4< Vector, orbiterEquationsOfMotion >( Xcurrent,
+                                             t,
+                                             stepSize,
+                                             integratedState,
+                                             derivatives );
+
+    // give back the final result
+    Xnext = integratedState;
 }
 
 } // namespace naos
