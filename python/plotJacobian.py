@@ -73,7 +73,7 @@ ax2 = plt.subplot( gs[ 1 ] )
 ax1.plot( t, jacobian, color=colors.cnames['purple'] )
 ax1.set_xlabel('time [s]')
 ax1.set_ylabel('jacobian')
-ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
+ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useOffset=False)
 ax1.grid( )
 
 ## plot meta data
