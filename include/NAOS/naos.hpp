@@ -9,6 +9,7 @@
 
 #include <naos/basicAstro.hpp>
 #include <naos/basicMath.hpp>
+#include <naos/bulirschStoer.hpp>
 #include <naos/constants.hpp>
 #include <naos/cubicRoot.hpp>
 #include <naos/ellipsoidGravitationalAcceleration.hpp>

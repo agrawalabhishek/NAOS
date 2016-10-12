@@ -19,6 +19,7 @@
 #include "NAOS/basicAstro.hpp"
 #include "NAOS/ellipsoidPotential.hpp"
 #include "NAOS/misc.hpp"
+#include "NAOS/bulirschStoer.hpp"
 
 namespace naos
 {
@@ -144,7 +145,7 @@ namespace naos
     // printVector( orbitalElements, 6 );
 
     // Specify the step size value [s]
-    double stepSize = integrationStepSize;
+    static double stepSize = integrationStepSize;
 
     // Specify the integration time limits [s]
     const double tStart = startTime;
@@ -200,6 +201,9 @@ namespace naos
     // Define a vector to store the integrated state vector values
     Vector6 nextStateVector = initialStateVector;
 
+    // set a boolean flag to indicate start of integration
+    bool startOfIntegration = true;
+
     // Start the integration outer loop
     while( tCurrent != tEnd )
     {
@@ -228,6 +232,24 @@ namespace naos
                                                  tCurrent,
                                                  stepSize,
                                                  nextStateVector );
+
+        // Perform a step integration using the bulirsch stoer integration method
+        // declare the variable for the order of the integrator.
+        // static double targetk;
+        // if( startOfIntegration )
+        // {
+        //     targetk = 2;
+        //     startOfIntegration = false;
+        // }
+        // nextStateVector = bulirschStoerIntegrator< Vector6 >( alpha,
+        //                                                       beta,
+        //                                                       gamma,
+        //                                                       gravParameter,
+        //                                                       Wmagnitude,
+        //                                                       currentStateVector,
+        //                                                       tCurrent,
+        //                                                       stepSize,
+        //                                                       targetk );
 
         // convert the next state vector in body frame to inertial frame
         phiAngle = Wmagnitude * tCurrent;

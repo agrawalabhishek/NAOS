@@ -17,6 +17,7 @@
 #include "NAOS/ellipsoidGravitationalAcceleration.hpp"
 #include "NAOS/orbiterEquationsOfMotion.hpp"
 #include "NAOS/rk4.hpp"
+#include "NAOS/bulirschStoer.hpp"
 #include "NAOS/basicMath.hpp"
 #include "NAOS/basicAstro.hpp"
 #include "NAOS/computeEllipsoidSurfaceGravitationalAcceleration.hpp"
