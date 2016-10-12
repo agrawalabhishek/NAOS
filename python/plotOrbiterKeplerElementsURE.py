@@ -92,19 +92,19 @@ ax2.grid( )
 ax3.plot( t, inclination, color=colors.cnames['purple'] )
 ax3.set_xlabel('time [s]')
 ax3.set_ylabel('inclination [deg]')
-ax3.ticklabel_format(style='plain', axis='y')
+ax3.ticklabel_format(style='plain', useOffset=False)
 ax3.grid( )
 
 ax4.plot( t, raan, color=colors.cnames['purple'] )
 ax4.set_xlabel('time [s]')
 ax4.set_ylabel('RAAN [deg]')
-ax3.ticklabel_format(style='plain', axis='y')
+ax4.ticklabel_format(style='plain', useOffset=False)
 ax4.grid( )
 
 ax5.plot( t, aop, color=colors.cnames['purple'] )
 ax5.set_xlabel('time [s]')
 ax5.set_ylabel('AOP [deg]')
-ax3.ticklabel_format(style='plain', axis='y')
+ax5.ticklabel_format(style='plain', useOffset=False)
 ax5.grid( )
 
 ## plot meta data
