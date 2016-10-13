@@ -20,5 +20,7 @@
 #include <naos/misc.hpp>
 #include <naos/orbiterEquationsOfMotion.hpp>
 #include <naos/rk4.hpp>
+#include <naos/springMassEquationsOfMotion.hpp>
+#include <naos/springMassIntegratorTest.hpp>
 
 #endif NAOS_HPP
