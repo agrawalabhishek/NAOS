@@ -22,5 +22,6 @@
 #include <naos/rk4.hpp>
 #include <naos/springMassEquationsOfMotion.hpp>
 #include <naos/springMassIntegratorTest.hpp>
+#include <naos/executeOrbiterAroundUREPointMassGravity.hpp>
 
 #endif NAOS_HPP
