@@ -471,11 +471,7 @@ void rk54GeneralIntegrator(
             stepReject = true;
             scalingFactor = safetyFactor * std::pow( ( 1.0 / errorValue ), alphaExponent );
             // scaling factor of the step size shouldn't go below the min value
-            // scalingFactor = std::min( scalingFactor, minScale );
-            if( scalingFactor < minScale )
-            {
-                scalingFactor = minScale;
-            }
+            scalingFactor = std::max( scalingFactor, minScale );
             stepSize = stepSize * scalingFactor;
         }
     } // break in while loop leads here
