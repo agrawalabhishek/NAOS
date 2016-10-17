@@ -92,7 +92,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                                             pointMass_AOP,
                                             pointMass_TA };
     const bool pointMass_initialVectorIsCartesian = false;
-    const double pointMass_integrationStepSize = 0.01;
+    const double pointMass_integrationStepSize = 0.1;
     const double pointMass_startTime = 0.0;
     const double pointMass_endTime = 1000.0;
 
