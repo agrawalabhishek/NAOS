@@ -363,8 +363,8 @@ void rk54GeneralIntegrator(
     double &previousErrorValue )
 {
     // specify tolerance values
-    const double absoluteTolerance = 10.0e-7;
-    const double relativeTolerance = 10.0e-7;
+    const double absoluteTolerance = 10.0e-5;
+    const double relativeTolerance = 10.0e-5;
 
     // run the step integrator for using rk54 routine
     bool coldStart = true;
@@ -380,7 +380,7 @@ void rk54GeneralIntegrator(
     // set safety factor, and max and min scaling factors for scaling the step size
     const double safetyFactor = 0.9;
     // new step size should not increase or decrease by a factor of 10 or 0.5 respectively.
-    const double maxScale = 5.0;
+    const double maxScale = 10.0;
     const double minScale = 0.5;
     double scalingFactor = 0.0;
 
@@ -453,10 +453,6 @@ void rk54GeneralIntegrator(
             if( stepReject )
             {
                 scalingFactor = std::min( scalingFactor, 1.0 );
-                if( scalingFactor < minScale )
-                {
-                    scalingFactor = minScale;
-                }
                 stepSize = stepSize * scalingFactor;
                 stepReject = false;
                 break; // exit the while loop and return the integrated state
