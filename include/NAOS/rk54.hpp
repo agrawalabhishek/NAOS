@@ -364,7 +364,7 @@ void rk54GeneralIntegrator(
 {
     // specify tolerance values
     const double absoluteTolerance = 10.0e-5;
-    const double relativeTolerance = 10.0e-5;
+    const double relativeTolerance = 10.0e-10;
 
     // run the step integrator for using rk54 routine
     bool coldStart = true;
