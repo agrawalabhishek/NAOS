@@ -16,6 +16,7 @@
 
 #include "NAOS/constants.hpp"
 #include "NAOS/rk4.hpp"
+#include "NAOS/rk54.hpp"
 #include "NAOS/basicMath.hpp"
 #include "NAOS/misc.hpp"
 #include "NAOS/springMassEquationsOfMotion.hpp"
@@ -43,7 +44,7 @@ namespace naos
     outputFile.open( filePath.str( ) );
     outputFile << "integrated_distance" << "," << "integrated_velocity" << ",";
     outputFile << "analytical_distance" << "," << "analytical_velocity" << ",";
-    outputFile << "t" << std::endl;
+    outputFile << "stepSize" << "," << "t" << std::endl;
 
     // time values
     double tCurrent = startTime;
@@ -63,6 +64,7 @@ namespace naos
     outputFile << currentStateVector[ 1 ] << ",";
     outputFile << analyticVector[ 0 ] << ",";
     outputFile << analyticVector[ 1 ] << ",";
+    outputFile << stepSize << ",";
     outputFile << tCurrent << std::endl;
 
     // calculate the natural frequency of the dynamical system
@@ -71,6 +73,9 @@ namespace naos
     // Start the integration outer loop
     while( tCurrent != tEnd )
     {
+        // display the progress bar
+        displayProgressBar< double >( tCurrent, tEnd );
+
         // calculate the new time value
         double tNext = tCurrent + stepSize;
 
@@ -82,12 +87,23 @@ namespace naos
             stepSize = tEnd - tCurrent;
         }
 
-        // perform the integration
-        rk4< Vector6, eomSpringMass >( currentStateVector,
-                                       tCurrent,
-                                       stepSize,
-                                       nextStateVector,
-                                       derivatives );
+        // perform the RK4 integration
+        // rk4< Vector6, eomSpringMass >( currentStateVector,
+        //                                tCurrent,
+        //                                stepSize,
+        //                                nextStateVector,
+        //                                derivatives );
+
+        // Perform the RK5(4) integration
+        static bool stepReject = false;
+        static double previousError = 10.0e-4;
+        rk54GeneralIntegrator< Vector6, eomSpringMass >( currentStateVector,
+                                                         tCurrent,
+                                                         stepSize,
+                                                         nextStateVector,
+                                                         derivatives,
+                                                         stepReject,
+                                                         previousError );
 
         // get the analytical solution
         analyticVector[ 0 ] = ( initialState[ 1 ] / omega ) * std::sin( omega * tNext )
@@ -101,6 +117,7 @@ namespace naos
         outputFile << nextStateVector[ 1 ] << ",";
         outputFile << analyticVector[ 0 ] << ",";
         outputFile << analyticVector[ 1 ] << ",";
+        outputFile << stepSize << ",";
         outputFile << tNext << std::endl;
 
         // save the new state values in the vector of current state values. these will be used in

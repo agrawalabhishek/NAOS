@@ -17,6 +17,7 @@
 #include "NAOS/constants.hpp"
 #include "NAOS/orbiterEquationsOfMotion.hpp"
 #include "NAOS/rk4.hpp"
+#include "NAOS/rk54.hpp"
 #include "NAOS/basicMath.hpp"
 #include "NAOS/basicAstro.hpp"
 #include "NAOS/misc.hpp"
@@ -207,6 +208,9 @@ namespace naos
     // Start the integration outer loop
     while( tCurrent != tEnd )
     {
+        // display the progress bar
+        displayProgressBar< double >( tCurrent, tEnd );
+
         // calculate the new time value
         double tNext = tCurrent + stepSize;
 
@@ -231,11 +235,23 @@ namespace naos
 
         eomOrbiterURE derivatives( currentGravAcceleration, Wmagnitude );
 
-        rk4< Vector6, eomOrbiterURE >( currentStateVector,
-                                       tCurrent,
-                                       stepSize,
-                                       nextStateVector,
-                                       derivatives );
+        // perform the integration using rk4 integrator
+        // rk4< Vector6, eomOrbiterURE >( currentStateVector,
+        //                                tCurrent,
+        //                                stepSize,
+        //                                nextStateVector,
+        //                                derivatives );
+
+        // perform the integration using rk5(4) integration
+        static bool stepReject = false;
+        static double previousError = 10.0e-4;
+        rk54GeneralIntegrator< Vector6, eomOrbiterURE >( currentStateVector,
+                                                         tCurrent,
+                                                         stepSize,
+                                                         nextStateVector,
+                                                         derivatives,
+                                                         stepReject,
+                                                         previousError );
 
         // convert the next state vector in body frame to inertial frame
         phiAngle = Wmagnitude * tCurrent;

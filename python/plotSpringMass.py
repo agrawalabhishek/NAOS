@@ -57,29 +57,45 @@ integrated_velocity = data[ 'integrated_velocity' ].values
 analytical_distance = data[ 'analytical_distance' ].values
 analytical_velocity = data[ 'analytical_velocity' ].values
 t = data[ 't' ].values
+stepSize = data['stepSize'].values
 
 ## Set up the figure
 fig = plt.figure( )
-ax1 = fig.add_subplot( 211 )
-ax2 = fig.add_subplot( 212 )
+ax1 = fig.add_subplot( 311 )
+ax2 = fig.add_subplot( 312 )
+ax3 = fig.add_subplot( 313 )
 
 ## plot the distance
-ax1.plot( t, integrated_distance, color=colors.cnames['red'], label='RK4 integrated' )
-ax1.plot( t, analytical_distance, color=colors.cnames['green'], label='analytical' )
+# ax1.plot( t, integrated_distance, color=colors.cnames['red'], label='RK5(4) integrated' )
+# ax1.plot( t, analytical_distance, color=colors.cnames['green'], label='analytical' )
+ax1.plot( t, (integrated_distance - analytical_distance), color=colors.cnames['green'], label='difference' )
 ax1.set_xlabel('time [s]')
 ax1.set_ylabel('distance [m]')
+ymin = np.min( integrated_distance - analytical_distance )
+ymax = np.max( integrated_distance - analytical_distance )
+# ax1.set_ylim( [ -1.2e-11, 1.2e-12 ] )
 ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useOffset=False)
 ax1.grid( )
 ax1.legend( )
 
 ## plot the velocity
-ax2.plot( t, integrated_velocity, color=colors.cnames['red'], label='RK4 integrated' )
-ax2.plot( t, analytical_velocity, color=colors.cnames['green'], label='analytical' )
+# ax2.plot( t, integrated_velocity, color=colors.cnames['red'], label='RK5(4) integrated' )
+# ax2.plot( t, analytical_velocity, color=colors.cnames['green'], label='analytical' )
+ax2.plot( t, (integrated_velocity - analytical_velocity), color=colors.cnames['red'], label='difference' )
 ax2.set_xlabel('time [s]')
 ax2.set_ylabel('velocity [m/s]')
+ax2.set_ylim( [ -1.1e-8, 1.1e-8 ] )
 ax2.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useOffset=False)
 ax2.grid( )
 ax2.legend( )
+
+## plot the variation in the step size throughout the integration process
+ax3.plot( t, stepSize, color=colors.cnames['purple'], label='RK5(4)' )
+ax3.set_xlabel('time [s]')
+ax3.set_ylabel('step size [s]')
+ax3.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useOffset=False)
+ax3.grid( )
+ax3.legend( )
 
 ## show plot
 plt.tight_layout( )

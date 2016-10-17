@@ -31,6 +31,31 @@ void printVector( const Vector &vector, const double size )
     std::cout << std::endl;
 }
 
+//! Progress bar
+/*!
+ * function that will display the progress bar when executed within a certain c++ function.
+ *
+ */
+template< typename Real >
+void displayProgressBar( Real counterValue, Real endValue )
+{
+    int barWidth = 70;
+
+    std::cout << "[";
+    int position = barWidth * ( counterValue / endValue );
+    for ( int barIndex = 0; barIndex < barWidth; ++barIndex )
+    {
+        if (barIndex < position)
+            std::cout << "=";
+        else if (barIndex == position)
+            std::cout << ">";
+        else
+            std::cout << " ";
+    }
+    std::cout << "] " << int( ( counterValue / endValue ) * 100.0 ) << "%\r";
+    std::cout.flush( );
+}
+
 } // namespace naos
 
 #endif // MISC_HPP

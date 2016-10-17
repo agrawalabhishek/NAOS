@@ -20,6 +20,7 @@
 #include <naos/misc.hpp>
 #include <naos/orbiterEquationsOfMotion.hpp>
 #include <naos/rk4.hpp>
+#include <naos/rk54.hpp>
 #include <naos/springMassEquationsOfMotion.hpp>
 #include <naos/springMassIntegratorTest.hpp>
 #include <naos/executeOrbiterAroundUREPointMassGravity.hpp>
