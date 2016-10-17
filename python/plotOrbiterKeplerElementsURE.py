@@ -71,12 +71,13 @@ stepSize = data['stepSize'].values
 
 ## Set up the figure
 fig = plt.figure( )
-ax1 = fig.add_subplot( 321 )
-ax2 = fig.add_subplot( 322 )
-ax3 = fig.add_subplot( 323 )
-ax4 = fig.add_subplot( 324 )
-ax5 = fig.add_subplot( 325 )
-ax6 = fig.add_subplot( 326 )
+ax1 = fig.add_subplot( 421 )
+ax2 = fig.add_subplot( 422 )
+ax3 = fig.add_subplot( 423 )
+ax4 = fig.add_subplot( 424 )
+ax5 = fig.add_subplot( 425 )
+ax6 = fig.add_subplot( 426 )
+ax7 = fig.add_subplot( 427 )
 
 ## plot the orbital elements
 ax1.plot( t, semiMajor, color=colors.cnames['purple'] )
@@ -116,22 +117,22 @@ ax6.ticklabel_format(style='plain', useOffset=False)
 ax6.grid( )
 
 ## plot meta data
-# endIndex = np.size( x )
-# ax6.axis( 'off' )
-# metadata_table = []
-# metadata_table.append( [ "Initial X coordinate", x[0], "[m]" ] )
-# metadata_table.append( [ "Initial Y coordinate", y[0], "[m]" ] )
-# metadata_table.append( [ "Initial Z coordinate", z[0], "[m]" ] )
-# metadata_table.append( [ "Initial X velocity", vx[0], "[m/s]" ] )
-# metadata_table.append( [ "Initial Y velocity", vy[0], "[m/s]" ] )
-# metadata_table.append( [ "Initial Z velocity", vz[0], "[m/s]" ] )
-# metadata_table.append( [ "Simulation time", t[endIndex-1], "[s]" ] )
-# table = ax6.table( cellText = metadata_table, colLabels = None, cellLoc = 'center', loc = 'center' )
-# table_properties = table.properties( )
-# table_cells = table_properties[ 'child_artists' ]
-# for cell in table_cells: cell.set_height( 0.15 )
-# cell_dict = table.get_celld( )
-# for row in xrange( 0, 7 ): cell_dict[ ( row, 2 ) ].set_width( 0.1 )
+endIndex = np.size( x )
+ax7.axis( 'off' )
+metadata_table = []
+metadata_table.append( [ "Initial X coordinate", x[0], "[m]" ] )
+metadata_table.append( [ "Initial Y coordinate", y[0], "[m]" ] )
+metadata_table.append( [ "Initial Z coordinate", z[0], "[m]" ] )
+metadata_table.append( [ "Initial X velocity", vx[0], "[m/s]" ] )
+metadata_table.append( [ "Initial Y velocity", vy[0], "[m/s]" ] )
+metadata_table.append( [ "Initial Z velocity", vz[0], "[m/s]" ] )
+metadata_table.append( [ "Simulation time", t[endIndex-1], "[s]" ] )
+table = ax7.table( cellText = metadata_table, colLabels = None, cellLoc = 'center', loc = 'center' )
+table_properties = table.properties( )
+table_cells = table_properties[ 'child_artists' ]
+for cell in table_cells: cell.set_height( 0.15 )
+cell_dict = table.get_celld( )
+for row in xrange( 0, 7 ): cell_dict[ ( row, 2 ) ].set_width( 0.1 )
 
 ## show plot
 plt.tight_layout( )
