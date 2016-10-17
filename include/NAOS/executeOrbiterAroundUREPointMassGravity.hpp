@@ -70,8 +70,8 @@ namespace naos
     eomOrbiterUREFile << "x" << "," << "y" << "," << "z" << ",";
     eomOrbiterUREFile << "vx" << "," << "vy" << "," << "vz" << "," << "t" << ",";
     eomOrbiterUREFile << "jacobian" << "," << "semiMajor" << "," << "eccentricity" << ",";
-    eomOrbiterUREFile << "inclination" << "," << "RAAN" << "," << "AOP" << "," << "TA";
-    eomOrbiterUREFile << std::endl;
+    eomOrbiterUREFile << "inclination" << "," << "RAAN" << "," << "AOP" << "," << "TA" << ",";
+    eomOrbiterUREFile << "stepSize" << std::endl;
 
     // get the initial state from the input arguments
     Vector6 initialStateVector( 6 );
@@ -194,7 +194,8 @@ namespace naos
     eomOrbiterUREFile << orbitalElements[ 2 ] << ",";
     eomOrbiterUREFile << orbitalElements[ 3 ] << ",";
     eomOrbiterUREFile << orbitalElements[ 4 ] << ",";
-    eomOrbiterUREFile << orbitalElements[ 5 ] << std::endl;
+    eomOrbiterUREFile << orbitalElements[ 5 ] << ",";
+    eomOrbiterUREFile << stepSize << std::endl;
 
     // Define a vector to store latest/current state values in the integration loop
     Vector6 currentStateVector = initialStateVector;
@@ -337,7 +338,8 @@ namespace naos
             eomOrbiterUREFile << orbitalElements[ 2 ] << ",";
             eomOrbiterUREFile << orbitalElements[ 3 ] << ",";
             eomOrbiterUREFile << orbitalElements[ 4 ] << ",";
-            eomOrbiterUREFile << orbitalElements[ 5 ] << std::endl;
+            eomOrbiterUREFile << orbitalElements[ 5 ] << ",";
+            eomOrbiterUREFile << stepSize << std::endl;
             std::cout << "Houston, we've got a problem!" << std::endl;
             std::cout << "Particle at or inside the ellipsoidal surface" << std::endl;
             std::cout << "Event occurence at: " << tNext << " seconds" << std::endl;
@@ -358,7 +360,8 @@ namespace naos
         eomOrbiterUREFile << orbitalElements[ 2 ] << ",";
         eomOrbiterUREFile << orbitalElements[ 3 ] << ",";
         eomOrbiterUREFile << orbitalElements[ 4 ] << ",";
-        eomOrbiterUREFile << orbitalElements[ 5 ] << std::endl;
+        eomOrbiterUREFile << orbitalElements[ 5 ] << ",";
+        eomOrbiterUREFile << stepSize << std::endl;
 
         // save the new state values in the vector of current state values. these will be used in
         // the next loop iteration
