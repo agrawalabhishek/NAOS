@@ -363,8 +363,8 @@ void rk54GeneralIntegrator(
     double &previousErrorValue )
 {
     // specify tolerance values
-    const double absoluteTolerance = 10.0e-5;
-    const double relativeTolerance = 10.0e-10;
+    const double absoluteTolerance = 10.0e-3;
+    const double relativeTolerance = 10.0e-9;
 
     // run the step integrator for using rk54 routine
     bool coldStart = true;
@@ -378,10 +378,10 @@ void rk54GeneralIntegrator(
     double errorValue = 0.0;
 
     // set safety factor, and max and min scaling factors for scaling the step size
-    const double safetyFactor = 0.9;
+    const double safetyFactor = 0.8;
     // new step size should not increase or decrease by a factor of 10 or 0.5 respectively.
-    const double maxScale = 10.0;
-    const double minScale = 0.5;
+    const double maxScale = 4.0;
+    const double minScale = 0.1;
     double scalingFactor = 0.0;
 
     // terms to be used in the PI adaptive step size control algorithm

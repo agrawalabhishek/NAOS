@@ -26,6 +26,7 @@
 #include "NAOS/ellipsoidPotential.hpp"
 #include "NAOS/springMassIntegratorTest.hpp"
 #include "NAOS/executeOrbiterAroundUREPointMassGravity.hpp"
+#include "NAOS/gslIntegratorOrbiterAroundPointMassGravity.hpp"
 
 int main( const int numberOfInputs, const char* inputArguments[ ] )
 {
@@ -92,7 +93,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                                             pointMass_AOP,
                                             pointMass_TA };
     const bool pointMass_initialVectorIsCartesian = false;
-    const double pointMass_integrationStepSize = 0.1;
+    const double pointMass_integrationStepSize = 0.01;
     const double pointMass_startTime = 0.0;
     const double pointMass_endTime = 1000.0;
 
@@ -109,6 +110,40 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                                                    pointMass_startTime,
                                                    pointMass_endTime,
                                                    pointMassFilePath );
+
+    // Point mass gravity orbiter problem with gsl integrator
+    // std::ostringstream pointMassFilePath;
+    // pointMassFilePath << "../../data/gslIntegratorPointMassSolution.csv";
+    // const double pointMass_semiMajor = 35000.0;
+    // const double pointMass_eccentricity = 0.1;
+    // const double pointMass_inclination = 10.0;
+    // const double pointMass_RAAN = 50.0;
+    // const double pointMass_AOP = 100.0;
+    // const double pointMass_TA = 5.0;
+    // naos::Vector6 pointMass_initialVector { pointMass_semiMajor,
+    //                                         pointMass_eccentricity,
+    //                                         pointMass_inclination,
+    //                                         pointMass_RAAN,
+    //                                         pointMass_AOP,
+    //                                         pointMass_TA };
+    // const bool pointMass_initialVectorIsCartesian = false;
+    // const double pointMass_integrationStepSize = 0.1;
+    // const double pointMass_startTime = 0.0;
+    // const double pointMass_endTime = 1000.0;
+
+    // naos::executeOrbiterAroundPointMassGravity( alpha,
+    //                                             beta,
+    //                                             gamma,
+    //                                             gravitationalParameter,
+    //                                             density,
+    //                                             W,
+    //                                             Wmagnitude,
+    //                                             pointMass_initialVectorIsCartesian,
+    //                                             pointMass_initialVector,
+    //                                             pointMass_integrationStepSize,
+    //                                             pointMass_startTime,
+    //                                             pointMass_endTime,
+    //                                             pointMassFilePath );
 
     // // compute orbit trajectory around a URE for given initial conditions
     // std::ostringstream orbiterAroundUREFilePath;

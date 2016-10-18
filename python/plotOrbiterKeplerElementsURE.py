@@ -52,6 +52,7 @@ start_time = time.time( )
 ## Operations
 # Read data in csv file. data returned as a panda series.
 # data = pd.read_csv( '../data/eomOrbiterURESolution.csv' )
+# data = pd.read_csv( '../data/gslIntegratorPointMassSolution.csv' )
 data = pd.read_csv( '../data/pointMassSolution.csv' )
 x = data[ 'x' ].values
 y = data[ 'y' ].values
@@ -115,7 +116,7 @@ ax6.set_xlabel('time [s]')
 ax6.set_ylabel('stepSize [s]')
 maxStep = np.max( stepSize )
 minStep = np.min( stepSize )
-ax6.set_ylim( [ -0.01, 0.01 ] )
+# ax6.set_ylim( [ -0.01, 0.01 ] )
 ax6.ticklabel_format(style='plain', useOffset=False)
 ax6.grid( )
 
