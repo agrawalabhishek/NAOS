@@ -151,10 +151,10 @@ void convertCartesianCoordinatesToKeplerianElements(
     std::vector< double > angularMomentum( 3 );
     angularMomentum = crossProduct( position, velocity );
 
-    // get the node vector
+    // get the unit vector for the ascending node
     std::vector< double > node( 3 );
     std::vector< double > zUnitVector = { 0.0, 0.0, 1.0 };
-    node = crossProduct( zUnitVector, angularMomentum );
+    node = normalize( crossProduct( zUnitVector, normalize( angularMomentum ) ) );
 
     // get the eccentricity vector
     std::vector< double > eccentricityVector( 3 );
@@ -183,7 +183,10 @@ void convertCartesianCoordinatesToKeplerianElements(
     }
     else
     {
-        double semiAxis = -1.0 * gravParameter / ( 2 * specificMechanicalEnergy );
+        // double semiAxis = -1.0 * gravParameter / ( 2 * specificMechanicalEnergy );
+        double semiLatus = vectorNorm( angularMomentum ) * vectorNorm( angularMomentum )
+                             / gravParameter;
+        double semiAxis = semiLatus / ( 1.0 - eccentricity * eccentricity );
         orbitalElements[ 0 ] = semiAxis;
     }
 

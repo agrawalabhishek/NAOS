@@ -77,6 +77,28 @@ double vectorNorm( const Vector3 &vector1 )
     return result;
 }
 
+//! Compute unit vector
+/*!
+ * normalize a vector of 3 elements.
+ *
+ * @tparam Vector3      Template paramter for a 3 element vector
+ * @param[in] vector    A 3 element vector
+ * @return result       The resulting unit vector
+ */
+template< typename Vector3 >
+Vector3 normalize( const Vector3 &vector )
+{
+    Vector3 result = vector;
+    // normalize
+    const double magnitude = vectorNorm< Vector3 >( vector );
+    for( int i = 0; i < 3; i++ )
+    {
+        result[ i ] = vector[ i ] / magnitude;
+    }
+
+    return result;
+}
+
 //! Convert degrees to radians
 /*!
  * convert degrees to radians

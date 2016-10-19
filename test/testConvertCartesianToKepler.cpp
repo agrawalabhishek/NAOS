@@ -10,6 +10,7 @@
 
 #include "NAOS/constants.hpp"
 #include "NAOS/basicAstro.hpp"
+#include "NAOS/basicMath.hpp"
 
 namespace naos
 {
@@ -18,23 +19,25 @@ namespace tests
 
 TEST_CASE( "Test funtion to convert cartesian elements to kepler elements", "[cartesian-kepler]" )
 {
-    // input test values taken from DA Vallado - fundamentals of astrodynamics book
+    // input test values taken from:
+    // github.com/openAstro/Astro/test/testOrbitalElementConversions.cpp
     Vector6 cartesianElements( 6 );
-    cartesianElements[ xPositionIndex ] = 6524.834;
-    cartesianElements[ yPositionIndex ] = 6862.875;
-    cartesianElements[ zPositionIndex ] = 6448.296;
-    cartesianElements[ xVelocityIndex ] = 4.901327;
-    cartesianElements[ yVelocityIndex ] = 5.533756;
-    cartesianElements[ zVelocityIndex ] = -1.976341;
+    cartesianElements[ 0 ] = 3.75e6;
+    cartesianElements[ 1 ] = 4.24e6;
+    cartesianElements[ 2 ] = -1.39e6;
+    cartesianElements[ 3 ] = -4.65e3;
+    cartesianElements[ 4 ] = -2.21e3;
+    cartesianElements[ 5 ] = 1.66e3;
 
-    Vector6 keplerElements( 6 );
-    keplerElements[ 0 ] = 36127.3376;
-    keplerElements[ 1 ] = 0.832853;
-    keplerElements[ 2 ] = 87.870;
-    keplerElements[ 3 ] = 227.89826;
-    keplerElements[ 4 ] = 53.384930;
-    keplerElements[ 5 ] = 92.335;
-    const double gravParameter = 398600.4418;
+    Vector6 keplerianElements( 6 );
+    keplerianElements[ 0 ] = 3.707478199246163e6;
+    keplerianElements[ 1 ] = 0.949175203660321;
+    keplerianElements[ 2 ] = convertRadiansToDegree( 0.334622356632438 );
+    keplerianElements[ 3 ] = convertRadiansToDegree( 1.630852596545341 );
+    keplerianElements[ 4 ] = convertRadiansToDegree( 2.168430616511167 );
+    keplerianElements[ 5 ] = convertRadiansToDegree( 3.302032232567084 );
+
+    const double gravParameter = 3.986004415e14;
 
     // comute the equivalent cartesian coordinates
     Vector6 testKeplerElements( 6 );
@@ -42,12 +45,12 @@ TEST_CASE( "Test funtion to convert cartesian elements to kepler elements", "[ca
                                                                gravParameter,
                                                                testKeplerElements );
     // check the computed values
-    REQUIRE( testKeplerElements[ 0 ] == Approx( keplerElements[ 0 ] ).epsilon( 1.0e-5 ) );
-    REQUIRE( testKeplerElements[ 1 ] == Approx( keplerElements[ 1 ] ).epsilon( 1.0e-5 ) );
-    REQUIRE( testKeplerElements[ 2 ] == Approx( keplerElements[ 2 ] ).epsilon( 1.0e-5 ) );
-    REQUIRE( testKeplerElements[ 3 ] == Approx( keplerElements[ 3 ] ).epsilon( 1.0e-5 ) );
-    REQUIRE( testKeplerElements[ 4 ] == Approx( keplerElements[ 4 ] ).epsilon( 1.0e-5 ) );
-    REQUIRE( testKeplerElements[ 5 ] == Approx( keplerElements[ 5 ] ).epsilon( 1.0e-5 ) );
+    REQUIRE( testKeplerElements[ 0 ] == Approx( keplerianElements[ 0 ] ).epsilon( 1.0e-10 ) );
+    REQUIRE( testKeplerElements[ 1 ] == Approx( keplerianElements[ 1 ] ).epsilon( 1.0e-10 ) );
+    REQUIRE( testKeplerElements[ 2 ] == Approx( keplerianElements[ 2 ] ).epsilon( 1.0e-10 ) );
+    REQUIRE( testKeplerElements[ 3 ] == Approx( keplerianElements[ 3 ] ).epsilon( 1.0e-10 ) );
+    REQUIRE( testKeplerElements[ 4 ] == Approx( keplerianElements[ 4 ] ).epsilon( 1.0e-10 ) );
+    REQUIRE( testKeplerElements[ 5 ] == Approx( keplerianElements[ 5 ] ).epsilon( 1.0e-10 ) );
 }
 
 } // namespace tests
