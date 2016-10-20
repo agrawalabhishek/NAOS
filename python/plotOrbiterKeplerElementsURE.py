@@ -51,9 +51,10 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-# data = pd.read_csv( '../data/eomOrbiterURESolution.csv' )
+data = pd.read_csv( '../data/eomOrbiterURESolution.csv' )
+# data = pd.read_csv( '../data/eomOrbiterURESolutionZeroRotation.csv' )
 # data = pd.read_csv( '../data/gslIntegratorPointMassSolution.csv' )
-data = pd.read_csv( '../data/pointMassSolution.csv' )
+# data = pd.read_csv( '../data/pointMassSolution.csv' )
 x = data[ 'x' ].values
 y = data[ 'y' ].values
 z = data[ 'z' ].values

@@ -10,16 +10,17 @@
 #include <fstream>
 #include <string>
 #include <cmath>
+#include <limits>
 
 #include "NAOS/constants.hpp"
 #include "NAOS/ellipsoidGravitationalAcceleration.hpp"
 #include "NAOS/orbiterEquationsOfMotion.hpp"
 #include "NAOS/rk4.hpp"
+#include "NAOS/rk54.hpp"
 #include "NAOS/basicMath.hpp"
 #include "NAOS/basicAstro.hpp"
 #include "NAOS/ellipsoidPotential.hpp"
 #include "NAOS/misc.hpp"
-#include "NAOS/bulirschStoer.hpp"
 
 namespace naos
 {
@@ -68,81 +69,107 @@ namespace naos
     eomOrbiterUREFile << "x" << "," << "y" << "," << "z" << ",";
     eomOrbiterUREFile << "vx" << "," << "vy" << "," << "vz" << "," << "t" << ",";
     eomOrbiterUREFile << "jacobian" << "," << "semiMajor" << "," << "eccentricity" << ",";
-    eomOrbiterUREFile << "inclination" << "," << "RAAN" << "," << "AOP" << "," << "TA";
-    eomOrbiterUREFile << std::endl;
+    eomOrbiterUREFile << "inclination" << "," << "RAAN" << "," << "AOP" << "," << "TA" << ",";
+    eomOrbiterUREFile << "stepSize" << std::endl;
 
     // get the initial state from the input arguments
     Vector6 initialStateVector( 6 );
+    Vector6 orbitalElements( 6 );
     if( initialVectorIsCartesian == false )
     {
-        Vector6 keplerElements( 6 );
         for( int i = 0; i < 6; i++ )
         {
-            keplerElements[ i ] = initialVector[ i ];
+            orbitalElements[ i ] = initialVector[ i ];
         }
 
-        // Specify initial values for the state vector of the orbiter in SI units.
-        initialStateVector = convertKeplerianElementsToCartesianCoordinates< Vector6 >(
-                                keplerElements,
+        // Specify initial values for the state vector of the orbiter in the inertial frame.
+        Vector6 inertialStateVector( 6 );
+        inertialStateVector = convertKeplerianElementsToCartesianCoordinates< Vector6 >(
+                                orbitalElements,
                                 gravParameter );
-        // std::cout << "Inertial frame cartesian coordinates (at t=0):";
-        // printVector( initialStateVector, 6 );
 
-        // get velocity in the body frame
+        // convert position in inertial frame to position in body frame at the starting time
+        double phiAngle = Wvector[ zPositionIndex ] * startTime; // angle is in radians
+
+        double xPositionBodyFrame = inertialStateVector[ xPositionIndex ] * std::cos( phiAngle )
+                                    + inertialStateVector[ yPositionIndex ] * std::sin( phiAngle );
+
+        double yPositionBodyFrame = -inertialStateVector[ xPositionIndex ] * std::sin( phiAngle )
+                                    + inertialStateVector[ yPositionIndex ] * std::cos( phiAngle );
+
+        double zPositionBodyFrame = inertialStateVector[ zPositionIndex ];
+
+        initialStateVector[ xPositionIndex ] = xPositionBodyFrame;
+        initialStateVector[ yPositionIndex ] = yPositionBodyFrame;
+        initialStateVector[ zPositionIndex ] = zPositionBodyFrame;
+
+        // get velocity in the body frame from inertial frame for the starting time/initial epoch
         Vector3 positionVector { initialStateVector[ xPositionIndex ],
                                  initialStateVector[ yPositionIndex ],
                                  initialStateVector[ zPositionIndex ] };
 
-        Vector3 coriolisTerm = crossProduct< Vector3 >( Wvector, positionVector );
+        Vector3 rotationTerm = crossProduct< Vector3 >( Wvector, positionVector );
 
-        initialStateVector[ xVelocityIndex ] = initialStateVector[ xVelocityIndex ]
-                                                - coriolisTerm[ 0 ];
-        initialStateVector[ yVelocityIndex ] = initialStateVector[ yVelocityIndex ]
-                                                - coriolisTerm[ 1 ];
-        initialStateVector[ zVelocityIndex ] = initialStateVector[ zVelocityIndex ]
-                                                - coriolisTerm[ 2 ];
+        double xBodyFrameVelocityInInertialFrame =
+                                    inertialStateVector[ xVelocityIndex ] * std::cos( phiAngle )
+                                    + inertialStateVector[ yVelocityIndex ] * std::sin( phiAngle );
+
+        double yBodyFrameVelocityInInertialFrame =
+                                    -inertialStateVector[ xVelocityIndex ] * std::sin( phiAngle )
+                                    + inertialStateVector[ yVelocityIndex ] * std::cos( phiAngle );
+
+        double zBodyFrameVelocityInInertialFrame = inertialStateVector[ zVelocityIndex ];
+
+        double xVelocityBodyFrame = xBodyFrameVelocityInInertialFrame - rotationTerm[ 0 ];
+        double yVelocityBodyFrame = yBodyFrameVelocityInInertialFrame - rotationTerm[ 1 ];
+        double zVelocityBodyFrame = zBodyFrameVelocityInInertialFrame - rotationTerm[ 2 ];
+
+        initialStateVector[ xVelocityIndex ] = xVelocityBodyFrame;
+        initialStateVector[ yVelocityIndex ] = yVelocityBodyFrame;
+        initialStateVector[ zVelocityIndex ] = zVelocityBodyFrame;
     }
     else
     {
+        // assuming initialVector has body frame coordinates
         initialStateVector = initialVector;
+
+        // convert the initial state vector in body frame to inertial frame and obtain orbital elements
+        double phiAngle = Wvector[ zPositionIndex ] * startTime; // the angle is in radians
+
+        double xInertial = initialStateVector[ xPositionIndex ] * std::cos( phiAngle )
+                            - initialStateVector[ yPositionIndex ] * std::sin( phiAngle );
+        double yInertial = initialStateVector[ xPositionIndex ] * std::sin( phiAngle )
+                            + initialStateVector[ yPositionIndex ] * std::cos( phiAngle );
+        double zInertial = initialStateVector[ zPositionIndex ];
+
+        // body frame position vector
+        Vector3 positionVector = { initialStateVector[ xPositionIndex ],
+                                   initialStateVector[ yPositionIndex ],
+                                   initialStateVector[ zPositionIndex ] };
+
+        Vector3 wCrossR( 3 );
+        wCrossR = crossProduct( Wvector, positionVector );
+        double xBodyFrameVelocityInInertialFrame = initialStateVector[ xVelocityIndex ] + wCrossR[ 0 ];
+        double yBodyFrameVelocityInInertialFrame = initialStateVector[ yVelocityIndex ] + wCrossR[ 1 ];
+        double zBodyFrameVelocityInInertialFrame = initialStateVector[ zVelocityIndex ] + wCrossR[ 2 ];
+
+        double vxInertial = xBodyFrameVelocityInInertialFrame * std::cos( phiAngle )
+                            - yBodyFrameVelocityInInertialFrame * std::sin( phiAngle );
+        double vyInertial = xBodyFrameVelocityInInertialFrame * std::sin( phiAngle )
+                            + yBodyFrameVelocityInInertialFrame * std::cos( phiAngle );
+        double vzInertial = zBodyFrameVelocityInInertialFrame;
+
+        Vector6 inertialCartesianElements = { xInertial,
+                                              yInertial,
+                                              zInertial,
+                                              vxInertial,
+                                              vyInertial,
+                                              vzInertial };
+
+        convertCartesianCoordinatesToKeplerianElements( inertialCartesianElements,
+                                                        gravParameter,
+                                                        orbitalElements );
     }
-    // std::cout << "Body frame cartesian coordinates (at t=0):";
-    // printVector( initialStateVector, 6 );
-
-    // convert the initial state vector in body frame to inertial frame and obtain orbital elements
-    double phiAngle = Wmagnitude * startTime;
-    phiAngle = mod360( phiAngle );
-    phiAngle = convertDegreeToRadians( phiAngle );
-
-    double xInertial = initialStateVector[ xPositionIndex ] * std::cos( phiAngle )
-                        - initialStateVector[ yPositionIndex ] * std::sin( phiAngle );
-    double yInertial = initialStateVector[ xPositionIndex ] * std::sin( phiAngle )
-                        + initialStateVector[ yPositionIndex ] * std::cos( phiAngle );
-    double zInertial = initialStateVector[ zPositionIndex ];
-
-    Vector3 positionVector = { initialStateVector[ xPositionIndex ],
-                               initialStateVector[ yPositionIndex ],
-                               initialStateVector[ zPositionIndex ] };
-    Vector3 wCrossR( 3 );
-    wCrossR = crossProduct( Wvector, positionVector );
-    double vxInertial = initialStateVector[ xVelocityIndex ] + wCrossR[ 0 ];
-    double vyInertial = initialStateVector[ yVelocityIndex ] + wCrossR[ 1 ];
-    double vzInertial = initialStateVector[ zVelocityIndex ] + wCrossR[ 2 ];
-
-    Vector6 orbitalElements( 6 );
-    Vector6 inertialCartesianElements = { xInertial,
-                                          yInertial,
-                                          zInertial,
-                                          vxInertial,
-                                          vyInertial,
-                                          vzInertial };
-    // std::cout << "Inertial cartesian coordinates, obtained from rotating body frame coordinates";
-    // printVector( inertialCartesianElements, 6 );
-    convertCartesianCoordinatesToKeplerianElements( inertialCartesianElements,
-                                                    gravParameter,
-                                                    orbitalElements );
-    // std::cout << "orbital elements from inertial coordinates at t=0:";
-    // printVector( orbitalElements, 6 );
 
     // Specify the step size value [s]
     static double stepSize = integrationStepSize;
@@ -193,7 +220,8 @@ namespace naos
     eomOrbiterUREFile << orbitalElements[ 2 ] << ",";
     eomOrbiterUREFile << orbitalElements[ 3 ] << ",";
     eomOrbiterUREFile << orbitalElements[ 4 ] << ",";
-    eomOrbiterUREFile << orbitalElements[ 5 ] << std::endl;
+    eomOrbiterUREFile << orbitalElements[ 5 ] << ",";
+    eomOrbiterUREFile << stepSize << std::endl;
 
     // Define a vector to store latest/current state values in the integration loop
     Vector6 currentStateVector = initialStateVector;
@@ -201,12 +229,12 @@ namespace naos
     // Define a vector to store the integrated state vector values
     Vector6 nextStateVector = initialStateVector;
 
-    // set a boolean flag to indicate start of integration
-    bool startOfIntegration = true;
-
     // Start the integration outer loop
     while( tCurrent != tEnd )
     {
+        // display the progress bar
+        // displayProgressBar< double >( tCurrent, tEnd );
+
         // calculate the new time value
         double tNext = tCurrent + stepSize;
 
@@ -223,59 +251,105 @@ namespace naos
         // from the integration algorithm itself. This black box functionality ensures, that
         // any other integrator can be plugged in here in place of rk4, without making any changes
         // to the code before or after this function call.
-        rk4Integrator< Vector6, eomOrbiterURE >( alpha,
-                                                 beta,
-                                                 gamma,
-                                                 gravParameter,
-                                                 Wmagnitude,
-                                                 currentStateVector,
-                                                 tCurrent,
-                                                 stepSize,
-                                                 nextStateVector );
+        // rk4Integrator< Vector6, eomOrbiterURE >( alpha,
+        //                                          beta,
+        //                                          gamma,
+        //                                          gravParameter,
+        //                                          Wmagnitude,
+        //                                          currentStateVector,
+        //                                          tCurrent,
+        //                                          stepSize,
+        //                                          nextStateVector );
 
-        // Perform a step integration using the bulirsch stoer integration method
-        // declare the variable for the order of the integrator.
-        // static double targetk;
-        // if( startOfIntegration )
-        // {
-        //     targetk = 2;
-        //     startOfIntegration = false;
-        // }
-        // nextStateVector = bulirschStoerIntegrator< Vector6 >( alpha,
-        //                                                       beta,
-        //                                                       gamma,
-        //                                                       gravParameter,
-        //                                                       Wmagnitude,
-        //                                                       currentStateVector,
-        //                                                       tCurrent,
-        //                                                       stepSize,
-        //                                                       targetk );
+        // Evaluate gravitational acceleration values at the current state values
+        Vector3 currentGravAcceleration( 3 );
+        computeEllipsoidGravitationalAcceleration(
+            alpha,
+            beta,
+            gamma,
+            gravParameter,
+            currentStateVector[ xPositionIndex ],
+            currentStateVector[ yPositionIndex ],
+            currentStateVector[ zPositionIndex ],
+            currentGravAcceleration );
+
+        // Create an object of the struct containing the equations of motion (in this case the eom
+        // for an orbiter around a uniformly rotating tri-axial ellipsoid) and initialize it to the
+        // values of the ellipsoidal asteroid's current gravitational accelerations
+        eomOrbiterURE derivatives( currentGravAcceleration, Wmagnitude );
+
+        // perform integration using the rk5(4) integrator
+        static bool stepReject = false;
+        static double previousError = 10.0e-4;
+        rk54GeneralIntegrator< Vector6, eomOrbiterURE >( currentStateVector,
+                                                         tCurrent,
+                                                         stepSize,
+                                                         nextStateVector,
+                                                         derivatives,
+                                                         stepReject,
+                                                         previousError );
 
         // convert the next state vector in body frame to inertial frame
-        phiAngle = Wmagnitude * tCurrent;
-        phiAngle = mod360( phiAngle );
-        phiAngle = convertDegreeToRadians( phiAngle );
+        double phiAngle = Wvector[ zPositionIndex ] * tNext; // the angle is in radians
 
-        xInertial = nextStateVector[ xPositionIndex ] * std::cos( phiAngle )
+        double xInertial = nextStateVector[ xPositionIndex ] * std::cos( phiAngle )
                             - nextStateVector[ yPositionIndex ] * std::sin( phiAngle );
-        yInertial = nextStateVector[ xPositionIndex ] * std::sin( phiAngle )
+        double yInertial = nextStateVector[ xPositionIndex ] * std::sin( phiAngle )
                             + nextStateVector[ yPositionIndex ] * std::cos( phiAngle );
-        zInertial = nextStateVector[ zPositionIndex ];
+        double zInertial = nextStateVector[ zPositionIndex ];
 
-        positionVector = { nextStateVector[ xPositionIndex ],
-                           nextStateVector[ yPositionIndex ],
-                           nextStateVector[ zPositionIndex ] };
+        // body frame position vector
+        Vector3 positionVector = { nextStateVector[ xPositionIndex ],
+                                   nextStateVector[ yPositionIndex ],
+                                   nextStateVector[ zPositionIndex ] };
+
+        Vector3 wCrossR( 3 );
         wCrossR = crossProduct( Wvector, positionVector );
-        vxInertial = nextStateVector[ xVelocityIndex ] + wCrossR[ 0 ];
-        vyInertial = nextStateVector[ yVelocityIndex ] + wCrossR[ 1 ];
-        vzInertial = nextStateVector[ zVelocityIndex ] + wCrossR[ 2 ];
+        double xBodyFrameVelocityInInertialFrame = nextStateVector[ xVelocityIndex ] + wCrossR[ 0 ];
+        double yBodyFrameVelocityInInertialFrame = nextStateVector[ yVelocityIndex ] + wCrossR[ 1 ];
+        double zBodyFrameVelocityInInertialFrame = nextStateVector[ zVelocityIndex ] + wCrossR[ 2 ];
 
-        inertialCartesianElements = { xInertial,
-                                      yInertial,
-                                      zInertial,
-                                      vxInertial,
-                                      vyInertial,
-                                      vzInertial };
+        double vxInertial = xBodyFrameVelocityInInertialFrame * std::cos( phiAngle )
+                            - yBodyFrameVelocityInInertialFrame * std::sin( phiAngle );
+        double vyInertial = xBodyFrameVelocityInInertialFrame * std::sin( phiAngle )
+                            + yBodyFrameVelocityInInertialFrame * std::cos( phiAngle );
+        double vzInertial = zBodyFrameVelocityInInertialFrame;
+
+        // check whether length of the vectors are the same between the two frames
+        // frame conversions should not affect the vector lengths (magnitudes)
+        Vector3 inertialPositionVector = { xInertial,
+                                           yInertial,
+                                           zInertial };
+        double inertialFramePositionNorm = vectorNorm( inertialPositionVector );
+
+        Vector3 bodyFramePositionVector = { nextStateVector[ xPositionIndex ],
+                                            nextStateVector[ yPositionIndex ],
+                                            nextStateVector[ zPositionIndex ] };
+        double bodyFramePositionNorm = vectorNorm( bodyFramePositionVector );
+
+        double precision = 10.0e-10; // in metre
+        if( std::fabs( bodyFramePositionNorm - inertialFramePositionNorm ) > precision )
+        {
+            std::cout.precision( 20 );
+            std::cout << "integration time value: " << tNext << std::endl;
+            std::cout << "difference in position norms: ";
+            std::cout << std::fabs( bodyFramePositionNorm - inertialFramePositionNorm );
+            std::cout << std::endl;
+
+            std::ostringstream errorMessage;
+            errorMessage << std::endl;
+            errorMessage << "ERROR!: the body and inertial position vector norms do not match";
+            errorMessage << std::endl;
+            throw std::runtime_error( errorMessage.str( ) );
+        }
+
+        Vector6 inertialCartesianElements = { xInertial,
+                                              yInertial,
+                                              zInertial,
+                                              vxInertial,
+                                              vyInertial,
+                                              vzInertial };
+
         convertCartesianCoordinatesToKeplerianElements( inertialCartesianElements,
                                                         gravParameter,
                                                         orbitalElements );
@@ -338,7 +412,8 @@ namespace naos
             eomOrbiterUREFile << orbitalElements[ 2 ] << ",";
             eomOrbiterUREFile << orbitalElements[ 3 ] << ",";
             eomOrbiterUREFile << orbitalElements[ 4 ] << ",";
-            eomOrbiterUREFile << orbitalElements[ 5 ] << std::endl;
+            eomOrbiterUREFile << orbitalElements[ 5 ] << ",";
+            eomOrbiterUREFile << stepSize << std::endl;
             std::cout << "Houston, we've got a problem!" << std::endl;
             std::cout << "Particle at or inside the ellipsoidal surface" << std::endl;
             std::cout << "Event occurence at: " << tNext << " seconds" << std::endl;
@@ -359,7 +434,8 @@ namespace naos
         eomOrbiterUREFile << orbitalElements[ 2 ] << ",";
         eomOrbiterUREFile << orbitalElements[ 3 ] << ",";
         eomOrbiterUREFile << orbitalElements[ 4 ] << ",";
-        eomOrbiterUREFile << orbitalElements[ 5 ] << std::endl;
+        eomOrbiterUREFile << orbitalElements[ 5 ] << ",";
+        eomOrbiterUREFile << stepSize << std::endl;
 
         // save the new state values in the vector of current state values. these will be used in
         // the next loop iteration

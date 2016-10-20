@@ -204,10 +204,10 @@ void convertCartesianCoordinatesToKeplerianElements(
     }
     else
     {
-        double RAAN = std::acos( node[ 0 ] / vectorNorm( node ) );
+        double RAAN = std::acos( node[ 0 ] );
         RAAN = convertRadiansToDegree( RAAN );
         // quadrant check
-        if( node[ 1 ] < 0 )
+        if( node[ 1 ] < 0.0 )
         {
             RAAN = 360.0 - RAAN;
         }
