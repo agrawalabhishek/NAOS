@@ -9,6 +9,7 @@ set(SRC
   "${SRC_PATH}/ellipsoidGravitationalAcceleration.cpp"
   "${SRC_PATH}/computeEllipsoidSurfaceGravitationalAcceleration.cpp"
   "${SRC_PATH}/executeOrbiterAroundURE.cpp"
+  "${SRC_PATH}/gslIntegratorOrbiterAroundURE.cpp"
 )
 
 # Set project main file.

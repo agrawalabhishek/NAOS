@@ -26,6 +26,7 @@
 #include "NAOS/ellipsoidPotential.hpp"
 #include "NAOS/springMassIntegratorTest.hpp"
 #include "NAOS/executeOrbiterAroundUREPointMassGravity.hpp"
+#include "NAOS/gslIntegratorOrbiterAroundURE.hpp"
 
 int main( const int numberOfInputs, const char* inputArguments[ ] )
 {
@@ -112,7 +113,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
     // compute orbit trajectory around a URE for given initial conditions
     std::ostringstream orbiterAroundUREFilePath;
-    orbiterAroundUREFilePath << "../../data/eomOrbiterURESolutionZeroRotation.csv";
+    orbiterAroundUREFilePath << "../../data/eomOrbiterURESolution.csv";
     const double semiMajor = 35000.0;
     const double eccentricity = 0.1;
     const double inclination = 10.0;
@@ -125,19 +126,33 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     const double startTime = 0.0;
     const double endTime = 10000.0;
 
-    naos::executeOrbiterAroundURE( alpha,
-                                   beta,
-                                   gamma,
-                                   gravitationalParameter,
-                                   density,
-                                   W,
-                                   Wmagnitude,
-                                   initialVectorIsCartesian,
-                                   initialVector,
-                                   integrationStepSize,
-                                   startTime,
-                                   endTime,
-                                   orbiterAroundUREFilePath );
+    // naos::executeOrbiterAroundURE( alpha,
+    //                                beta,
+    //                                gamma,
+    //                                gravitationalParameter,
+    //                                density,
+    //                                W,
+    //                                Wmagnitude,
+    //                                initialVectorIsCartesian,
+    //                                initialVector,
+    //                                integrationStepSize,
+    //                                startTime,
+    //                                endTime,
+    //                                orbiterAroundUREFilePath );
+
+    naos::gslIntegratorOrbiterAroundURE( alpha,
+                                         beta,
+                                         gamma,
+                                         gravitationalParameter,
+                                         density,
+                                         W,
+                                         Wmagnitude,
+                                         initialVectorIsCartesian,
+                                         initialVector,
+                                         integrationStepSize,
+                                         startTime,
+                                         endTime,
+                                         orbiterAroundUREFilePath );
 
     return EXIT_SUCCESS;
 }
