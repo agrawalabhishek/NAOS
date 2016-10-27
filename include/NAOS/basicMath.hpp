@@ -8,6 +8,10 @@
 #define BASIC_MATH_HPP
 
 #include <cmath>
+#include <stdexcept>
+#include <sstream>
+#include <iostream>
+#include <vector>
 
 #include "NAOS/constants.hpp"
 
@@ -139,6 +143,81 @@ Vector3 normalize( const Vector3 &vector )
  {
     Real result = std::fmod( degreeAngle, 360.0 );
     return result;
+ }
+
+//! Multiply two matrices
+/*!
+ * multiply two matrices and return the final resultant matrix. The matrices, both input and output
+ * are in the form of c++11 std::vectors. for the sake of simplicity, all the matrices should be
+ * given in a 2D format, even if they are just row or column vectors.
+ *
+ * @param[in] firstMatrix       The matrix on the left hand side of the multiplication symbol
+ * @param[in] secondMatrix      The matrix on the right hand side of the multiplication symbol
+ * @param[in/out] result        The final product matrix
+ */
+ template< typename Vector2D >
+ void matrixMultiplication( Vector2D &firstMatrix,
+                            Vector2D &secondMatrix,
+                            Vector2D &result,
+                            const int firstMatrixRowSize,
+                            const int firstMatrixColumnSize,
+                            const int secondMatrixRowSize,
+                            const int secondMatrixColumnSize )
+ {
+    // check if the input matrices are of proper dimensions
+    if( firstMatrixColumnSize != secondMatrixRowSize )
+    {
+        std::ostringstream errorMessage;
+        errorMessage << std::endl;
+        errorMessage << "ERROR in matrix multiplication, dimension mismatch" << std::endl;
+        errorMessage << std::endl;
+        throw std::runtime_error( errorMessage.str( ) );
+    }
+
+    // perform the multiplication
+    for( int i = 0; i < firstMatrixRowSize; i++ )
+    {
+        for( int j = 0; j < secondMatrixColumnSize; j++ )
+        {
+            for( int k = 0; k < firstMatrixColumnSize; k++ )
+            {
+                result[ i ][ j ] += firstMatrix[ i ][ k ] * secondMatrix[ k ][ j ];
+            }
+        }
+    }
+ }
+
+//! transpose of a matrix
+/*!
+ * This routine computes the transpose of a NxN matrix
+ *
+ * @param[in] matrix        The input matrix whose transpose has to be computed
+ * @param[in/out] result    The transposed matrix as output
+ */
+ template< typename Vector2D >
+ void matrixTranspose( Vector2D &matrix, Vector2D &result )
+ {
+    // get the input matrix's dimensions and check if they are equal or not
+    const int row = matrix.size( );
+    const int column = matrix[ 0 ].size( );
+
+    if( row != column )
+    {
+        std::ostringstream errorMessage;
+        errorMessage << std::endl;
+        errorMessage << "ERROR in matrix transpose, dimension mismatch" << std::endl;
+        errorMessage << std::endl;
+        throw std::runtime_error( errorMessage.str( ) );
+    }
+
+    // do the transpose
+    for( int i = 0; i < row; i++ )
+    {
+        for( int j = 0; j < column; j++ )
+        {
+            result[ i ][ j ] = matrix[ j ][ i ];
+        }
+    }
  }
 
 } // namespace naos

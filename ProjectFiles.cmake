@@ -26,4 +26,6 @@ set(TEST_SRC
   "${TEST_SRC_PATH}/testMaxRealCubicRoot.cpp"
   "${TEST_SRC_PATH}/testDotProduct.cpp"
   "${TEST_SRC_PATH}/testVectorNorm.cpp"
+  "${TEST_SRC_PATH}/testMatrixMultiplication.cpp"
+  "${TEST_SRC_PATH}/testMatrixTranspose.cpp"
 )

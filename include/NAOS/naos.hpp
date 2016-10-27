@@ -24,5 +24,7 @@
 #include <naos/springMassEquationsOfMotion.hpp>
 #include <naos/springMassIntegratorTest.hpp>
 #include <naos/executeOrbiterAroundUREPointMassGravity.hpp>
+#include <naos/gslIntegratorOrbiterAroundURE.hpp>
+#include <naos/regolithTrajectoryCalculator.hpp>
 
 #endif NAOS_HPP
