@@ -27,13 +27,14 @@
 #include "NAOS/springMassIntegratorTest.hpp"
 #include "NAOS/executeOrbiterAroundUREPointMassGravity.hpp"
 #include "NAOS/gslIntegratorOrbiterAroundURE.hpp"
+#include "NAOS/regolithTrajectoryCalculator.hpp"
 
 int main( const int numberOfInputs, const char* inputArguments[ ] )
 {
     // Physical parameters for Asteroid Eros, all in SI units, modelled as an ellipsoid.
     const double alpha = 20.0 * 1.0e3;
-    const double beta = 20.0 * 1.0e3;
-    const double gamma = 20.0 * 1.0e3;
+    const double beta = 7.0 * 1.0e3;
+    const double gamma = 7.0 * 1.0e3;
     const double density = 3.2 * ( 10.0e-3 ) / ( 10.0e-6 );
     const double mass = ( 4.0 * naos::PI / 3.0 ) * density * alpha * beta * gamma;
     const double gravitationalParameter = naos::GRAVITATIONAL_CONSTANT * mass;
@@ -45,17 +46,17 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     const double Wmagnitude = std::sqrt( Wx * Wx + Wy * Wy + Wz * Wz );
 
     // Generate surface coordinates for the Asteroid
-    std::ostringstream ellipsoidSurfacePointsFile;
-    ellipsoidSurfacePointsFile << "../../data/ellipsoidSurfacePoints.csv";
-    const double stepSizeAzimuthDegree = 10.0;
-    const double stepSizeElevationDegree = 10.0;
-    naos::computeEllipsoidSurfacePoints( alpha, beta, gamma,
-                                         stepSizeAzimuthDegree, stepSizeElevationDegree,
-                                         ellipsoidSurfacePointsFile );
+    // std::ostringstream ellipsoidSurfacePointsFile;
+    // ellipsoidSurfacePointsFile << "../../data/ellipsoidSurfacePoints.csv";
+    // const double stepSizeAzimuthDegree = 10.0;
+    // const double stepSizeElevationDegree = 10.0;
+    // naos::computeEllipsoidSurfacePoints( alpha, beta, gamma,
+    //                                      stepSizeAzimuthDegree, stepSizeElevationDegree,
+    //                                      ellipsoidSurfacePointsFile );
 
     // Compute gravitational acceleration on the surface of the ellipsoidal asteroid
-    naos::computeEllipsoidSurfaceGravitationalAcceleration( alpha, beta, gamma,
-                                                            gravitationalParameter );
+    // naos::computeEllipsoidSurfaceGravitationalAcceleration( alpha, beta, gamma,
+    //                                                         gravitationalParameter );
 
     // Perform sanity check for the numerical integrator routine using the spring mass system
     // const double springConstant = 1.0;
@@ -112,19 +113,19 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     //                                                pointMassFilePath );
 
     // compute orbit trajectory around a URE for given initial conditions
-    std::ostringstream orbiterAroundUREFilePath;
-    orbiterAroundUREFilePath << "../../data/eomOrbiterURESolution.csv";
-    const double semiMajor = 35000.0;
-    const double eccentricity = 0.1;
-    const double inclination = 10.0;
-    const double RAAN = 60.0;
-    const double AOP = 100.0;
-    const double TA = 0.0;
-    naos::Vector6 initialVector { semiMajor, eccentricity, inclination, RAAN, AOP, TA };
-    const bool initialVectorIsCartesian = false;
-    const double integrationStepSize = 0.01;
-    const double startTime = 0.0;
-    const double endTime = 10000.0;
+    // std::ostringstream orbiterAroundUREFilePath;
+    // orbiterAroundUREFilePath << "../../data/RK5_OrbiterAroundSphericalEros_longTermSimulation.csv";
+    // const double semiMajor = 35000.0;
+    // const double eccentricity = 0.1;
+    // const double inclination = 10.0;
+    // const double RAAN = 60.0;
+    // const double AOP = 100.0;
+    // const double TA = 0.0;
+    // naos::Vector6 initialVector { semiMajor, eccentricity, inclination, RAAN, AOP, TA };
+    // const bool initialVectorIsCartesian = false;
+    // const double integrationStepSize = 0.01;
+    // const double startTime = 0.0;
+    // const double endTime = 10000.0;
 
     // naos::executeOrbiterAroundURE( alpha,
     //                                beta,
@@ -140,19 +141,54 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     //                                endTime,
     //                                orbiterAroundUREFilePath );
 
-    naos::gslIntegratorOrbiterAroundURE( alpha,
-                                         beta,
-                                         gamma,
-                                         gravitationalParameter,
-                                         density,
-                                         W,
-                                         Wmagnitude,
-                                         initialVectorIsCartesian,
-                                         initialVector,
-                                         integrationStepSize,
-                                         startTime,
-                                         endTime,
-                                         orbiterAroundUREFilePath );
+    // std::ostringstream gslOrbiterAroundUREFilePath;
+    // gslOrbiterAroundUREFilePath << "../../data/gsl_RK8_OrbiterAroundSphericalEros.csv";
+    // naos::gslIntegratorOrbiterAroundURE( alpha,
+    //                                      beta,
+    //                                      gamma,
+    //                                      gravitationalParameter,
+    //                                      density,
+    //                                      W,
+    //                                      Wmagnitude,
+    //                                      initialVectorIsCartesian,
+    //                                      initialVector,
+    //                                      integrationStepSize,
+    //                                      startTime,
+    //                                      endTime,
+    //                                      gslOrbiterAroundUREFilePath );
+
+    // compute trajectory evolution for single regolith lofted from the surface of an asteroid
+    std::ostringstream regolithAroundUREFilePath;
+    regolithAroundUREFilePath << "../../data/singleRegolithEjectaURESolution.csv";
+
+    const double integrationStepSize = 0.01;
+    const double startTime = 0.0;
+    const double endTime = 100.0;
+
+    const double aXValue = 1.0;
+    const double aYValue = 2.0;
+    const double aZValue = 0.0;
+    const double velocityMagnitudeFactor = 0.7;
+    const double coneAngleAzimuth = naos::convertDegreeToRadians( 90.0 );
+    const double coneAngleDeclination = naos::convertDegreeToRadians( 45.0 );
+
+    naos::calculateRegolithTrajectory( alpha,
+                                       beta,
+                                       gamma,
+                                       gravitationalParameter,
+                                       density,
+                                       W,
+                                       Wmagnitude,
+                                       aXValue,
+                                       aYValue,
+                                       aZValue,
+                                       coneAngleAzimuth,
+                                       coneAngleDeclination,
+                                       velocityMagnitudeFactor,
+                                       integrationStepSize,
+                                       startTime,
+                                       endTime,
+                                       regolithAroundUREFilePath );
 
     return EXIT_SUCCESS;
 }
