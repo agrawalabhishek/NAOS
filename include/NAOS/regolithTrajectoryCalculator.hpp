@@ -31,7 +31,8 @@ namespace naos
  * frame. More details are given in the thesis report and author's personal notes.
  *
  */
-void computeRegolithVelocityVector( const double velocityMagnitude,
+void computeRegolithVelocityVector( std::vector< double > regolithPositionVector,
+                                    const double velocityMagnitude,
                                     const double coneAngleAzimuth,
                                     const double coneAngleDeclination,
                                     std::vector< double > &unitNormalVector,

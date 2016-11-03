@@ -32,7 +32,8 @@ namespace naos
  * frame. More details are given in the thesis report and author's personal notes.
  *
  */
-void computeRegolithVelocityVector( const double velocityMagnitude,
+void computeRegolithVelocityVector( std::vector< double > regolithPositionVector,
+                                    const double velocityMagnitude,
                                     const double coneAngleAzimuth,
                                     const double coneAngleDeclination,
                                     std::vector< double > &unitNormalVector,
@@ -99,13 +100,13 @@ void computeRegolithVelocityVector( const double velocityMagnitude,
     // get the intermediate RTN frame at the surface point
     std::vector< double > unitR = normalize( regolithPositionVector );
 
-    std::vector< double > unitT = normalize( crossProduct( unitR, zPrincpalAxisBodyFrame ) );
+    std::vector< double > unitT = normalize( crossProduct( unitR, bodyFrameZUnitVector ) );
 
     // get the x basis vector, pointing to north
-    std::vector< double > xUnitVector = normalize( crossProduct( unitT, zUnitVector ) );
+    xUnitVector = normalize( crossProduct( unitT, zUnitVector ) );
 
     // get the y basis vector
-    std::vector< double > yUnitVector = normalize( crossProduct( xUnitVector, zUnitVector ) );
+    yUnitVector = normalize( crossProduct( xUnitVector, zUnitVector ) );
 
     // yUnitVector = normalize( crossProduct( unitNormalVector, bodyFrameZUnitVector ) );
 
@@ -246,7 +247,8 @@ void calculateRegolithTrajectory( const double alpha,
                                     * std::sqrt( 2.0 * gravitationalParameter / positionMagnitude );
     std::vector< double > regolithVelocityVector( 3 );
 
-    // computeRegolithVelocityVector( velocityMagnitude,
+    // computeRegolithVelocityVector( regolithPositionVector,
+    //                                velocityMagnitude,
     //                                coneAngleAzimuth,
     //                                coneAngleDeclination,
     //                                regolithNormalUnitVector,
