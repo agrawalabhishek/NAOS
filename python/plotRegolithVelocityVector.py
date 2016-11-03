@@ -92,7 +92,7 @@ ellipsoid_z = gamma * np.outer(np.ones(np.size(u)), np.cos(v))
 
 newColor = colors.cnames["slategray"]
 surf = ax1.plot_surface( ellipsoid_x, ellipsoid_y, ellipsoid_z,
-                         rstride=5, cstride=5, alpha=0.5 )
+                         rstride=5, cstride=5, alpha=0.3 )
 surf.set_facecolor( newColor )
 surf.set_linewidth( 0.1 )
 
@@ -148,7 +148,7 @@ ax1.quiver3D( positionVector[ 0 ], positionVector[ 1 ], positionVector[ 2 ],
               color=colors.cnames["magenta"], linestyles='solid', label='X axis' )
 
 # cross product of unitX and normal
-unitY = np.cross( unitX, unitNormalVector ) / LA.norm( np.cross( unitX, unitNormalVector ) )
+unitY = np.cross( unitNormalVector, unitX ) / LA.norm( np.cross( unitNormalVector, unitX ) )
 ax1.quiver3D( positionVector[ 0 ], positionVector[ 1 ], positionVector[ 2 ],
               unitY[ 0 ], unitY[ 1 ], unitY[ 2 ],
               length=3000, lw=1, pivot='tail', arrow_length_ratio=0.2,

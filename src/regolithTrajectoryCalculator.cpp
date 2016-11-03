@@ -106,7 +106,7 @@ void computeRegolithVelocityVector( std::vector< double > regolithPositionVector
     xUnitVector = normalize( crossProduct( unitT, zUnitVector ) );
 
     // get the y basis vector
-    yUnitVector = normalize( crossProduct( xUnitVector, zUnitVector ) );
+    yUnitVector = normalize( crossProduct( zUnitVector, xUnitVector ) );
 
     // yUnitVector = normalize( crossProduct( unitNormalVector, bodyFrameZUnitVector ) );
 
@@ -144,25 +144,45 @@ void computeRegolithVelocityVector2( std::vector< double > regolithPositionVecto
     // get the z basis vector of the surface frame
     std::vector< double > zUnitVector = unitNormalVector;
 
-    // Z principal axis body frame
-    std::vector< double > zPrincpalAxisBodyFrame { 0.0, 0.0, 1.0 };
+    std::vector< double > xUnitVector( 3 );
+    std::vector< double > yUnitVector( 3 );
 
-    // get the intermediate RTN frame at the surface point
-    std::vector< double > unitR = normalize( regolithPositionVector );
+    // body frame principal axis Z
+    std::vector< double > zPrincipalAxisBodyFrame { 0.0, 0.0, 1.0 };
+    std::vector< double > zNegativePrincipalAxisBodyFrame { 0.0, 0.0, -1.0 };
 
-    std::vector< double > unitT = normalize( crossProduct( unitR, zPrincpalAxisBodyFrame ) );
+    // check if the position vector is along the poles
+    const double positionDotPrincipalZ
+            = dotProduct( normalize( regolithPositionVector ), zPrincipalAxisBodyFrame );
+    const double positionDotNegativePrincipalZ
+            = dotProduct( normalize( regolithPositionVector ), zNegativePrincipalAxisBodyFrame );
 
-    // get the x basis vector, pointing to north
-    std::vector< double > xUnitVector = normalize( crossProduct( unitT, zUnitVector ) );
+    if( positionDotPrincipalZ == 1.0 )
+    {
+        // the position vector is pointing to the poles, hence x basis vector pointing to the north
+        // direction wouldn't work
+        xUnitVector = { 1.0, 0.0, 0.0 };
+        yUnitVector = { 0.0, 1.0, 0.0 };
+    }
+    else if( positionDotNegativePrincipalZ == 1.0 )
+    {
+        xUnitVector = { -1.0, 0.0, 0.0 };
+        yUnitVector = { 0.0, -1.0, 0.0 };
+    }
+    else
+    {
+        // do the regular thing where the x basis is pointing to north
+        // get the intermediate RTN frame at the surface point
+        std::vector< double > unitR = normalize( regolithPositionVector );
 
-    // get the y basis vector
-    std::vector< double > yUnitVector = normalize( crossProduct( xUnitVector, zUnitVector ) );
+        std::vector< double > unitT = normalize( crossProduct( unitR, zPrincipalAxisBodyFrame ) );
 
-    // get the y basis vector of the surface frame
-    // std::vector< double > yUnitVector = normalize( crossProduct( zUnitVector, zPrincpalAxisBodyFrame ) );
+        // get the x basis vector, pointing to north
+        xUnitVector = normalize( crossProduct( unitT, zUnitVector ) );
 
-    // get the x basis vector of the surface frame
-    // std::vector< double > xUnitVector = normalize( crossProduct( yUnitVector, zUnitVector ) );
+        // get the y basis vector
+        yUnitVector = normalize( crossProduct( zUnitVector, xUnitVector ) );
+    }
 
     const double cosDelta = std::cos( coneAngleDeclination );
     const double sinDelta = std::sin( coneAngleDeclination );
@@ -180,6 +200,8 @@ void computeRegolithVelocityVector2( std::vector< double > regolithPositionVecto
     regolithVelocityVector[ 2 ] = velocityMagnitude * ( cosDelta * zUnitVector[ 2 ]
                                                         + sinDelta * cosGamma * xUnitVector[ 2 ]
                                                         + sinDelta * sinGamma * yUnitVector[ 2 ] );
+
+    // printVector( regolithVelocityVector, 3 );
 }
 
 //! Compute trajectory for regolith ejected from the surface of an asteroid
