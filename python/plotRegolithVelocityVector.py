@@ -114,7 +114,7 @@ ax1.quiver3D( 0.0, 0.0, 0.0,
 # draw the north pole vector
 ax1.quiver3D( 0.0, 0.0, 0.0,
               0.0, 0.0, gamma,
-              length=gamma+1000.0, lw=1, pivot='tail', arrow_length_ratio=0.2,
+              length=gamma+2000.0, lw=1, pivot='tail', arrow_length_ratio=0.2,
               color=colors.cnames["black"], linestyles='solid' )
 
 # get the surface unit normal vector (body fixed frame) and plot it
@@ -140,15 +140,30 @@ unitT = np.cross( unitR, bodyFramePrincipalZAxisUnitVector ) / LA.norm( np.cross
 
 unitN = np.cross( unitT, unitR ) / LA.norm( np.cross( unitT, unitR ) )
 
+# check for if the position vector is pointing to the poles
+unitPositionVector = positionVector / LA.norm( positionVector )
+positionDotPrincipalZ = np.dot( unitPositionVector, [ 0.0, 0.0, 1.0 ] )
+positionDotNegativePrincipalZ = np.dot( unitPositionVector, [ 0.0, 0.0, -1.0 ] )
+
 # cross product of normal and unitT
 unitX = np.cross( unitT, unitNormalVector ) / LA.norm( np.cross( unitT, unitNormalVector ) )
+
+# cross product of unitX and normal
+unitY = np.cross( unitNormalVector, unitX ) / LA.norm( np.cross( unitNormalVector, unitX ) )
+
+if positionDotPrincipalZ == 1.0:
+    unitX = [ 1.0, 0.0, 0.0 ]
+    unitY = [ 0.0, 1.0, 0.0 ]
+elif positionDotNegativePrincipalZ == 1.0:
+    unitX = [ -1.0, 0.0, 0.0 ]
+    unitY = [ 0.0, 1.0, 0.0 ]
+
+#plot the x and y basis vectors
 ax1.quiver3D( positionVector[ 0 ], positionVector[ 1 ], positionVector[ 2 ],
               unitX[ 0 ], unitX[ 1 ], unitX[ 2 ],
               length=3000, lw=1, pivot='tail', arrow_length_ratio=0.2,
               color=colors.cnames["magenta"], linestyles='solid', label='X axis' )
 
-# cross product of unitX and normal
-unitY = np.cross( unitNormalVector, unitX ) / LA.norm( np.cross( unitNormalVector, unitX ) )
 ax1.quiver3D( positionVector[ 0 ], positionVector[ 1 ], positionVector[ 2 ],
               unitY[ 0 ], unitY[ 1 ], unitY[ 2 ],
               length=3000, lw=1, pivot='tail', arrow_length_ratio=0.2,

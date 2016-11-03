@@ -108,6 +108,27 @@ void computeRegolithVelocityVector( std::vector< double > regolithPositionVector
     // get the y basis vector
     yUnitVector = normalize( crossProduct( zUnitVector, xUnitVector ) );
 
+    std::vector< double > zPrincipalAxisBodyFrame { 0.0, 0.0, 1.0 };
+    std::vector< double > zNegativePrincipalAxisBodyFrame { 0.0, 0.0, -1.0 };
+
+    // check if the position vector is along the poles
+    const double positionDotPrincipalZ
+            = dotProduct( normalize( regolithPositionVector ), zPrincipalAxisBodyFrame );
+    const double positionDotNegativePrincipalZ
+            = dotProduct( normalize( regolithPositionVector ), zNegativePrincipalAxisBodyFrame );
+    if( positionDotPrincipalZ == 1.0 )
+    {
+        // the position vector is pointing to the poles, hence x basis vector pointing to the north
+        // direction wouldn't work
+        xUnitVector = { 1.0, 0.0, 0.0 };
+        yUnitVector = { 0.0, 1.0, 0.0 };
+    }
+    else if( positionDotNegativePrincipalZ == 1.0 )
+    {
+        xUnitVector = { -1.0, 0.0, 0.0 };
+        yUnitVector = { 0.0, 1.0, 0.0 };
+    }
+
     // yUnitVector = normalize( crossProduct( unitNormalVector, bodyFrameZUnitVector ) );
 
     // xUnitVector = normalize( crossProduct( yUnitVector, unitNormalVector ) );
@@ -167,7 +188,7 @@ void computeRegolithVelocityVector2( std::vector< double > regolithPositionVecto
     else if( positionDotNegativePrincipalZ == 1.0 )
     {
         xUnitVector = { -1.0, 0.0, 0.0 };
-        yUnitVector = { 0.0, -1.0, 0.0 };
+        yUnitVector = { 0.0, 1.0, 0.0 };
     }
     else
     {
