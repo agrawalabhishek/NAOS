@@ -102,6 +102,7 @@ namespace naos
     eomOrbiterUREFile << "jacobian" << "," << "semiMajor" << "," << "eccentricity" << ",";
     eomOrbiterUREFile << "inclination" << "," << "RAAN" << "," << "AOP" << "," << "TA" << ",";
     eomOrbiterUREFile << "stepSize" << std::endl;
+    eomOrbiterUREFile.precision( 10 );
 
     // get the initial state from the input arguments
     Vector6 initialStateVector( 6 );
@@ -277,6 +278,12 @@ namespace naos
     // set up the step evolution function
     gsl_odeiv2_evolve * stepEvolution = gsl_odeiv2_evolve_alloc( 6 );
 
+    // some variables used in the stopping condition
+    std::vector< double > lastKnownExternalState( 6 );
+    double lastKnownExternalTime;
+    double lastKnownExternalStepSize;
+    double lastKnownExternalPhiCheck;
+
     // Start the integration outer loop
     while( tCurrent != tEnd )
     {
@@ -303,17 +310,6 @@ namespace naos
                                          6,
                                          parameters };
 
-        // int stepperResetStatus = gsl_odeiv2_step_reset( stepper );
-        // int evolveResetStatus = gsl_odeiv2_evolve_reset( stepEvolution );
-        // if( evolveResetStatus != GSL_SUCCESS )
-        // {
-        //     std::ostringstream errorMessage;
-        //     errorMessage << std::endl;
-        //     errorMessage << "ERROR: GSL evolve reset routine failed" << std::endl;
-        //     errorMessage << std::endl;
-        //     throw std::runtime_error( errorMessage.str( ) );
-        // }
-
         // perform the gsl integration step here
         double stateHolder[ 6 ] = { currentStateVector[ xPositionIndex ],
                                     currentStateVector[ yPositionIndex ],
@@ -323,6 +319,7 @@ namespace naos
                                     currentStateVector[ zVelocityIndex ] };
         double timeHolder = tCurrent;
 
+        double currentStepSize = stepSize; // this will be used for the stopping condition
         int gslStatus = gsl_odeiv2_evolve_apply( stepEvolution,
                                                  stepControl,
                                                  stepper,
@@ -412,20 +409,6 @@ namespace naos
                                                         gravParameter,
                                                         orbitalElements );
 
-        // Check if the new state is valid or not i.e. the particle/orbiter is not
-        // inside the surface of the asteroid. If it is then terminate the outer loop. Evaluate the
-        // function phi(x,y,z;0) and check if it has a positive sign (i.e. point is outside)
-        double xCoordinateSquare = nextStateVector[ xPositionIndex ]
-                                    * nextStateVector[ xPositionIndex ];
-        double yCoordinateSquare = nextStateVector[ yPositionIndex ]
-                                    * nextStateVector[ yPositionIndex ];
-        double zCoordinateSquare = nextStateVector[ zPositionIndex ]
-                                    * nextStateVector[ zPositionIndex ];
-        double phiCheck = xCoordinateSquare / ( alpha * alpha )
-                            + yCoordinateSquare / ( beta * beta )
-                            + zCoordinateSquare / ( gamma * gamma )
-                            - 1.0;
-
         // calculate the jacobian after each integration step
         xVelocitySquare = nextStateVector[ xVelocityIndex ]
                             * nextStateVector[ xVelocityIndex ];
@@ -453,10 +436,39 @@ namespace naos
                             - 0.5 * wSquare * ( xPositionSquare + yPositionSquare )
                             - gravPotential;
 
-        if( phiCheck <= 0.0 )
+        // Check if the new state is valid or not i.e. the particle/orbiter is not
+        // inside the surface of the asteroid. If it is then terminate the outer loop. Evaluate the
+        // function phi(x,y,z;0) and check if it has a positive sign (i.e. point is outside)
+        double xCoordinateSquare = nextStateVector[ xPositionIndex ]
+                                    * nextStateVector[ xPositionIndex ];
+        double yCoordinateSquare = nextStateVector[ yPositionIndex ]
+                                    * nextStateVector[ yPositionIndex ];
+        double zCoordinateSquare = nextStateVector[ zPositionIndex ]
+                                    * nextStateVector[ zPositionIndex ];
+        double phiCheck = xCoordinateSquare / ( alpha * alpha )
+                            + yCoordinateSquare / ( beta * beta )
+                            + zCoordinateSquare / ( gamma * gamma );
+
+        const double phiCheckTolerance = std::numeric_limits< double >::epsilon( );
+
+        if( phiCheck > 1.0 )
         {
-            // point is either inside or on the surface of the ellipsoid, so terminate the
-            // simulator and exit the outer loop after saving the data.
+            // point is outside the ellipsoid
+            lastKnownExternalState = { nextStateVector[ xPositionIndex ],
+                                       nextStateVector[ yPositionIndex ],
+                                       nextStateVector[ zPositionIndex ],
+                                       nextStateVector[ xVelocityIndex ],
+                                       nextStateVector[ yVelocityIndex ],
+                                       nextStateVector[ zVelocityIndex ] };
+            lastKnownExternalTime = timeHolder;
+            lastKnownExternalStepSize = stepSize;
+            lastKnownExternalPhiCheck = phiCheck;
+        }
+
+        if( phiCheck == 1.0 )
+        {
+            // particle is at the surface
+            // terminate the simulator and exit the outer loop after saving the data.
             eomOrbiterUREFile << nextStateVector[ xPositionIndex ] << ",";
             eomOrbiterUREFile << nextStateVector[ yPositionIndex ] << ",";
             eomOrbiterUREFile << nextStateVector[ zPositionIndex ] << ",";
@@ -464,17 +476,122 @@ namespace naos
             eomOrbiterUREFile << nextStateVector[ yVelocityIndex ] << ",";
             eomOrbiterUREFile << nextStateVector[ zVelocityIndex ] << ",";
             eomOrbiterUREFile << tNext << ",";
-            eomOrbiterUREFile << jacobian << ",";
-            eomOrbiterUREFile << orbitalElements[ 0 ] << ",";
-            eomOrbiterUREFile << orbitalElements[ 1 ] << ",";
-            eomOrbiterUREFile << orbitalElements[ 2 ] << ",";
-            eomOrbiterUREFile << orbitalElements[ 3 ] << ",";
-            eomOrbiterUREFile << orbitalElements[ 4 ] << ",";
-            eomOrbiterUREFile << orbitalElements[ 5 ] << ",";
+            eomOrbiterUREFile << std::numeric_limits< double >::quiet_NaN( ) << ",";
+            eomOrbiterUREFile << std::numeric_limits< double >::quiet_NaN( ) << ",";
+            eomOrbiterUREFile << std::numeric_limits< double >::quiet_NaN( ) << ",";
+            eomOrbiterUREFile << std::numeric_limits< double >::quiet_NaN( ) << ",";
+            eomOrbiterUREFile << std::numeric_limits< double >::quiet_NaN( ) << ",";
+            eomOrbiterUREFile << std::numeric_limits< double >::quiet_NaN( ) << ",";
+            eomOrbiterUREFile << std::numeric_limits< double >::quiet_NaN( ) << ",";
             eomOrbiterUREFile << stepSize << std::endl;
-            std::cout << "Houston, we've got a problem!" << std::endl;
-            std::cout << "Particle at or inside the ellipsoidal surface" << std::endl;
-            std::cout << "Event occurence at: " << tNext << " seconds" << std::endl;
+            std::cout << std::endl;
+            std::cout << "Particle collided with the surface, simulation terminated!" << std::endl;
+            break;
+        }
+
+        if( phiCheck < 1.0 )
+        {
+            // point is inside the surface of the ellipsoid
+            while( std::fabs(phiCheck - 1.0) > phiCheckTolerance )
+            {
+                // go back to the last known external state vector and reintegrate for a smaller fixed step
+                computeEllipsoidGravitationalAcceleration(
+                    alpha,
+                    beta,
+                    gamma,
+                    gravParameter,
+                    lastKnownExternalState[ xPositionIndex ],
+                    lastKnownExternalState[ yPositionIndex ],
+                    lastKnownExternalState[ zPositionIndex ],
+                    currentGravAcceleration );
+
+                parameters->xGravAcceleration = currentGravAcceleration[ xPositionIndex ];
+                parameters->yGravAcceleration = currentGravAcceleration[ yPositionIndex ];
+                parameters->zGravAcceleration = currentGravAcceleration[ zPositionIndex ];
+                parameters->zRotation = Wvector[ zPositionIndex ];
+
+                stepSystem = { equationsOfMotion,
+                               NULL,
+                               6,
+                               parameters };
+
+                double tempStateHolder[ 6 ] = { lastKnownExternalState[ xPositionIndex ],
+                                                lastKnownExternalState[ yPositionIndex ],
+                                                lastKnownExternalState[ zPositionIndex ],
+                                                lastKnownExternalState[ xVelocityIndex ],
+                                                lastKnownExternalState[ yVelocityIndex ],
+                                                lastKnownExternalState[ zVelocityIndex ] };
+
+                timeHolder = lastKnownExternalTime;
+
+                stepSize = stepSize * 0.5;
+                gslStatus = gsl_odeiv2_evolve_apply_fixed_step( stepEvolution,
+                                                                stepControl,
+                                                                stepper,
+                                                                &stepSystem,
+                                                                &timeHolder,
+                                                                stepSize,
+                                                                tempStateHolder );
+
+                if( gslStatus != GSL_SUCCESS )
+                {
+                    std::ostringstream errorMessage;
+                    errorMessage << std::endl;
+                    errorMessage << "ERROR: gsl integration routine failed ";
+                    errorMessage << "while processing the stopping condition" << std::endl;
+                    errorMessage << std::endl;
+                    throw std::runtime_error( errorMessage.str( ) );
+                }
+
+                for( int i = 0; i < 6; i++ )
+                {
+                    nextStateVector[ i ] = tempStateHolder[ i ];
+                }
+                tNext = timeHolder;
+
+                xCoordinateSquare = nextStateVector[ xPositionIndex ]
+                                    * nextStateVector[ xPositionIndex ];
+                yCoordinateSquare = nextStateVector[ yPositionIndex ]
+                                    * nextStateVector[ yPositionIndex ];
+                zCoordinateSquare = nextStateVector[ zPositionIndex ]
+                                    * nextStateVector[ zPositionIndex ];
+                phiCheck = xCoordinateSquare / ( alpha * alpha )
+                            + yCoordinateSquare / ( beta * beta )
+                            + zCoordinateSquare / ( gamma * gamma );
+
+                if( phiCheck > 1.0 )
+                {
+                    // point is outside the ellipsoid
+                    lastKnownExternalState = { nextStateVector[ xPositionIndex ],
+                                               nextStateVector[ yPositionIndex ],
+                                               nextStateVector[ zPositionIndex ],
+                                               nextStateVector[ xVelocityIndex ],
+                                               nextStateVector[ yVelocityIndex ],
+                                               nextStateVector[ zVelocityIndex ] };
+                    lastKnownExternalTime = timeHolder;
+                    lastKnownExternalStepSize = stepSize;
+                    lastKnownExternalPhiCheck = phiCheck;
+                }
+            }
+
+            // terminate the simulator and exit the outer loop after saving the data.
+            eomOrbiterUREFile << nextStateVector[ xPositionIndex ] << ",";
+            eomOrbiterUREFile << nextStateVector[ yPositionIndex ] << ",";
+            eomOrbiterUREFile << nextStateVector[ zPositionIndex ] << ",";
+            eomOrbiterUREFile << nextStateVector[ xVelocityIndex ] << ",";
+            eomOrbiterUREFile << nextStateVector[ yVelocityIndex ] << ",";
+            eomOrbiterUREFile << nextStateVector[ zVelocityIndex ] << ",";
+            eomOrbiterUREFile << tNext << ",";
+            eomOrbiterUREFile << std::numeric_limits< double >::quiet_NaN( ) << ",";
+            eomOrbiterUREFile << std::numeric_limits< double >::quiet_NaN( ) << ",";
+            eomOrbiterUREFile << std::numeric_limits< double >::quiet_NaN( ) << ",";
+            eomOrbiterUREFile << std::numeric_limits< double >::quiet_NaN( ) << ",";
+            eomOrbiterUREFile << std::numeric_limits< double >::quiet_NaN( ) << ",";
+            eomOrbiterUREFile << std::numeric_limits< double >::quiet_NaN( ) << ",";
+            eomOrbiterUREFile << std::numeric_limits< double >::quiet_NaN( ) << ",";
+            eomOrbiterUREFile << stepSize << std::endl;
+            std::cout << std::endl;
+            std::cout << "Particle collided with the surface, simulation terminated!" << std::endl;
             break;
         }
 

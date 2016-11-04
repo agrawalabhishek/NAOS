@@ -221,8 +221,6 @@ void computeRegolithVelocityVector2( std::vector< double > regolithPositionVecto
     regolithVelocityVector[ 2 ] = velocityMagnitude * ( cosDelta * zUnitVector[ 2 ]
                                                         + sinDelta * cosGamma * xUnitVector[ 2 ]
                                                         + sinDelta * sinGamma * yUnitVector[ 2 ] );
-
-    // printVector( regolithVelocityVector, 3 );
 }
 
 //! Compute trajectory for regolith ejected from the surface of an asteroid
@@ -290,23 +288,12 @@ void calculateRegolithTrajectory( const double alpha,
                                     * std::sqrt( 2.0 * gravitationalParameter / positionMagnitude );
     std::vector< double > regolithVelocityVector( 3 );
 
-    // computeRegolithVelocityVector( regolithPositionVector,
-    //                                velocityMagnitude,
-    //                                coneAngleAzimuth,
-    //                                coneAngleDeclination,
-    //                                regolithNormalUnitVector,
-    //                                regolithVelocityVector );
-
     computeRegolithVelocityVector2( regolithPositionVector,
                                     velocityMagnitude,
                                     coneAngleAzimuth,
                                     coneAngleDeclination,
                                     regolithNormalUnitVector,
                                     regolithVelocityVector );
-
-    // velocity sanity check
-    // std::cout << "input velocity Magnitude = " << velocityMagnitude << std::endl;
-    // std::cout << "output velocity Magnitude = " << vectorNorm( regolithVelocityVector ) << std::endl;
 
     naos::Vector6 initialVector { regolithPositionVector[ xPositionIndex ],
                                   regolithPositionVector[ yPositionIndex ],

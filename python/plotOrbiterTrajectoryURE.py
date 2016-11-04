@@ -83,7 +83,7 @@ ellipsoid_z = gamma * np.outer(np.ones(np.size(u)), np.cos(v))
 
 newColor = colors.cnames["slategray"]
 surf = ax1.plot_surface( ellipsoid_x, ellipsoid_y, ellipsoid_z,
-                         rstride=5, cstride=5 )
+                         rstride=5, cstride=5, alpha=0.5 )
 # surf.set_facecolor( ( 0, 0, 1, 0.5 ) )
 surf.set_facecolor( newColor )
 surf.set_linewidth( 0.1 )

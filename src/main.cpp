@@ -163,13 +163,13 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
     const double integrationStepSize = 0.01;
     const double startTime = 0.0;
-    const double endTime = 100.0;
+    const double endTime = 10000.0;
 
     const double aXValue = 1.0;
-    const double aYValue = 2.0;
-    const double aZValue = 0.0;
+    const double aYValue = 1.0;
+    const double aZValue = 1.0;
     const double velocityMagnitudeFactor = 0.7;
-    const double coneAngleAzimuth = naos::convertDegreeToRadians( 90.0 );
+    const double coneAngleAzimuth = naos::convertDegreeToRadians( 45.0 );
     const double coneAngleDeclination = naos::convertDegreeToRadians( 45.0 );
 
     naos::calculateRegolithTrajectory( alpha,
