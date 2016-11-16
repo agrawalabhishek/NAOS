@@ -45,6 +45,21 @@ namespace naos
                         double stateTimeDerivative[ ],
                         void *parameters );
 
+//! Get the jacobian for the integrator
+int jacobianForIntegrator( double currentTime,
+                           const double stateVector[ ],
+                           double *dfdy[ ],
+                           double dfdt[ ],
+                           void *parameters );
+
+//! Calculate the jacobian
+/*!
+ * calculate the jacobian for the point mass gravity potential case.
+ */
+double calculateJacobianPointMassGravity( const double stateVector[ ],
+                                          const double angularVelocity,
+                                          const double gravParameter );
+
 //! Execute orbiter around an asteroid (URE) modeled as a point mass
 /*!
  * integrate the equations of motion for a particle around an asteroid using the GSL odeiv2 library

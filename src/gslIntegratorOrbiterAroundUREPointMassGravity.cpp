@@ -65,6 +65,80 @@ int equationsOfMotion( double currentTime,
     return GSL_SUCCESS;
 }
 
+//! Get the jacobian for the integrator
+int jacobianForIntegrator( double currentTime,
+                           const double stateVector[ ],
+                           double dfdy[ ],
+                           double dfdt[ ],
+                           void *parameters )
+{
+    ( void )( currentTime ); // to avoid warning for unused parameter
+
+    asteroidParameters param = *( asteroidParameters *) ( parameters );
+    const double Ux = param.xGravAcceleration;
+    const double Uy = param.yGravAcceleration;
+    const double Uz = param.zGravAcceleration;
+    const double Wz = param.zRotation;
+
+    // form the dfdy matrix
+    gsl_matrix_view dfdyMatrix = gsl_matrix_view_array( dfdy, 6, 6 );
+    gsl_matrix * m = &dfdyMatrix.matrix;
+
+    gsl_matrix_set_all( m, 0.0 );
+
+    gsl_matrix_set( m, 0, 3, 1.0 );
+    gsl_matrix_set( m, 1, 4, 1.0 );
+    gsl_matrix_set( m, 2, 5, 1.0 );
+    gsl_matrix_set( m, 3, 0, Wz * Wz );
+    gsl_matrix_set( m, 3, 4, 2.0 * Wz );
+    gsl_matrix_set( m, 4, 1, Wz * Wz );
+    gsl_matrix_set( m, 4, 3, -2.0 * Wz );
+
+    // form the dfdt array
+    dfdt[ 0 ] = 0.0;
+    dfdt[ 1 ] = 0.0;
+    dfdt[ 2 ] = 0.0;
+    dfdt[ 3 ] = 0.0;
+    dfdt[ 4 ] = 0.0;
+    dfdt[ 5 ] = 0.0;
+
+    // return success
+    return GSL_SUCCESS;
+}
+
+//! Calculate the jacobian
+/*!
+ * calculate the jacobian for the point mass gravity potential case.
+ */
+double calculateJacobianPointMassGravity( const double stateVector[ ],
+                                          const double angularVelocity,
+                                          const double gravParameter )
+{
+    double xVelocitySquare = stateVector[ xVelocityIndex ] * stateVector[ xVelocityIndex ];
+
+    double yVelocitySquare = stateVector[ yVelocityIndex ] * stateVector[ yVelocityIndex ];
+
+    double zVelocitySquare = stateVector[ zVelocityIndex ] * stateVector[ zVelocityIndex ];
+
+    double xPositionSquare = stateVector[ xPositionIndex ] * stateVector[ xPositionIndex ];
+
+    double yPositionSquare = stateVector[ yPositionIndex ] * stateVector[ yPositionIndex ];
+
+    double zPositionSquare = stateVector[ zPositionIndex ] * stateVector[ zPositionIndex ];
+
+    double radialDistance = std::sqrt( xPositionSquare + yPositionSquare + zPositionSquare );
+
+    double angularVelocitySquare = angularVelocity * angularVelocity;
+
+    double gravPotential = gravParameter / radialDistance;
+
+    double jacobian = 0.5 * ( xVelocitySquare + yVelocitySquare + zVelocitySquare )
+                        - 0.5 * angularVelocitySquare * ( xPositionSquare + yPositionSquare )
+                        - gravPotential;
+
+    return jacobian;
+}
+
 //! Execute orbiter around an asteroid (URE) modeled as a point mass
 /*!
  * integrate the equations of motion for a particle around an asteroid using the GSL odeiv2 library
@@ -89,6 +163,7 @@ void gslIntegratorOrbiterAroundUREPointMassGravity( const double gravParameter,
     outputFile << "vy" << ",";
     outputFile << "vz" << ",";
     outputFile << "t" << ",";
+    outputFile << "jacobian" << ",";
     outputFile << "stepSize" << std::endl;
 
     //! convert the initial orbital elements to cartesian state (expressed in the body frame)
@@ -147,7 +222,20 @@ void gslIntegratorOrbiterAroundUREPointMassGravity( const double gravParameter,
     double stepSize = initialStepSize;
     double currentTime = startTime;
 
-    //! save the initial body frame cartesian satte vector in the csv file
+    //! set the current state vector
+    double currentStateVector[ 6 ] = { initialStateBodyFrame[ xPositionIndex ],
+                                       initialStateBodyFrame[ yPositionIndex ],
+                                       initialStateBodyFrame[ zPositionIndex ],
+                                       initialStateBodyFrame[ xVelocityIndex ],
+                                       initialStateBodyFrame[ yVelocityIndex ],
+                                       initialStateBodyFrame[ zVelocityIndex ] };
+
+    //! initial jacobian
+    double jacobian = calculateJacobianPointMassGravity( currentStateVector,
+                                                         asteroidRotationVector[ zPositionIndex ],
+                                                         gravParameter );
+
+    //! save the initial body frame cartesian state vector in the csv file
     outputFile << initialStateBodyFrame[ xPositionIndex ] << ",";
     outputFile << initialStateBodyFrame[ yPositionIndex ] << ",";
     outputFile << initialStateBodyFrame[ zPositionIndex ] << ",";
@@ -155,11 +243,12 @@ void gslIntegratorOrbiterAroundUREPointMassGravity( const double gravParameter,
     outputFile << initialStateBodyFrame[ yVelocityIndex ] << ",";
     outputFile << initialStateBodyFrame[ zVelocityIndex ] << ",";
     outputFile << currentTime << ",";
+    outputFile << jacobian << ",";
     outputFile << initialStepSize << std::endl;
 
     //! GSL integrator
     // set the numerical integrator algorithm
-    const gsl_odeiv2_step_type * stepType = gsl_odeiv2_step_rk8pd;
+    const gsl_odeiv2_step_type * stepType = gsl_odeiv2_step_bsimp;
     gsl_odeiv2_step * stepper = gsl_odeiv2_step_alloc( stepType, 6 );
 
     // set the tolerances
@@ -175,14 +264,6 @@ void gslIntegratorOrbiterAroundUREPointMassGravity( const double gravParameter,
     // set the step evolution function
     gsl_odeiv2_evolve * stepEvolution = gsl_odeiv2_evolve_alloc( 6 );
 
-    // set the current state vector
-    double currentStateVector[ 6 ] = { initialStateBodyFrame[ xPositionIndex ],
-                                       initialStateBodyFrame[ yPositionIndex ],
-                                       initialStateBodyFrame[ zPositionIndex ],
-                                       initialStateBodyFrame[ xVelocityIndex ],
-                                       initialStateBodyFrame[ yVelocityIndex ],
-                                       initialStateBodyFrame[ zVelocityIndex ] };
-
     // assign the gravitational acceleration values to an object of asteroid paramter struct
     asteroidParameters * parameters = ( asteroidParameters *)std::malloc( sizeof( asteroidParameters ) );
     parameters->xGravAcceleration = 0.0;
@@ -192,7 +273,7 @@ void gslIntegratorOrbiterAroundUREPointMassGravity( const double gravParameter,
 
     // set up the integration system
     gsl_odeiv2_system stepSystem = { equationsOfMotion,
-                                     NULL,
+                                     jacobianForIntegrator,
                                      6,
                                      parameters };
 
@@ -242,6 +323,10 @@ void gslIntegratorOrbiterAroundUREPointMassGravity( const double gravParameter,
             throw std::runtime_error( errorMessage.str( ) );
         } // end of if loop for runtime exception
 
+        // calculate the current jacobian
+        jacobian = calculateJacobianPointMassGravity( currentStateVector,
+                                                      asteroidRotationVector[ zPositionIndex ],
+                                                      gravParameter );
         // store the step result
         outputFile << currentStateVector[ xPositionIndex ] << ",";
         outputFile << currentStateVector[ yPositionIndex ] << ",";
@@ -250,6 +335,7 @@ void gslIntegratorOrbiterAroundUREPointMassGravity( const double gravParameter,
         outputFile << currentStateVector[ yVelocityIndex ] << ",";
         outputFile << currentStateVector[ zVelocityIndex ] << ",";
         outputFile << currentTime << ",";
+        outputFile << jacobian << ",";
         outputFile << stepSize << std::endl;
 
     } // end of outer while loop for integration
