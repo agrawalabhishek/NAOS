@@ -51,7 +51,7 @@ struct eomOrbiterURE
         dXdt[ naos::xVelocityIndex ] = Ux + 2.0 * Wz * X[ naos::yVelocityIndex ]
                                         + Wz * Wz * X[ naos::xPositionIndex ];
         dXdt[ naos::yVelocityIndex ] = Uy - 2.0 * Wz * X[ naos::xVelocityIndex ]
-                                        + Wz* Wz * X[ naos::yPositionIndex ];
+                                        + Wz * Wz * X[ naos::yPositionIndex ];
         dXdt[ naos::zVelocityIndex ] = Uz;
     }
 };
