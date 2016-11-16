@@ -252,7 +252,7 @@ void gslIntegratorOrbiterAroundUREPointMassGravity( const double gravParameter,
     gsl_odeiv2_step * stepper = gsl_odeiv2_step_alloc( stepType, 6 );
 
     // set the tolerances
-    const double absoluteTolerance = 10.0e-12;
+    const double absoluteTolerance = 10.0e-8;
     const double relativeTolerance = 10.0e-12;
 
     // set the step size control method
