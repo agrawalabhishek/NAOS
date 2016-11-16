@@ -248,12 +248,12 @@ void gslIntegratorOrbiterAroundUREPointMassGravity( const double gravParameter,
 
     //! GSL integrator
     // set the numerical integrator algorithm
-    const gsl_odeiv2_step_type * stepType = gsl_odeiv2_step_bsimp;
+    const gsl_odeiv2_step_type * stepType = gsl_odeiv2_step_msadams;
     gsl_odeiv2_step * stepper = gsl_odeiv2_step_alloc( stepType, 6 );
 
     // set the tolerances
-    const double absoluteTolerance = 10.0e-10;
-    const double relativeTolerance = 10.0e-10;
+    const double absoluteTolerance = 10.0e-12;
+    const double relativeTolerance = 10.0e-12;
 
     // set the step size control method
     gsl_odeiv2_control * stepSizeControl = gsl_odeiv2_control_standard_new( absoluteTolerance,
@@ -276,6 +276,17 @@ void gslIntegratorOrbiterAroundUREPointMassGravity( const double gravParameter,
                                      jacobianForIntegrator,
                                      6,
                                      parameters };
+
+    // set up the driver wrapper for the integrator
+    gsl_odeiv2_driver * driver =  gsl_odeiv2_driver_alloc_standard_new( &stepSystem,
+                                                                        stepType,
+                                                                        stepSize,
+                                                                        absoluteTolerance,
+                                                                        relativeTolerance,
+                                                                        1.0,
+                                                                        1.0 );
+
+    int stepSetDriverStatus = gsl_odeiv2_step_set_driver( stepper, driver );
 
     // start the integration outer loop
     while( currentTime != endTime )
@@ -344,6 +355,7 @@ void gslIntegratorOrbiterAroundUREPointMassGravity( const double gravParameter,
     gsl_odeiv2_evolve_free( stepEvolution );
     gsl_odeiv2_control_free( stepSizeControl );
     gsl_odeiv2_step_free( stepper );
+    gsl_odeiv2_driver_free( driver );
     outputFile.close( );
 }
 

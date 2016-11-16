@@ -97,7 +97,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     const bool pointMass_initialVectorIsCartesian = false;
     const double pointMass_integrationStepSize = 0.01;
     const double pointMass_startTime = 0.0;
-    const double pointMass_endTime = 10000.0;
+    const double pointMass_endTime = 20000.0;
 
     // naos::executeOrbiterAroundUREPointMassGravity( alpha,
     //                                                beta,
