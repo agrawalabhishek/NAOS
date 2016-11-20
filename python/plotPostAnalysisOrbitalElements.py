@@ -51,64 +51,61 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-data = pd.read_csv( '../data/pointMassSolution_jacobian.csv' )
+data = pd.read_csv( "../data/pointMassSolution_orbitalElements.csv" )
+cartesianData = pd.read_csv( "../data/pointMassSolution.csv" )
 
-t = data[ 'time' ].values
-jacobian = data[ 'jacobian' ].values
+semiMajor = data['semiMajor'].values
+eccentricity = data['eccentricity'].values
+inclination = data['inclination'].values
+raan = data['raan'].values
+aop = data['aop'].values
+ta = data['ta'].values
+t = data['time'].values
 
 # convert time in seconds to earth days
 t = t / ( 24.0 * 60.0 * 60.0 )
 
-# upto 4 significant digits after the decimal point in jacobian
-# for index in range( 0, len(jacobian) ):
-#     jacobian[index] = float( "{0:.4f}".format(jacobian[index]) )
-
 ## Set up the figure
 fig = plt.figure( )
-# ax1 = fig.add_subplot( 211, projection = '3d' )
-# ax2 = fig.add_subplot( 212, frameon = False )
-gs = gridspec.GridSpec( 2, 1, height_ratios = [ 2.5, 1 ] )
-ax1 = plt.subplot( gs[ 0 ] )
-ax2 = plt.subplot( gs[ 1 ] )
+ax1 = fig.add_subplot( 421 )
+ax2 = fig.add_subplot( 422 )
+ax3 = fig.add_subplot( 423 )
+ax4 = fig.add_subplot( 424 )
+ax5 = fig.add_subplot( 425 )
 
-## plot the jacobian
-ax1.plot( t, jacobian, color=colors.cnames['purple'] )
+## plot the orbital elements
+ax1.plot( t, semiMajor, color=colors.cnames['purple'] )
 ax1.set_xlabel('time [Earth days]')
-ax1.set_ylabel('jacobian')
-ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useOffset=False)
+ax1.set_ylabel('semi-major axis [m]')
+ax1.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
 ax1.grid( )
 
-## plot relative change in jacobian
-initialJacobian = jacobian[ 0 ];
-relativeChangeInJacobian = (jacobian - initialJacobian) / initialJacobian
-
-ax2.plot( t, relativeChangeInJacobian, color=colors.cnames['purple'] )
+ax2.plot( t, eccentricity, color=colors.cnames['purple'] )
 ax2.set_xlabel('time [Earth days]')
-ax2.set_ylabel('Relative change in jacobian')
-ax2.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useOffset=False)
+ax2.set_ylabel('eccentricity')
+ax2.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
 ax2.grid( )
 
-## plot meta data
-# endIndex = np.size( x )
-# ax2.axis( 'off' )
-# metadata_table = []
-# metadata_table.append( [ "Initial X coordinate", x[0], "[m]" ] )
-# metadata_table.append( [ "Initial Y coordinate", y[0], "[m]" ] )
-# metadata_table.append( [ "Initial Z coordinate", z[0], "[m]" ] )
-# metadata_table.append( [ "Initial X velocity", vx[0], "[m/s]" ] )
-# metadata_table.append( [ "Initial Y velocity", vy[0], "[m/s]" ] )
-# metadata_table.append( [ "Initial Z velocity", vz[0], "[m/s]" ] )
-# metadata_table.append( [ "Simulation time", t[endIndex-1], "[s]" ] )
-# table = ax2.table( cellText = metadata_table, colLabels = None, cellLoc = 'center', loc = 'center' )
-# table_properties = table.properties( )
-# table_cells = table_properties[ 'child_artists' ]
-# for cell in table_cells: cell.set_height( 0.15 )
-# cell_dict = table.get_celld( )
-# for row in xrange( 0, 7 ): cell_dict[ ( row, 2 ) ].set_width( 0.1 )
+ax3.plot( t, inclination, color=colors.cnames['purple'] )
+ax3.set_xlabel('time [Earth days]')
+ax3.set_ylabel('inclination [deg]')
+ax3.ticklabel_format(style='plain', useOffset=False)
+ax3.grid( )
+
+ax4.plot( t, raan, color=colors.cnames['purple'] )
+ax4.set_xlabel('time [Earth days]')
+ax4.set_ylabel('RAAN [deg]')
+ax4.ticklabel_format(style='plain', useOffset=False)
+ax4.grid( )
+
+ax5.plot( t, aop, color=colors.cnames['purple'] )
+ax5.set_xlabel('time [Earth days]')
+ax5.set_ylabel('AOP [deg]')
+ax5.ticklabel_format(style='plain', useOffset=False)
+ax5.grid( )
 
 ## show plot
 plt.tight_layout( )
-plt.grid( )
 plt.show( )
 
 # Stop timer

@@ -51,64 +51,59 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-data = pd.read_csv( '../data/pointMassSolution_jacobian.csv' )
+data = pd.read_csv( '../data/pointMassSolution.csv' )
 
-t = data[ 'time' ].values
-jacobian = data[ 'jacobian' ].values
+x = data['x'].values
+y = data['y'].values
+z = data['z'].values
+vx = data['vx'].values
+vy = data['vy'].values
+vz = data['vz'].values
+t = data['t'].values
 
 # convert time in seconds to earth days
 t = t / ( 24.0 * 60.0 * 60.0 )
 
-# upto 4 significant digits after the decimal point in jacobian
-# for index in range( 0, len(jacobian) ):
-#     jacobian[index] = float( "{0:.4f}".format(jacobian[index]) )
-
 ## Set up the figure
 fig = plt.figure( )
-# ax1 = fig.add_subplot( 211, projection = '3d' )
-# ax2 = fig.add_subplot( 212, frameon = False )
-gs = gridspec.GridSpec( 2, 1, height_ratios = [ 2.5, 1 ] )
-ax1 = plt.subplot( gs[ 0 ] )
-ax2 = plt.subplot( gs[ 1 ] )
+ax1 = plt.subplot( 211 )
+ax2 = plt.subplot( 212 )
 
-## plot the jacobian
-ax1.plot( t, jacobian, color=colors.cnames['purple'] )
+## Gravitational parameter
+alpha = 20e3;
+beta = alpha;
+gamma = alpha;
+density = 3.2 * ( 10.0e-3 ) / ( 10.0e-6 );
+mass = ( 4.0 * np.pi / 3.0 ) * density * alpha * beta * gamma
+gravParam = 6.67259e-11 * mass
+
+## plot the energy
+velocity = np.sqrt( vx**2 + vy**2 + vz**2 )
+position = np.sqrt( x**2 + y**2 + z**2 )
+energy = 0.5 * velocity**2 - gravParam / position
+
+ax1.plot( t, energy, color=colors.cnames['purple'] )
 ax1.set_xlabel('time [Earth days]')
-ax1.set_ylabel('jacobian')
+ax1.set_ylabel('energy')
 ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useOffset=False)
 ax1.grid( )
 
-## plot relative change in jacobian
-initialJacobian = jacobian[ 0 ];
-relativeChangeInJacobian = (jacobian - initialJacobian) / initialJacobian
+## plot angular momentum
+angMomentum = np.zeros(len(x))
+for index in range(0, len(x)):
+    positionVector = [ x[index], y[index], z[index] ]
+    velocityVector = [ vx[index], vy[index], vz[index] ]
+    angularMomentumVector = np.cross( positionVector, velocityVector )
+    angMomentum[index] = np.linalg.norm( angularMomentumVector )
 
-ax2.plot( t, relativeChangeInJacobian, color=colors.cnames['purple'] )
+ax2.plot( t, angMomentum, color=colors.cnames['purple'] )
 ax2.set_xlabel('time [Earth days]')
-ax2.set_ylabel('Relative change in jacobian')
+ax2.set_ylabel('Angular momentum')
 ax2.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useOffset=False)
 ax2.grid( )
 
-## plot meta data
-# endIndex = np.size( x )
-# ax2.axis( 'off' )
-# metadata_table = []
-# metadata_table.append( [ "Initial X coordinate", x[0], "[m]" ] )
-# metadata_table.append( [ "Initial Y coordinate", y[0], "[m]" ] )
-# metadata_table.append( [ "Initial Z coordinate", z[0], "[m]" ] )
-# metadata_table.append( [ "Initial X velocity", vx[0], "[m/s]" ] )
-# metadata_table.append( [ "Initial Y velocity", vy[0], "[m/s]" ] )
-# metadata_table.append( [ "Initial Z velocity", vz[0], "[m/s]" ] )
-# metadata_table.append( [ "Simulation time", t[endIndex-1], "[s]" ] )
-# table = ax2.table( cellText = metadata_table, colLabels = None, cellLoc = 'center', loc = 'center' )
-# table_properties = table.properties( )
-# table_cells = table_properties[ 'child_artists' ]
-# for cell in table_cells: cell.set_height( 0.15 )
-# cell_dict = table.get_celld( )
-# for row in xrange( 0, 7 ): cell_dict[ ( row, 2 ) ].set_width( 0.1 )
-
 ## show plot
 plt.tight_layout( )
-plt.grid( )
 plt.show( )
 
 # Stop timer

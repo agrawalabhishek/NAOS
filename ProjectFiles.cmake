@@ -12,6 +12,8 @@ set(SRC
   "${SRC_PATH}/gslIntegratorOrbiterAroundURE.cpp"
   "${SRC_PATH}/gslIntegratorOrbiterAroundUREPointMassGravity.cpp"
   "${SRC_PATH}/regolithTrajectoryCalculator.cpp"
+  "${SRC_PATH}/postAnalysis.cpp"
+  "${SRC_PATH}/boostIntegratorRestrictedTwoBodyProblem.cpp"
 )
 
 # Set project main file.

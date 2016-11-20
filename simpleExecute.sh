@@ -2,5 +2,6 @@
 cd build
 make
 cd bin
-./NAOS_main
+./NAOS_main executePointMassGravityOrbiter
+./NAOS_main postAnalysis
 cd ../../

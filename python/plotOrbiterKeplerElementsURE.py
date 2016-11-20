@@ -51,7 +51,7 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-data = pd.read_csv( '../data/gsl_RK8_OrbiterAroundSphericalEros.csv' )
+# data = pd.read_csv( '../data/gsl_RK8_OrbiterAroundSphericalEros.csv' )
 # data = pd.read_csv( '../data/RK5_OrbiterAroundSphericalEros_longTermSimulation.csv' )
 # data = pd.read_csv( '../data/RK5_OrbiterAroundSphericalEros_shortTimeSimulation.csv' )
 # data = pd.read_csv( '../data/sphericalErosEllipsoidPotentialZeroRotation.csv' )
