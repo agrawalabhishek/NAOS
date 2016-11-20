@@ -2,6 +2,6 @@
 cd build
 make
 cd bin
-./NAOS_main executePointMassGravityOrbiter
-./NAOS_main postAnalysis
+./NAOS_main executeRestricted2BP
+./NAOS_main postAnalysisRestricted2BP
 cd ../../
