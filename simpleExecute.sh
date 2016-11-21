@@ -2,6 +2,6 @@
 cd build
 make
 cd bin
-./NAOS_main executeRestricted2BP
-./NAOS_main postAnalysisRestricted2BP
+./NAOS_main executeParticleAroundSpheroid
+./NAOS_main postAnalysisParticleAroundSpheroid
 cd ../../

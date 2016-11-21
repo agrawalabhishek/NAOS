@@ -51,7 +51,7 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-data = pd.read_csv( '../data/solutionrestricted2BP_jacobian.csv' )
+data = pd.read_csv( '../data/solutionParticleAroundSpheroid_jacobian.csv' )
 
 t = data[ 'time' ].values
 jacobian = data[ 'jacobian' ].values

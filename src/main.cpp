@@ -19,7 +19,6 @@
 #include "NAOS/orbiterEquationsOfMotion.hpp"
 #include "NAOS/rk4.hpp"
 #include "NAOS/rk54.hpp"
-#include "NAOS/bulirschStoer.hpp"
 #include "NAOS/basicMath.hpp"
 #include "NAOS/basicAstro.hpp"
 #include "NAOS/computeEllipsoidSurfaceGravitationalAcceleration.hpp"
@@ -29,9 +28,11 @@
 #include "NAOS/executeOrbiterAroundUREPointMassGravity.hpp"
 #include "NAOS/postAnalysis.hpp"
 #include "NAOS/boostIntegratorRestrictedTwoBodyProblem.hpp"
+#include "NAOS/particleAroundSpheroidAndElllipsoidGravitationalPotential.hpp"
 // #include "NAOS/gslIntegratorOrbiterAroundUREPointMassGravity.hpp"
 // #include "NAOS/gslIntegratorOrbiterAroundURE.hpp"
 // #include "NAOS/regolithTrajectoryCalculator.hpp"
+// #include "NAOS/bulirschStoer.hpp"
 
 int main( const int numberOfInputs, const char* inputArguments[ ] )
 {
@@ -118,7 +119,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         const double integrationStepSize = 0.01;
         const double startTime = 0.0;
         const double endTime = 24.0 * 30.0 * 24.0 * 60.0 * 60.0;
-        const int dataSaveIntervals = 10000;
+        const int dataSaveIntervals = 1000;
 
         double wallTimeStart = naos::getWallTime< double >( );
         double cpuTimeStart = naos::getCPUTime< double >( );
@@ -130,6 +131,49 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                                                        endTime,
                                                        pointMassFilePath,
                                                        dataSaveIntervals );
+
+        double wallTimeEnd = naos::getWallTime< double >( );
+        double cpuTimeEnd = naos::getCPUTime< double >( );
+
+        std::cout << "Total wall time for execution = " << wallTimeEnd - wallTimeStart << std::endl;
+        std::cout << "Total CPU time for execution = " << cpuTimeEnd - cpuTimeStart << std::endl;
+    }
+
+    else if( userMode.compare( "executeParticleAroundSpheroid" ) == 0 )
+    {
+        // Particle around spheroid orbiter problem solution
+        std::ostringstream filePath;
+        filePath << "../../data/solutionParticleAroundSpheroid.csv";
+        const double semiMajor = 35000.0;
+        const double eccentricity = 0.1;
+        const double inclination = 10.0;
+        const double RAAN = 50.0;
+        const double AOP = 100.0;
+        const double TA = 0.0;
+
+        naos::Vector6 initialVector { semiMajor,
+                                      eccentricity,
+                                      inclination,
+                                      RAAN,
+                                      AOP,
+                                      TA };
+
+        const double integrationStepSize = 0.01;
+        const double startTime = 0.0;
+        const double endTime = 24.0 * 30.0 * 24.0 * 60.0 * 60.0;
+        const int dataSaveIntervals = 1000;
+
+        double wallTimeStart = naos::getWallTime< double >( );
+        double cpuTimeStart = naos::getCPUTime< double >( );
+
+        naos::executeParticleAroundSpheroid( alpha,
+                                             gravitationalParameter,
+                                             initialVector,
+                                             integrationStepSize,
+                                             startTime,
+                                             endTime,
+                                             filePath,
+                                             dataSaveIntervals );
 
         double wallTimeEnd = naos::getWallTime< double >( );
         double cpuTimeEnd = naos::getCPUTime< double >( );
@@ -239,6 +283,31 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         std::ostringstream pointMassJacobianOutputFilePath;
         pointMassJacobianOutputFilePath << "../../data/solutionrestricted2BP_jacobian.csv";
         naos::calculateJacobianPointMassGravity( centralBodyRotationRate,
+                                                 gravitationalParameter,
+                                                 inputFilePath,
+                                                 pointMassJacobianOutputFilePath );
+    }
+
+    else if( userMode.compare( "postAnalysisParticleAroundSpheroid" ) == 0 )
+    {
+        // specify the input file path
+        std::ostringstream inputFilePath;
+        inputFilePath << "../../data/solutionParticleAroundSpheroid.csv";
+
+        // specify the output file path
+        std::ostringstream pointMassOrbitalElementsOutputFilePath;
+        pointMassOrbitalElementsOutputFilePath << "../../data/solutionParticleAroundSpheroid_orbitalElements.csv";
+
+        // post analysis, conversion of cartesian data into orbital elements
+        naos::postSimulationOrbitalElementsConversion( W,
+                                                       gravitationalParameter,
+                                                       inputFilePath,
+                                                       pointMassOrbitalElementsOutputFilePath );
+
+        //! Calculate the jacobian
+        std::ostringstream pointMassJacobianOutputFilePath;
+        pointMassJacobianOutputFilePath << "../../data/solutionParticleAroundSpheroid_jacobian.csv";
+        naos::calculateJacobianPointMassGravity( W,
                                                  gravitationalParameter,
                                                  inputFilePath,
                                                  pointMassJacobianOutputFilePath );

@@ -51,8 +51,8 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-data = pd.read_csv( "../data/solutionrestricted2BP_orbitalElements.csv" )
-cartesianData = pd.read_csv( "../data/solutionrestricted2BP.csv" )
+data = pd.read_csv( "../data/solutionParticleAroundSpheroid_orbitalElements.csv" )
+cartesianData = pd.read_csv( "../data/solutionParticleAroundSpheroid.csv" )
 
 semiMajor = data['semiMajor'].values
 eccentricity = data['eccentricity'].values
