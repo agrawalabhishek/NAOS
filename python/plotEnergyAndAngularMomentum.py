@@ -51,7 +51,7 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-data = pd.read_csv( '../data/solutionParticleAroundRotatingSpheroid_orbitalElements.csv' )
+data = pd.read_csv( '../data/solutionParticleAroundUniformlyRotatingEllipsoid_orbitalElements.csv' )
 
 t = data[ 'time' ].values
 energy = data[ 'energy' ].values

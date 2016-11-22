@@ -53,7 +53,7 @@ start_time = time.time( )
 # Read data in csv file. data returned as a panda series.
 
 ## data in body frame
-# data = pd.read_csv( '../data/solutionParticleAroundRotatingSpheroid.csv' )
+# data = pd.read_csv( '../data/solutionParticleAroundUniformlyRotatingEllipsoid.csv' )
 # x = data[ 'x' ].values
 # y = data[ 'y' ].values
 # z = data[ 'z' ].values
@@ -63,7 +63,7 @@ start_time = time.time( )
 # t = data[ 't' ].values
 
 ## data in inertial frame
-data = pd.read_csv( '../data/solutionParticleAroundRotatingSpheroid_orbitalElements.csv' )
+data = pd.read_csv( '../data/solutionParticleAroundUniformlyRotatingEllipsoid_orbitalElements.csv' )
 x = data[ 'xInertial' ].values
 y = data[ 'yInertial' ].values
 z = data[ 'zInertial' ].values

@@ -22,7 +22,8 @@
 #include "NAOS/ellipsoidPotential.hpp"
 #include "NAOS/springMassIntegratorTest.hpp"
 #include "NAOS/postAnalysis.hpp"
-#include "NAOS/particleAroundSpheroidAndElllipsoidGravitationalPotential.hpp"
+#include "NAOS/particleAroundUniformlyRotatingEllipsoid.hpp"
+// #include "NAOS/particleAroundSpheroidAndElllipsoidGravitationalPotential.hpp"
 // #include "NAOS/boostIntegratorRestrictedTwoBodyProblem.hpp"
 // #include "NAOS/executeOrbiterAroundUREPointMassGravity.hpp"
 // #include "NAOS/executeOrbiterAroundURE.hpp"
@@ -139,11 +140,55 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     //     std::cout << "Total CPU time for execution = " << cpuTimeEnd - cpuTimeStart << std::endl;
     // }
 
-    else if( userMode.compare( "executeParticleAroundSpheroid" ) == 0 )
+    // else if( userMode.compare( "executeParticleAroundSpheroid" ) == 0 )
+    // {
+    //     // Particle around spheroid orbiter problem solution
+    //     std::ostringstream filePath;
+    //     filePath << "../../data/solutionParticleAroundRotatingSpheroid.csv";
+    //     const double semiMajor = 35000.0;
+    //     const double eccentricity = 0.1;
+    //     const double inclination = 10.0;
+    //     const double RAAN = 50.0;
+    //     const double AOP = 10.0;
+    //     const double TA = 0.0;
+
+    //     naos::Vector6 initialVector { semiMajor,
+    //                                   eccentricity,
+    //                                   inclination,
+    //                                   RAAN,
+    //                                   AOP,
+    //                                   TA };
+
+    //     const double integrationStepSize = 0.01;
+    //     const double startTime = 0.0;
+    //     const double endTime = 2.0 * 365.0 * 24.0 * 60.0 * 60.0;
+    //     const int dataSaveIntervals = 1000;
+
+    //     double wallTimeStart = naos::getWallTime< double >( );
+    //     double cpuTimeStart = naos::getCPUTime< double >( );
+
+    //     naos::executeParticleAroundSpheroid( alpha,
+    //                                          gravitationalParameter,
+    //                                          W,
+    //                                          initialVector,
+    //                                          integrationStepSize,
+    //                                          startTime,
+    //                                          endTime,
+    //                                          filePath,
+    //                                          dataSaveIntervals );
+
+    //     double wallTimeEnd = naos::getWallTime< double >( );
+    //     double cpuTimeEnd = naos::getCPUTime< double >( );
+
+    //     std::cout << "Total wall time for execution = " << wallTimeEnd - wallTimeStart << std::endl;
+    //     std::cout << "Total CPU time for execution = " << cpuTimeEnd - cpuTimeStart << std::endl;
+    // }
+
+    else if( userMode.compare( "executeParticleAroundUniformlyRotatingEllipsoid" ) == 0 )
     {
         // Particle around spheroid orbiter problem solution
         std::ostringstream filePath;
-        filePath << "../../data/solutionParticleAroundRotatingSpheroid.csv";
+        filePath << "../../data/solutionParticleAroundUniformlyRotatingEllipsoid.csv";
         const double semiMajor = 35000.0;
         const double eccentricity = 0.1;
         const double inclination = 10.0;
@@ -166,15 +211,17 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         double wallTimeStart = naos::getWallTime< double >( );
         double cpuTimeStart = naos::getCPUTime< double >( );
 
-        naos::executeParticleAroundSpheroid( alpha,
-                                             gravitationalParameter,
-                                             W,
-                                             initialVector,
-                                             integrationStepSize,
-                                             startTime,
-                                             endTime,
-                                             filePath,
-                                             dataSaveIntervals );
+        naos::executeParticleAroundEllipsoid( alpha,
+                                              beta,
+                                              gamma,
+                                              gravitationalParameter,
+                                              W,
+                                              initialVector,
+                                              integrationStepSize,
+                                              startTime,
+                                              endTime,
+                                              filePath,
+                                              dataSaveIntervals );
 
         double wallTimeEnd = naos::getWallTime< double >( );
         double cpuTimeEnd = naos::getCPUTime< double >( );
@@ -182,51 +229,6 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         std::cout << "Total wall time for execution = " << wallTimeEnd - wallTimeStart << std::endl;
         std::cout << "Total CPU time for execution = " << cpuTimeEnd - cpuTimeStart << std::endl;
     }
-
-    // compute orbit trajectory around a URE for given initial conditions
-    // std::ostringstream orbiterAroundUREFilePath;
-    // orbiterAroundUREFilePath << "../../data/RK5_OrbiterAroundSphericalEros_longTermSimulation.csv";
-    // const double semiMajor = 35000.0;
-    // const double eccentricity = 0.1;
-    // const double inclination = 10.0;
-    // const double RAAN = 60.0;
-    // const double AOP = 100.0;
-    // const double TA = 0.0;
-    // naos::Vector6 initialVector { semiMajor, eccentricity, inclination, RAAN, AOP, TA };
-    // const bool initialVectorIsCartesian = false;
-    // const double integrationStepSize = 0.01;
-    // const double startTime = 0.0;
-    // const double endTime = 10000.0;
-
-    // naos::executeOrbiterAroundURE( alpha,
-    //                                beta,
-    //                                gamma,
-    //                                gravitationalParameter,
-    //                                density,
-    //                                W,
-    //                                Wmagnitude,
-    //                                initialVectorIsCartesian,
-    //                                initialVector,
-    //                                integrationStepSize,
-    //                                startTime,
-    //                                endTime,
-    //                                orbiterAroundUREFilePath );
-
-    // std::ostringstream gslOrbiterAroundUREFilePath;
-    // gslOrbiterAroundUREFilePath << "../../data/gsl_RK8_OrbiterAroundSphericalEros.csv";
-    // naos::gslIntegratorOrbiterAroundURE( alpha,
-    //                                      beta,
-    //                                      gamma,
-    //                                      gravitationalParameter,
-    //                                      density,
-    //                                      W,
-    //                                      Wmagnitude,
-    //                                      initialVectorIsCartesian,
-    //                                      initialVector,
-    //                                      integrationStepSize,
-    //                                      startTime,
-    //                                      endTime,
-    //                                      gslOrbiterAroundUREFilePath );
 
     // compute trajectory evolution for single regolith lofted from the surface of an asteroid
     // std::ostringstream regolithAroundUREFilePath;
@@ -308,6 +310,37 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         //! Calculate the jacobian
         std::ostringstream JacobianOutputFilePath;
         JacobianOutputFilePath << "../../data/solutionParticleAroundRotatingSpheroid_jacobian.csv";
+        naos::calculateJacobianEllipsoidPotentialModel( alpha,
+                                                        beta,
+                                                        gamma,
+                                                        W,
+                                                        gravitationalParameter,
+                                                        inputFilePath,
+                                                        JacobianOutputFilePath );
+    }
+
+    else if( userMode.compare( "postAnalysisParticleAroundUniformlyRotatingEllipsoid" ) == 0 )
+    {
+        // specify the input file path
+        std::ostringstream inputFilePath;
+        inputFilePath << "../../data/solutionParticleAroundUniformlyRotatingEllipsoid.csv";
+
+        // specify the output file path
+        std::ostringstream OrbitalElementsOutputFilePath;
+        OrbitalElementsOutputFilePath << "../../data/solutionParticleAroundUniformlyRotatingEllipsoid_orbitalElements.csv";
+
+        // post analysis, conversion of cartesian data into orbital elements
+        naos::postSimulationOrbitalElementsConversionForEllipsoid( alpha,
+                                                                   beta,
+                                                                   gamma,
+                                                                   W,
+                                                                   gravitationalParameter,
+                                                                   inputFilePath,
+                                                                   OrbitalElementsOutputFilePath );
+
+        //! Calculate the jacobian
+        std::ostringstream JacobianOutputFilePath;
+        JacobianOutputFilePath << "../../data/solutionParticleAroundUniformlyRotatingEllipsoid_jacobian.csv";
         naos::calculateJacobianEllipsoidPotentialModel( alpha,
                                                         beta,
                                                         gamma,

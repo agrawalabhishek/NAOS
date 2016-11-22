@@ -59,6 +59,22 @@ void postSimulationOrbitalElementsConversion( const std::vector< double > &angul
                                               std::ostringstream &inputFilePath,
                                               std::ostringstream &outputFilePath );
 
+//! Convert cartesian states to orbital elements post simulation for the ellipsoid case.
+/*!
+ * Convert the cartesian states stored in a csv file to orbital elements and store it in a seperate
+ * csv file. The cartesian states are to be in body fixed frame. And the central body is assumed to
+ * be in a unoform rotation mode. This information is important since the cartesian states will be
+ * transformed from the body fixed frame to the inertial frame before converting it to the orbital
+ * elements.
+ */
+void postSimulationOrbitalElementsConversionForEllipsoid( const double alpha,
+                                                          const double beta,
+                                                          const double gamma,
+                                                          const std::vector< double > &angularVelocityVector,
+                                                          const double gravParameter,
+                                                          std::ostringstream &inputFilePath,
+                                                          std::ostringstream &outputFilePath );
+
 } // namespace naos
 
 #endif // POST_ANALYSIS_HPP
