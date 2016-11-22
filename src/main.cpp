@@ -44,8 +44,8 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
     // Physical parameters for Asteroid Eros, all in SI units, modelled as an ellipsoid.
     const double alpha = 20.0 * 1.0e3;
-    const double beta = 20.0 * 1.0e3;
-    const double gamma = 20.0 * 1.0e3;
+    const double beta = 7.0 * 1.0e3;
+    const double gamma = 7.0 * 1.0e3;
     const double density = 3.2 * ( 10.0e-3 ) / ( 10.0e-6 );
     const double mass = ( 4.0 * naos::PI / 3.0 ) * density * alpha * beta * gamma;
     const double gravitationalParameter = naos::GRAVITATIONAL_CONSTANT * mass;
@@ -205,8 +205,8 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
         const double integrationStepSize = 0.01;
         const double startTime = 0.0;
-        const double endTime = 2.0 * 365.0 * 24.0 * 60.0 * 60.0;
-        const int dataSaveIntervals = 1000;
+        const double endTime = 100000;
+        const int dataSaveIntervals = 100;
 
         double wallTimeStart = naos::getWallTime< double >( );
         double cpuTimeStart = naos::getCPUTime< double >( );

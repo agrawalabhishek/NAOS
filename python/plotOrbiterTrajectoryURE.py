@@ -82,8 +82,8 @@ ax2 = plt.subplot( gs[ 1 ] )
 
 ## Plot the ellipsoidal shape of the asteroid
 alpha = 20000.0
-beta = 20000.0
-gamma = 20000.0
+beta = 7000.0
+gamma = 7000.0
 Wz = 0.00033118202125129593
 
 u = np.linspace(0, 2 * np.pi, 100)
@@ -106,17 +106,17 @@ ax1.hold( True )
 ax1.plot( x, y, z, zdir = 'z', color=colors.cnames["purple"] )
 
 # velocity vector
-ax1.quiver3D( x[10000], y[10000], z[10000],
-              vx[10000], vy[10000], vz[10000],
-              length=10000.0, lw = 1, pivot='tail', arrow_length_ratio=0.2,
-              color=colors.cnames["red"], linestyles='solid' )
+# ax1.quiver3D( x[10000], y[10000], z[10000],
+#               vx[10000], vy[10000], vz[10000],
+#               length=10000.0, lw = 1, pivot='tail', arrow_length_ratio=0.2,
+#               color=colors.cnames["red"], linestyles='solid' )
 
 # a position vector
-radius = np.sqrt( x[10000]**2 + y[10000]**2 + z[10000]**2 )
-ax1.quiver3D( 0.0, 0.0, 0.0,
-              x[10000], y[10000], z[10000],
-              length=radius, lw = 1, pivot='tail', arrow_length_ratio=0.2,
-              color=colors.cnames['green'], linestyles='solid' )
+# radius = np.sqrt( x[10000]**2 + y[10000]**2 + z[10000]**2 )
+# ax1.quiver3D( 0.0, 0.0, 0.0,
+#               x[10000], y[10000], z[10000],
+#               length=radius, lw = 1, pivot='tail', arrow_length_ratio=0.2,
+#               color=colors.cnames['green'], linestyles='solid' )
 
 ## indicate starting point
 # ax1.scatter( x[0], y[0], z[0], 'g^' )
