@@ -51,15 +51,26 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-data = pd.read_csv( '../data/pointMassSolution.csv' )
-# data = pd.read_csv( '../data/singleRegolithEjectaURESolution.csv' )
-x = data[ 'x' ].values
-y = data[ 'y' ].values
-z = data[ 'z' ].values
-vx = data[ 'vx' ].values
-vy = data[ 'vy' ].values
-vz = data[ 'vz' ].values
-t = data[ 't' ].values
+
+## data in body frame
+# data = pd.read_csv( '../data/solutionParticleAroundRotatingSpheroid.csv' )
+# x = data[ 'x' ].values
+# y = data[ 'y' ].values
+# z = data[ 'z' ].values
+# vx = data[ 'vx' ].values
+# vy = data[ 'vy' ].values
+# vz = data[ 'vz' ].values
+# t = data[ 't' ].values
+
+## data in inertial frame
+data = pd.read_csv( '../data/solutionParticleAroundRotatingSpheroid_orbitalElements.csv' )
+x = data[ 'xInertial' ].values
+y = data[ 'yInertial' ].values
+z = data[ 'zInertial' ].values
+vx = data[ 'vxInertial' ].values
+vy = data[ 'vyInertial' ].values
+vz = data[ 'vzInertial' ].values
+t = data[ 'time' ].values
 
 ## Set up the figure
 fig = plt.figure( )
@@ -71,8 +82,8 @@ ax2 = plt.subplot( gs[ 1 ] )
 
 ## Plot the ellipsoidal shape of the asteroid
 alpha = 20000.0
-beta = 7000.0
-gamma = 7000.0
+beta = 20000.0
+gamma = 20000.0
 Wz = 0.00033118202125129593
 
 u = np.linspace(0, 2 * np.pi, 100)
@@ -94,6 +105,19 @@ ax1.hold( True )
 ## Plot 3D trajectory of the orbiting particle
 ax1.plot( x, y, z, zdir = 'z', color=colors.cnames["purple"] )
 
+# velocity vector
+ax1.quiver3D( x[10000], y[10000], z[10000],
+              x[10000] + 1000*vx[10000], y[10000] + 1000*vy[10000], z[10000] + 1000*vz[10000],
+              length=10000.0, lw = 1, pivot='tail', arrow_length_ratio=0.2,
+              color=colors.cnames["red"], linestyles='solid' )
+
+# a position vector
+radius = np.sqrt( x[10000]**2 + y[10000]**2 + z[10000]**2 )
+ax1.quiver3D( 0.0, 0.0, 0.0,
+              x[10000], y[10000], z[10000],
+              length=radius, lw = 1, pivot='tail', arrow_length_ratio=0.2,
+              color=colors.cnames['green'], linestyles='solid' )
+
 ## indicate starting point
 # ax1.scatter( x[0], y[0], z[0], 'g^' )
 ax1.text( x[0], y[0], z[0], 'start', size=10, zorder=1, color=colors.cnames["black"] )
@@ -110,7 +134,7 @@ ax1.set_xlabel('x [m]')
 ax1.set_ylabel('y [m]')
 ax1.set_zlabel('z [m]')
 ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
-ax1.set_title( 'Particle trajectory around asteroid Eros (Body fixed frame)' )
+ax1.set_title( 'Particle trajectory around asteroid Eros (Inertial frame)' )
 
 ## Plot the metadata (initial state vector)
 ax2.axis( 'off' )

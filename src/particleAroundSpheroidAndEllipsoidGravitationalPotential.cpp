@@ -29,18 +29,21 @@ namespace naos
  * first order differential equations describing the motion of a particle or spacecraft around a
  * central body modeled as a spheroid using ellipsoid gravitational model.
  */
-class equationsOfMotion
+class equationsOfMotionParticleAroundSpheroid
 {
     // declare parameters, gravitational parameter and the radius of the spheroid
     const double gravParameter;
     const double alpha;
+    const double zRotation;
 
 public:
     // Default constructor with member initializer list, get the gravitational parameter
-    equationsOfMotion( const double aGravParameter,
-                       const double aAlpha )
+    equationsOfMotionParticleAroundSpheroid( const double aGravParameter,
+                       const double aAlpha,
+                       const double aZRotation )
                     : gravParameter( aGravParameter ),
-                      alpha( aAlpha )
+                      alpha( aAlpha ),
+                      zRotation( aZRotation )
     { }
     void operator() ( const std::vector< double > &stateVector,
                       std::vector< double > &dXdt,
@@ -63,8 +66,14 @@ public:
         dXdt[ yPositionIndex ] = stateVector[ yVelocityIndex ];
         dXdt[ zPositionIndex ] = stateVector[ zVelocityIndex ];
 
-        dXdt[ xVelocityIndex ] = gravAcceleration[ xPositionIndex ];
-        dXdt[ yVelocityIndex ] = gravAcceleration[ yPositionIndex ];
+        dXdt[ xVelocityIndex ] = gravAcceleration[ xPositionIndex ]
+                                + 2.0 * zRotation * stateVector[ yVelocityIndex ]
+                                + zRotation * zRotation * stateVector[ xPositionIndex ];
+
+        dXdt[ yVelocityIndex ] = gravAcceleration[ yPositionIndex ]
+                                - 2.0 * zRotation * stateVector[ xVelocityIndex ]
+                                + zRotation * zRotation * stateVector[ yPositionIndex ];
+
         dXdt[ zVelocityIndex ] = gravAcceleration[ zPositionIndex ];
     }
 };
@@ -102,6 +111,7 @@ struct pushBackStateAndTime
  */
 void executeParticleAroundSpheroid( const double alpha,
                                     const double gravParameter,
+                                    std::vector< double > asteroidRotationVector,
                                     std::vector< double > &initialOrbitalElements,
                                     const double initialStepSize,
                                     const double startTime,
@@ -122,20 +132,41 @@ void executeParticleAroundSpheroid( const double alpha,
     outputFile.precision( 16 );
 
     //! convert the initial orbital elements to cartesian state
+    std::vector< double > initialStateInertial( 6, 0.0 );
+    initialStateInertial = convertKeplerianElementsToCartesianCoordinates( initialOrbitalElements,
+                                                                           gravParameter );
+
+    std::vector< double > inertialPositionVector = { initialStateInertial[ xPositionIndex ],
+                                                     initialStateInertial[ yPositionIndex ],
+                                                     initialStateInertial[ zPositionIndex ] };
+    std::vector< double > omegaCrossPosition( 3, 0.0 );
+    omegaCrossPosition = crossProduct( asteroidRotationVector, inertialPositionVector );
+
     std::vector< double > initialState( 6, 0.0 );
-    initialState = convertKeplerianElementsToCartesianCoordinates( initialOrbitalElements,
-                                                                   gravParameter );
+    initialState[ xPositionIndex ] = initialStateInertial[ xPositionIndex ];
+    initialState[ yPositionIndex ] = initialStateInertial[ yPositionIndex ];
+    initialState[ zPositionIndex ] = initialStateInertial[ zPositionIndex ];
+
+    initialState[ xVelocityIndex ]
+                = initialStateInertial[ xVelocityIndex ] - omegaCrossPosition[ 0 ];
+
+    initialState[ yVelocityIndex ]
+                = initialStateInertial[ yVelocityIndex ] - omegaCrossPosition[ 1 ];
+
+    initialState[ zVelocityIndex ]
+                = initialStateInertial[ zVelocityIndex ] - omegaCrossPosition[ 2 ];
 
     // set up boost odeint
-    const double absoluteTolerance = 1.0e-10;
-    const double relativeTolerance = 1.0e-10;
+    const double absoluteTolerance = 1.0e-15;
+    const double relativeTolerance = 1.0e-15;
     typedef boost::numeric::odeint::runge_kutta_fehlberg78< std::vector< double > > stepperType;
 
     // state step size guess (at each step this initial guess will be used)
     double stepSizeGuess = initialStepSize;
 
     // initialize the ode system
-    equationsOfMotion particleAroundSpheroidProblem( gravParameter, alpha );
+    const double zRotation = asteroidRotationVector[ zPositionIndex ];
+    equationsOfMotionParticleAroundSpheroid particleAroundSpheroidProblem( gravParameter, alpha, zRotation );
 
     // initialize current state vector and time
     std::vector< double > currentStateVector = initialState;

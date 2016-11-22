@@ -27,8 +27,8 @@
 #include "NAOS/springMassIntegratorTest.hpp"
 #include "NAOS/executeOrbiterAroundUREPointMassGravity.hpp"
 #include "NAOS/postAnalysis.hpp"
-#include "NAOS/boostIntegratorRestrictedTwoBodyProblem.hpp"
 #include "NAOS/particleAroundSpheroidAndElllipsoidGravitationalPotential.hpp"
+// #include "NAOS/boostIntegratorRestrictedTwoBodyProblem.hpp"
 // #include "NAOS/gslIntegratorOrbiterAroundUREPointMassGravity.hpp"
 // #include "NAOS/gslIntegratorOrbiterAroundURE.hpp"
 // #include "NAOS/regolithTrajectoryCalculator.hpp"
@@ -97,58 +97,58 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                                                                      springMassFilePath );
     }
 
-    else if( userMode.compare( "executeRestricted2BP" ) == 0 )
-    {
-        // Point mass gravity R2BP orbiter problem solution
-        std::ostringstream pointMassFilePath;
-        pointMassFilePath << "../../data/solutionrestricted2BP.csv";
-        const double semiMajor = 35000.0;
-        const double eccentricity = 0.1;
-        const double inclination = 10.0;
-        const double RAAN = 50.0;
-        const double AOP = 100.0;
-        const double TA = 0.0;
+    // else if( userMode.compare( "executeRestricted2BP" ) == 0 )
+    // {
+    //     // Point mass gravity R2BP orbiter problem solution
+    //     std::ostringstream pointMassFilePath;
+    //     pointMassFilePath << "../../data/solutionrestricted2BP.csv";
+    //     const double semiMajor = 35000.0;
+    //     const double eccentricity = 0.1;
+    //     const double inclination = 10.0;
+    //     const double RAAN = 50.0;
+    //     const double AOP = 100.0;
+    //     const double TA = 0.0;
 
-        naos::Vector6 initialVector { semiMajor,
-                                      eccentricity,
-                                      inclination,
-                                      RAAN,
-                                      AOP,
-                                      TA };
+    //     naos::Vector6 initialVector { semiMajor,
+    //                                   eccentricity,
+    //                                   inclination,
+    //                                   RAAN,
+    //                                   AOP,
+    //                                   TA };
 
-        const double integrationStepSize = 0.01;
-        const double startTime = 0.0;
-        const double endTime = 24.0 * 30.0 * 24.0 * 60.0 * 60.0;
-        const int dataSaveIntervals = 1000;
+    //     const double integrationStepSize = 0.01;
+    //     const double startTime = 0.0;
+    //     const double endTime = 24.0 * 30.0 * 24.0 * 60.0 * 60.0;
+    //     const int dataSaveIntervals = 1000;
 
-        double wallTimeStart = naos::getWallTime< double >( );
-        double cpuTimeStart = naos::getCPUTime< double >( );
+    //     double wallTimeStart = naos::getWallTime< double >( );
+    //     double cpuTimeStart = naos::getCPUTime< double >( );
 
-        naos::boostIntegratorRestrictedTwoBodyProblem( gravitationalParameter,
-                                                       initialVector,
-                                                       integrationStepSize,
-                                                       startTime,
-                                                       endTime,
-                                                       pointMassFilePath,
-                                                       dataSaveIntervals );
+    //     naos::boostIntegratorRestrictedTwoBodyProblem( gravitationalParameter,
+    //                                                    initialVector,
+    //                                                    integrationStepSize,
+    //                                                    startTime,
+    //                                                    endTime,
+    //                                                    pointMassFilePath,
+    //                                                    dataSaveIntervals );
 
-        double wallTimeEnd = naos::getWallTime< double >( );
-        double cpuTimeEnd = naos::getCPUTime< double >( );
+    //     double wallTimeEnd = naos::getWallTime< double >( );
+    //     double cpuTimeEnd = naos::getCPUTime< double >( );
 
-        std::cout << "Total wall time for execution = " << wallTimeEnd - wallTimeStart << std::endl;
-        std::cout << "Total CPU time for execution = " << cpuTimeEnd - cpuTimeStart << std::endl;
-    }
+    //     std::cout << "Total wall time for execution = " << wallTimeEnd - wallTimeStart << std::endl;
+    //     std::cout << "Total CPU time for execution = " << cpuTimeEnd - cpuTimeStart << std::endl;
+    // }
 
     else if( userMode.compare( "executeParticleAroundSpheroid" ) == 0 )
     {
         // Particle around spheroid orbiter problem solution
         std::ostringstream filePath;
-        filePath << "../../data/solutionParticleAroundSpheroid.csv";
+        filePath << "../../data/solutionParticleAroundRotatingSpheroid.csv";
         const double semiMajor = 35000.0;
         const double eccentricity = 0.1;
         const double inclination = 10.0;
         const double RAAN = 50.0;
-        const double AOP = 100.0;
+        const double AOP = 10.0;
         const double TA = 0.0;
 
         naos::Vector6 initialVector { semiMajor,
@@ -160,7 +160,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
         const double integrationStepSize = 0.01;
         const double startTime = 0.0;
-        const double endTime = 24.0 * 30.0 * 24.0 * 60.0 * 60.0;
+        const double endTime = 2.0 * 365.0 * 24.0 * 60.0 * 60.0;
         const int dataSaveIntervals = 1000;
 
         double wallTimeStart = naos::getWallTime< double >( );
@@ -168,6 +168,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
         naos::executeParticleAroundSpheroid( alpha,
                                              gravitationalParameter,
+                                             W,
                                              initialVector,
                                              integrationStepSize,
                                              startTime,
@@ -292,25 +293,28 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     {
         // specify the input file path
         std::ostringstream inputFilePath;
-        inputFilePath << "../../data/solutionParticleAroundSpheroid.csv";
+        inputFilePath << "../../data/solutionParticleAroundRotatingSpheroid.csv";
 
         // specify the output file path
-        std::ostringstream pointMassOrbitalElementsOutputFilePath;
-        pointMassOrbitalElementsOutputFilePath << "../../data/solutionParticleAroundSpheroid_orbitalElements.csv";
+        std::ostringstream OrbitalElementsOutputFilePath;
+        OrbitalElementsOutputFilePath << "../../data/solutionParticleAroundRotatingSpheroid_orbitalElements.csv";
 
         // post analysis, conversion of cartesian data into orbital elements
         naos::postSimulationOrbitalElementsConversion( W,
                                                        gravitationalParameter,
                                                        inputFilePath,
-                                                       pointMassOrbitalElementsOutputFilePath );
+                                                       OrbitalElementsOutputFilePath );
 
         //! Calculate the jacobian
-        std::ostringstream pointMassJacobianOutputFilePath;
-        pointMassJacobianOutputFilePath << "../../data/solutionParticleAroundSpheroid_jacobian.csv";
-        naos::calculateJacobianPointMassGravity( W,
-                                                 gravitationalParameter,
-                                                 inputFilePath,
-                                                 pointMassJacobianOutputFilePath );
+        std::ostringstream JacobianOutputFilePath;
+        JacobianOutputFilePath << "../../data/solutionParticleAroundRotatingSpheroid_jacobian.csv";
+        naos::calculateJacobianEllipsoidPotentialModel( alpha,
+                                                        beta,
+                                                        gamma,
+                                                        W,
+                                                        gravitationalParameter,
+                                                        inputFilePath,
+                                                        JacobianOutputFilePath );
     }
 
     return EXIT_SUCCESS;

@@ -33,6 +33,7 @@ namespace naos
  */
 void executeParticleAroundSpheroid( const double alpha,
                                     const double gravParameter,
+                                    std::vector< double > asteroidRotationVector,
                                     std::vector< double > &initialOrbitalElements,
                                     const double initialStepSize,
                                     const double startTime,

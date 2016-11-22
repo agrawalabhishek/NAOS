@@ -20,6 +20,7 @@
 #include "NAOS/basicMath.hpp"
 #include "NAOS/basicAstro.hpp"
 #include "NAOS/misc.hpp"
+#include "NAOS/ellipsoidPotential.hpp"
 
 namespace naos
 {
@@ -32,6 +33,18 @@ void calculateJacobianPointMassGravity( const std::vector< double > &angularVelo
                                         const double gravParameter,
                                         std::ostringstream &inputFilePath,
                                         std::ostringstream &outputFilePath );
+
+//! Calculate the jacobian
+/*!
+ * calculate the jacobian for ellipsoid gravity potential case.
+ */
+void calculateJacobianEllipsoidPotentialModel( const double alpha,
+                                               const double beta,
+                                               const double gamma,
+                                               const std::vector< double > &angularVelocityVector,
+                                               const double gravParameter,
+                                               std::ostringstream &inputFilePath,
+                                               std::ostringstream &outputFilePath );
 
 //! Convert cartesian states to orbital elements post simulation.
 /*!
