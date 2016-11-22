@@ -107,7 +107,7 @@ ax1.plot( x, y, z, zdir = 'z', color=colors.cnames["purple"] )
 
 # velocity vector
 ax1.quiver3D( x[10000], y[10000], z[10000],
-              x[10000] + 1000*vx[10000], y[10000] + 1000*vy[10000], z[10000] + 1000*vz[10000],
+              vx[10000], vy[10000], vz[10000],
               length=10000.0, lw = 1, pivot='tail', arrow_length_ratio=0.2,
               color=colors.cnames["red"], linestyles='solid' )
 
