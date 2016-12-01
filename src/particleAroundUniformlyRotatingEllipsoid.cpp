@@ -248,4 +248,187 @@ void executeParticleAroundEllipsoid( const double alpha,
     outputFile.close( );
 }
 
+//! Trajectory calculation for regolith around an asteroid (modelled as ellipsoid here)
+/*!
+ * Same as the previous function, except that the initial conditions are now given as a cartesian
+ * state. The initial cartesian state should be given in body fixed frame of the asteroid.
+ */
+void singleRegolithTrajectoryCalculator( const double alpha,
+                                         const double beta,
+                                         const double gamma,
+                                         const double gravParameter,
+                                         std::vector< double > asteroidRotationVector,
+                                         std::vector< double > &initialCartesianStateVector,
+                                         const double initialStepSize,
+                                         const double startTime,
+                                         const double endTime,
+                                         std::ostringstream &outputFilePath,
+                                         const int dataSaveIntervals )
+{
+    //! open the output csv file to save data. Declare file headers.
+    std::ofstream outputFile;
+    outputFile.open( outputFilePath.str( ) );
+    outputFile << "x" << ",";
+    outputFile << "y" << ",";
+    outputFile << "z" << ",";
+    outputFile << "vx" << ",";
+    outputFile << "vy" << ",";
+    outputFile << "vz" << ",";
+    outputFile << "t" << std::endl;
+    outputFile.precision( 16 );
+
+    //! get the initial cartesian state vector in a seperate container
+    std::vector< double > initialState = initialCartesianStateVector;
+
+    // set up boost odeint
+    const double absoluteTolerance = 1.0e-15;
+    const double relativeTolerance = 1.0e-15;
+    typedef boost::numeric::odeint::runge_kutta_fehlberg78< std::vector< double > > stepperType;
+
+    // state step size guess (at each step this initial guess will be used)
+    double stepSizeGuess = initialStepSize;
+
+    // initialize the ode system
+    const double zRotation = asteroidRotationVector[ zPositionIndex ];
+    equationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
+                                                                             alpha,
+                                                                             beta,
+                                                                             gamma,
+                                                                             zRotation );
+
+    // initialize current state vector and time
+    std::vector< double > currentStateVector = initialState;
+    double currentTime = startTime;
+    double intermediateEndTime = currentTime + dataSaveIntervals;
+
+    // save the initial state vector
+    outputFile << currentStateVector[ xPositionIndex ] << ",";
+    outputFile << currentStateVector[ yPositionIndex ] << ",";
+    outputFile << currentStateVector[ zPositionIndex ] << ",";
+    outputFile << currentStateVector[ xVelocityIndex ] << ",";
+    outputFile << currentStateVector[ yVelocityIndex ] << ",";
+    outputFile << currentStateVector[ zVelocityIndex ] << ",";
+    outputFile << currentTime << std::endl;
+
+    // start the integration outer loop
+    while( intermediateEndTime <= endTime )
+    {
+        // save the last know state vector for when the particle is outside the asteroid
+        std::vector< double > lastStateVector = currentStateVector;
+
+        // perform integration, integrated result stored in currentStateVector
+        size_t steps = boost::numeric::odeint::integrate_adaptive(
+                            make_controlled( absoluteTolerance, relativeTolerance, stepperType( ) ),
+                            particleAroundEllipsoidProblem,
+                            currentStateVector,
+                            currentTime,
+                            intermediateEndTime,
+                            stepSizeGuess );
+
+        //! check if the particle is inside the surface of the asteroid
+        double xSquare = currentStateVector[ xPositionIndex ] * currentStateVector[ xPositionIndex ];
+        double ySquare = currentStateVector[ yPositionIndex ] * currentStateVector[ yPositionIndex ];
+        double zSquare = currentStateVector[ zPositionIndex ] * currentStateVector[ zPositionIndex ];
+
+        double crashCheck = xSquare / ( alpha * alpha )
+                            + ySquare / ( beta * beta )
+                            + zSquare / ( gamma * gamma )
+                            - 1.0;
+
+        if( crashCheck == 0.0 )
+        {
+            // particle is on the surface of the asteroid, save data and stop integration
+            // update the time variables
+            currentTime = intermediateEndTime;
+
+            // save data
+            outputFile << currentStateVector[ xPositionIndex ] << ",";
+            outputFile << currentStateVector[ yPositionIndex ] << ",";
+            outputFile << currentStateVector[ zPositionIndex ] << ",";
+            outputFile << currentStateVector[ xVelocityIndex ] << ",";
+            outputFile << currentStateVector[ yVelocityIndex ] << ",";
+            outputFile << currentStateVector[ zVelocityIndex ] << ",";
+            outputFile << currentTime << std::endl;
+
+            break;
+        }
+
+        if( crashCheck < 0.0 )
+        {
+            double stepSize = 1.0;
+            const double machinePrecision = std::numeric_limits< double >::epsilon( );
+            // if the particle is on the surface of the asteroid, then the while condition
+            // will be false, for all other cases it will be true. Within the while loop, the
+            // inside or outside differnetiation takes place.
+            while( std::fabs( crashCheck ) > machinePrecision )
+            {
+                // std::cout << "crash check value = " << crashCheck << std::endl;
+                if( crashCheck < 0.0 ) // particle is still inside the surface
+                {
+                    // std::cout << "particle inside the surface" << std::endl << std::endl;
+                    // particle is inside the surface of the asteroid. restart the integration from last
+                    // known state external to the asteroid
+                    currentStateVector = lastStateVector;
+                    stepSize = 0.5 * stepSize;
+                }
+                else // particle is outside the asteroid at the end of last integration step
+                {
+                    // std::cout << "particle outside the surface" << std::endl << std::endl;
+                    lastStateVector = currentStateVector;
+                    currentTime = intermediateEndTime;
+                }
+
+                typedef boost::numeric::odeint::runge_kutta_fehlberg78< std::vector< double > > errorStepperType;
+                intermediateEndTime =  boost::numeric::odeint::integrate_n_steps(
+                                                errorStepperType( ),
+                                                particleAroundEllipsoidProblem,
+                                                currentStateVector,
+                                                currentTime,
+                                                stepSize,
+                                                1 );
+
+                xSquare = currentStateVector[ xPositionIndex ] * currentStateVector[ xPositionIndex ];
+                ySquare = currentStateVector[ yPositionIndex ] * currentStateVector[ yPositionIndex ];
+                zSquare = currentStateVector[ zPositionIndex ] * currentStateVector[ zPositionIndex ];
+
+                crashCheck = xSquare / ( alpha * alpha )
+                            + ySquare / ( beta * beta )
+                            + zSquare / ( gamma * gamma )
+                            - 1.0;
+            }
+
+            // particle is on the surface of the asteroid, save data and stop integration
+            // update the time variables
+            currentTime = intermediateEndTime;
+
+            // save data
+            outputFile << currentStateVector[ xPositionIndex ] << ",";
+            outputFile << currentStateVector[ yPositionIndex ] << ",";
+            outputFile << currentStateVector[ zPositionIndex ] << ",";
+            outputFile << currentStateVector[ xVelocityIndex ] << ",";
+            outputFile << currentStateVector[ yVelocityIndex ] << ",";
+            outputFile << currentStateVector[ zVelocityIndex ] << ",";
+            outputFile << currentTime << std::endl;
+
+            break;
+        }
+
+        // update the time variables
+        currentTime = intermediateEndTime;
+        intermediateEndTime = currentTime + dataSaveIntervals;
+
+        // save data
+        outputFile << currentStateVector[ xPositionIndex ] << ",";
+        outputFile << currentStateVector[ yPositionIndex ] << ",";
+        outputFile << currentStateVector[ zPositionIndex ] << ",";
+        outputFile << currentStateVector[ xVelocityIndex ] << ",";
+        outputFile << currentStateVector[ yVelocityIndex ] << ",";
+        outputFile << currentStateVector[ zVelocityIndex ] << ",";
+        outputFile << currentTime << std::endl;
+
+    } // end of outer while loop for integration
+
+    outputFile.close( );
+}
+
 } // namespace naos

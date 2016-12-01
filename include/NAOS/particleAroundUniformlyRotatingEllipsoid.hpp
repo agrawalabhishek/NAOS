@@ -44,6 +44,23 @@ void executeParticleAroundEllipsoid( const double alpha,
                                      std::ostringstream &outputFilePath,
                                      const int dataSaveIntervals );
 
+//! Trajectory calculation for regolith around an asteroid (modelled as ellipsoid here)
+/*!
+ * Same as the previous function, except that the initial conditions are now given as a cartesian
+ * state. The initial cartesian state should be given in body fixed frame of the asteroid.
+ */
+void singleRegolithTrajectoryCalculator( const double alpha,
+                                         const double beta,
+                                         const double gamma,
+                                         const double gravParameter,
+                                         std::vector< double > asteroidRotationVector,
+                                         std::vector< double > &initialCartesianStateVector,
+                                         const double initialStepSize,
+                                         const double startTime,
+                                         const double endTime,
+                                         std::ostringstream &outputFilePath,
+                                         const int dataSaveIntervals );
+
 } // namespace naos
 
 #endif // PARTICLE_AROUND_UNIFORMLY_ROTATING_ELLIPSOID

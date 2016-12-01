@@ -2,6 +2,5 @@
 cd build
 make
 cd bin
-./NAOS_main executeParticleAroundUniformlyRotatingEllipsoid
-./NAOS_main postAnalysisParticleAroundUniformlyRotatingEllipsoid
+./NAOS_main executeRegolithTrajectoryCalculation
 cd ../../

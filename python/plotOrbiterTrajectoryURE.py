@@ -53,24 +53,24 @@ start_time = time.time( )
 # Read data in csv file. data returned as a panda series.
 
 ## data in body frame
-# data = pd.read_csv( '../data/solutionParticleAroundUniformlyRotatingEllipsoid.csv' )
-# x = data[ 'x' ].values
-# y = data[ 'y' ].values
-# z = data[ 'z' ].values
-# vx = data[ 'vx' ].values
-# vy = data[ 'vy' ].values
-# vz = data[ 'vz' ].values
-# t = data[ 't' ].values
+data = pd.read_csv( '../data/singleRegolithEjectaURESolution.csv' )
+x = data[ 'x' ].values
+y = data[ 'y' ].values
+z = data[ 'z' ].values
+vx = data[ 'vx' ].values
+vy = data[ 'vy' ].values
+vz = data[ 'vz' ].values
+t = data[ 't' ].values
 
 ## data in inertial frame
-data = pd.read_csv( '../data/solutionParticleAroundUniformlyRotatingEllipsoid_orbitalElements.csv' )
-x = data[ 'xInertial' ].values
-y = data[ 'yInertial' ].values
-z = data[ 'zInertial' ].values
-vx = data[ 'vxInertial' ].values
-vy = data[ 'vyInertial' ].values
-vz = data[ 'vzInertial' ].values
-t = data[ 'time' ].values
+# data = pd.read_csv( '../data/solutionParticleAroundUniformlyRotatingEllipsoid_orbitalElements.csv' )
+# x = data[ 'xInertial' ].values
+# y = data[ 'yInertial' ].values
+# z = data[ 'zInertial' ].values
+# vx = data[ 'vxInertial' ].values
+# vy = data[ 'vyInertial' ].values
+# vz = data[ 'vzInertial' ].values
+# t = data[ 'time' ].values
 
 ## Set up the figure
 fig = plt.figure( )
@@ -134,7 +134,7 @@ ax1.set_xlabel('x [m]')
 ax1.set_ylabel('y [m]')
 ax1.set_zlabel('z [m]')
 ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
-ax1.set_title( 'Particle trajectory around asteroid Eros (Inertial frame)' )
+ax1.set_title( 'Particle trajectory around asteroid Eros (Body frame)' )
 
 ## Plot the metadata (initial state vector)
 ax2.axis( 'off' )

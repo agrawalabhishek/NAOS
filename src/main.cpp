@@ -23,6 +23,7 @@
 #include "NAOS/springMassIntegratorTest.hpp"
 #include "NAOS/postAnalysis.hpp"
 #include "NAOS/particleAroundUniformlyRotatingEllipsoid.hpp"
+#include "NAOS/regolithTrajectoryCalculator.hpp"
 // #include "NAOS/particleAroundSpheroidAndElllipsoidGravitationalPotential.hpp"
 // #include "NAOS/boostIntegratorRestrictedTwoBodyProblem.hpp"
 // #include "NAOS/executeOrbiterAroundUREPointMassGravity.hpp"
@@ -32,7 +33,6 @@
 // #include "NAOS/rk54.hpp"
 // #include "NAOS/gslIntegratorOrbiterAroundUREPointMassGravity.hpp"
 // #include "NAOS/gslIntegratorOrbiterAroundURE.hpp"
-// #include "NAOS/regolithTrajectoryCalculator.hpp"
 // #include "NAOS/bulirschStoer.hpp"
 
 int main( const int numberOfInputs, const char* inputArguments[ ] )
@@ -231,37 +231,51 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     }
 
     // compute trajectory evolution for single regolith lofted from the surface of an asteroid
-    // std::ostringstream regolithAroundUREFilePath;
-    // regolithAroundUREFilePath << "../../data/singleRegolithEjectaURESolution.csv";
+    else if( userMode.compare( "executeRegolithTrajectoryCalculation" ) == 0 )
+    {
+        std::ostringstream regolithAroundUREFilePath;
+        regolithAroundUREFilePath << "../../data/singleRegolithEjectaURESolution.csv";
 
-    // const double integrationStepSize = 0.01;
-    // const double startTime = 0.0;
-    // const double endTime = 100.0;
+        const double integrationStepSize = 0.01;
+        const double startTime = 0.0;
+        const double endTime = 6.0 * 30.0 * 24.0 * 60.0 * 60.0;
+        const double dataSaveIntervals = 100;
 
-    // const double aXValue = 1.0;
-    // const double aYValue = 2.0;
-    // const double aZValue = 0.0;
-    // const double velocityMagnitudeFactor = 0.7;
-    // const double coneAngleAzimuth = naos::convertDegreeToRadians( 90.0 );
-    // const double coneAngleDeclination = naos::convertDegreeToRadians( 45.0 );
+        const double aXValue = 1.0;
+        const double aYValue = 1.0;
+        const double aZValue = 1.0;
+        const double velocityMagnitudeFactor = 0.9;
+        const double coneAngleAzimuth = naos::convertDegreeToRadians( 45.0 );
+        const double coneAngleDeclination = naos::convertDegreeToRadians( 60.0 );
 
-    // naos::calculateRegolithTrajectory( alpha,
-    //                                    beta,
-    //                                    gamma,
-    //                                    gravitationalParameter,
-    //                                    density,
-    //                                    W,
-    //                                    Wmagnitude,
-    //                                    aXValue,
-    //                                    aYValue,
-    //                                    aZValue,
-    //                                    coneAngleAzimuth,
-    //                                    coneAngleDeclination,
-    //                                    velocityMagnitudeFactor,
-    //                                    integrationStepSize,
-    //                                    startTime,
-    //                                    endTime,
-    //                                    regolithAroundUREFilePath );
+        double wallTimeStart = naos::getWallTime< double >( );
+        double cpuTimeStart = naos::getCPUTime< double >( );
+
+        naos::calculateRegolithTrajectory( alpha,
+                                           beta,
+                                           gamma,
+                                           gravitationalParameter,
+                                           density,
+                                           W,
+                                           Wmagnitude,
+                                           aXValue,
+                                           aYValue,
+                                           aZValue,
+                                           coneAngleAzimuth,
+                                           coneAngleDeclination,
+                                           velocityMagnitudeFactor,
+                                           integrationStepSize,
+                                           startTime,
+                                           endTime,
+                                           dataSaveIntervals,
+                                           regolithAroundUREFilePath );
+
+        double wallTimeEnd = naos::getWallTime< double >( );
+        double cpuTimeEnd = naos::getCPUTime< double >( );
+
+        std::cout << "Total wall time for execution = " << wallTimeEnd - wallTimeStart << std::endl;
+        std::cout << "Total CPU time for execution = " << cpuTimeEnd - cpuTimeStart << std::endl;
+    }
 
     else if( userMode.compare( "postAnalysisRestricted2BP" ) == 0 )
     {
