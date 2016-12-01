@@ -17,7 +17,7 @@
 
 #include "NAOS/constants.hpp"
 #include "NAOS/basicMath.hpp"
-#include "NAOS/gslIntegratorOrbiterAroundURE.hpp"
+#include "NAOS/particleAroundUniformlyRotatingEllipsoid.hpp"
 
 namespace naos
 {
@@ -68,6 +68,7 @@ void calculateRegolithTrajectory( const double alpha,
                                   const double integrationStepSize,
                                   const double startTime,
                                   const double endTime,
+                                  const double dataSaveIntervals,
                                   std::ostringstream &filePath );
 } // namespace naos
 

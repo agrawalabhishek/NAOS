@@ -8,6 +8,8 @@
 #define MISC_HPP
 
 #include <iostream>
+#include <time.h>
+#include <sys/time.h>
 
 namespace naos
 {
@@ -54,6 +56,26 @@ void displayProgressBar( Real counterValue, Real endValue )
     }
     std::cout << "] " << int( ( counterValue / endValue ) * 100.0 ) << "%\r";
     std::cout.flush( );
+}
+
+//! get wall time for a c++ process (linux only)
+template< typename Real >
+Real getWallTime( )
+{
+    struct timeval time;
+    if ( gettimeofday( &time, NULL ) )
+    {
+        //  Handle error
+        return 0;
+    }
+    return ( Real )time.tv_sec + ( Real )time.tv_usec * .000001;
+}
+
+//! get cpu time for a c++ process (linux only)
+template< typename Real >
+Real getCPUTime( )
+{
+    return ( Real )clock( ) / CLOCKS_PER_SEC;
 }
 
 } // namespace naos

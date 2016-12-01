@@ -16,9 +16,9 @@
 
 #include "NAOS/constants.hpp"
 #include "NAOS/basicMath.hpp"
-#include "NAOS/gslIntegratorOrbiterAroundURE.hpp"
-#include "NAOS/regolithTrajectoryCalculator.hpp"
 #include "NAOS/misc.hpp"
+#include "NAOS/particleAroundUniformlyRotatingEllipsoid.hpp"
+#include "NAOS/regolithTrajectoryCalculator.hpp"
 
 namespace naos
 {
@@ -129,10 +129,6 @@ void computeRegolithVelocityVector( std::vector< double > regolithPositionVector
         yUnitVector = { 0.0, 1.0, 0.0 };
     }
 
-    // yUnitVector = normalize( crossProduct( unitNormalVector, bodyFrameZUnitVector ) );
-
-    // xUnitVector = normalize( crossProduct( yUnitVector, unitNormalVector ) );
-
     // put the basis vectors in a 3x3 matrix
     std::vector< std::vector< double > > intermediateFrameBasisMatrix
             { { xUnitVector[ 0 ], yUnitVector[ 0 ], zUnitVector[ 0 ] },
@@ -222,7 +218,6 @@ void computeRegolithVelocityVector2( std::vector< double > regolithPositionVecto
                                                         + sinDelta * cosGamma * xUnitVector[ 2 ]
                                                         + sinDelta * sinGamma * yUnitVector[ 2 ] );
 
-    // printVector( regolithVelocityVector, 3 );
 }
 
 //! Compute trajectory for regolith ejected from the surface of an asteroid
@@ -248,6 +243,7 @@ void calculateRegolithTrajectory( const double alpha,
                                   const double integrationStepSize,
                                   const double startTime,
                                   const double endTime,
+                                  const double dataSaveIntervals,
                                   std::ostringstream &filePath )
 {
     // get the initial position coordinates for the particle on the surface
@@ -286,6 +282,7 @@ void calculateRegolithTrajectory( const double alpha,
 
     // get the velocity vector
     positionMagnitude = vectorNorm( regolithPositionVector );
+    // velocity magnitude calculated using simple point mass potential formula
     const double velocityMagnitude = velocityMagnitudeFactor
                                     * std::sqrt( 2.0 * gravitationalParameter / positionMagnitude );
     std::vector< double > regolithVelocityVector( 3 );
@@ -304,31 +301,25 @@ void calculateRegolithTrajectory( const double alpha,
                                     regolithNormalUnitVector,
                                     regolithVelocityVector );
 
-    // velocity sanity check
-    // std::cout << "input velocity Magnitude = " << velocityMagnitude << std::endl;
-    // std::cout << "output velocity Magnitude = " << vectorNorm( regolithVelocityVector ) << std::endl;
-
     naos::Vector6 initialVector { regolithPositionVector[ xPositionIndex ],
                                   regolithPositionVector[ yPositionIndex ],
                                   regolithPositionVector[ zPositionIndex ],
                                   regolithVelocityVector[ 0 ],
                                   regolithVelocityVector[ 1 ],
                                   regolithVelocityVector[ 2 ] };
-    const bool initialVectorIsCartesian = true;
 
-    naos::gslIntegratorOrbiterAroundURE( alpha,
-                                         beta,
-                                         gamma,
-                                         gravitationalParameter,
-                                         density,
-                                         W,
-                                         Wmagnitude,
-                                         initialVectorIsCartesian,
-                                         initialVector,
-                                         integrationStepSize,
-                                         startTime,
-                                         endTime,
-                                         filePath );
+    // calculate the trajectory of the regolith
+    singleRegolithTrajectoryCalculator( alpha,
+                                        beta,
+                                        gamma,
+                                        gravitationalParameter,
+                                        W,
+                                        initialVector,
+                                        integrationStepSize,
+                                        startTime,
+                                        endTime,
+                                        filePath,
+                                        dataSaveIntervals );
 }
 
 } // namespace naos

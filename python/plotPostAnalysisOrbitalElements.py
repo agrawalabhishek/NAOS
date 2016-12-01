@@ -51,28 +51,19 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-# data = pd.read_csv( '../data/gsl_RK8_OrbiterAroundSphericalEros.csv' )
-# data = pd.read_csv( '../data/RK5_OrbiterAroundSphericalEros_longTermSimulation.csv' )
-# data = pd.read_csv( '../data/RK5_OrbiterAroundSphericalEros_shortTimeSimulation.csv' )
-# data = pd.read_csv( '../data/sphericalErosEllipsoidPotentialZeroRotation.csv' )
-# data = pd.read_csv( '../data/pointMassSolution.csv' )
-# data = pd.read_csv( '../data/pointMassSolutionZeroRotation.csv' )
+data = pd.read_csv( "../data/solutionParticleAroundUniformlyRotatingEllipsoid_orbitalElements.csv" )
+cartesianData = pd.read_csv( "../data/solutionParticleAroundUniformlyRotatingEllipsoid.csv" )
 
-x = data[ 'x' ].values
-y = data[ 'y' ].values
-z = data[ 'z' ].values
-vx = data[ 'vx' ].values
-vy = data[ 'vy' ].values
-vz = data[ 'vz' ].values
-t = data[ 't' ].values
-jacobian = data[ 'jacobian' ].values
 semiMajor = data['semiMajor'].values
 eccentricity = data['eccentricity'].values
 inclination = data['inclination'].values
-raan = data['RAAN'].values
-aop = data['AOP'].values
-ta = data['TA'].values
-stepSize = data['stepSize'].values
+raan = data['raan'].values
+aop = data['aop'].values
+ta = data['ta'].values
+t = data['time'].values
+
+# convert time in seconds to earth days
+t = t / ( 24.0 * 60.0 * 60.0 )
 
 ## Set up the figure
 fig = plt.figure( )
@@ -81,70 +72,40 @@ ax2 = fig.add_subplot( 422 )
 ax3 = fig.add_subplot( 423 )
 ax4 = fig.add_subplot( 424 )
 ax5 = fig.add_subplot( 425 )
-ax6 = fig.add_subplot( 426 )
-ax7 = fig.add_subplot( 427 )
 
 ## plot the orbital elements
 ax1.plot( t, semiMajor, color=colors.cnames['purple'] )
-ax1.set_xlabel('time [s]')
+ax1.set_xlabel('time [Earth days]')
 ax1.set_ylabel('semi-major axis [m]')
 ax1.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
 ax1.grid( )
 
 ax2.plot( t, eccentricity, color=colors.cnames['purple'] )
-ax2.set_xlabel('time [s]')
+ax2.set_xlabel('time [Earth days]')
 ax2.set_ylabel('eccentricity')
 ax2.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
 ax2.grid( )
 
 ax3.plot( t, inclination, color=colors.cnames['purple'] )
-ax3.set_xlabel('time [s]')
+ax3.set_xlabel('time [Earth days]')
 ax3.set_ylabel('inclination [deg]')
 ax3.ticklabel_format(style='plain', useOffset=False)
 ax3.grid( )
 
 ax4.plot( t, raan, color=colors.cnames['purple'] )
-ax4.set_xlabel('time [s]')
+ax4.set_xlabel('time [Earth days]')
 ax4.set_ylabel('RAAN [deg]')
 ax4.ticklabel_format(style='plain', useOffset=False)
 ax4.grid( )
 
 ax5.plot( t, aop, color=colors.cnames['purple'] )
-ax5.set_xlabel('time [s]')
+ax5.set_xlabel('time [Earth days]')
 ax5.set_ylabel('AOP [deg]')
 ax5.ticklabel_format(style='plain', useOffset=False)
 ax5.grid( )
 
-ax6.plot( t, stepSize, color=colors.cnames['purple'] )
-ax6.set_xlabel('time [s]')
-ax6.set_ylabel('stepSize [s]')
-maxStep = np.max( stepSize )
-minStep = np.min( stepSize )
-# ax6.set_ylim( [ -0.01, 0.01 ] )
-ax6.ticklabel_format(style='plain', useOffset=False)
-ax6.grid( )
-
-## plot meta data
-endIndex = np.size( x )
-ax7.axis( 'off' )
-metadata_table = []
-metadata_table.append( [ "Initial X coordinate", x[0], "[m]" ] )
-metadata_table.append( [ "Initial Y coordinate", y[0], "[m]" ] )
-metadata_table.append( [ "Initial Z coordinate", z[0], "[m]" ] )
-metadata_table.append( [ "Initial X velocity", vx[0], "[m/s]" ] )
-metadata_table.append( [ "Initial Y velocity", vy[0], "[m/s]" ] )
-metadata_table.append( [ "Initial Z velocity", vz[0], "[m/s]" ] )
-metadata_table.append( [ "Simulation time", t[endIndex-1], "[s]" ] )
-table = ax7.table( cellText = metadata_table, colLabels = None, cellLoc = 'center', loc = 'center' )
-table_properties = table.properties( )
-table_cells = table_properties[ 'child_artists' ]
-for cell in table_cells: cell.set_height( 0.15 )
-cell_dict = table.get_celld( )
-for row in xrange( 0, 7 ): cell_dict[ ( row, 2 ) ].set_width( 0.1 )
-
 ## show plot
 plt.tight_layout( )
-plt.grid( )
 plt.show( )
 
 # Stop timer
