@@ -53,7 +53,7 @@ start_time = time.time( )
 # Read data in csv file. data returned as a panda series.
 
 ## data in body frame
-data = pd.read_csv( '../data/trajectory_for_different_launch_azimuth/regolithTrajectoryAtAzimuth300.csv' )
+data = pd.read_csv( '../data/trajectory_for_different_launch_azimuth/regolithTrajectoryAtAzimuth210.csv' )
 x = data[ 'x' ].values
 y = data[ 'y' ].values
 z = data[ 'z' ].values
