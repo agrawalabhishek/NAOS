@@ -356,7 +356,10 @@ void singleRegolithTrajectoryCalculator( const double alpha,
         if( crashCheck < 0.0 )
         {
             double stepSize = 1.0;
-            const double machinePrecision = std::numeric_limits< double >::epsilon( );
+
+            // const double machinePrecision = std::numeric_limits< double >::epsilon( );
+            const double machinePrecision = 1.0e-15;
+
             // if the particle is on the surface of the asteroid, then the while condition
             // will be false, for all other cases it will be true. Within the while loop, the
             // inside or outside differnetiation takes place.

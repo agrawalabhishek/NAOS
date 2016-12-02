@@ -233,42 +233,57 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     // compute trajectory evolution for single regolith lofted from the surface of an asteroid
     else if( userMode.compare( "executeRegolithTrajectoryCalculation" ) == 0 )
     {
-        std::ostringstream regolithAroundUREFilePath;
-        regolithAroundUREFilePath << "../../data/singleRegolithEjectaURESolution.csv";
-
         const double integrationStepSize = 0.01;
         const double startTime = 0.0;
-        const double endTime = 6.0 * 30.0 * 24.0 * 60.0 * 60.0;
+        const double endTime = 1.0 * 30.0 * 24.0 * 60.0 * 60.0;
         const double dataSaveIntervals = 100;
 
         const double aXValue = 1.0;
         const double aYValue = 1.0;
         const double aZValue = 1.0;
         const double velocityMagnitudeFactor = 0.9;
-        const double coneAngleAzimuth = naos::convertDegreeToRadians( 45.0 );
-        const double coneAngleDeclination = naos::convertDegreeToRadians( 60.0 );
+        const double coneAngleDeclination = naos::convertDegreeToRadians( 45.0 );
+        const double coneAngleAzimuthFactor = 10.0;
 
         double wallTimeStart = naos::getWallTime< double >( );
         double cpuTimeStart = naos::getCPUTime< double >( );
 
-        naos::calculateRegolithTrajectory( alpha,
-                                           beta,
-                                           gamma,
-                                           gravitationalParameter,
-                                           density,
-                                           W,
-                                           Wmagnitude,
-                                           aXValue,
-                                           aYValue,
-                                           aZValue,
-                                           coneAngleAzimuth,
-                                           coneAngleDeclination,
-                                           velocityMagnitudeFactor,
-                                           integrationStepSize,
-                                           startTime,
-                                           endTime,
-                                           dataSaveIntervals,
-                                           regolithAroundUREFilePath );
+        // azimuth angle iterator begins here
+        for( int azimuthIterator = 0; azimuthIterator < 36; azimuthIterator++ )
+        {
+            // calculate the azimuth angle
+            const double coneAngleAzimuth
+                    = naos::convertDegreeToRadians( coneAngleAzimuthFactor * azimuthIterator );
+
+            // set the output file name for the current azimuth angle
+            std::stringstream dynamicPathConstruction;
+            dynamicPathConstruction << "../../data/trajectory_for_different_launch_azimuth/";
+            dynamicPathConstruction << "regolithTrajectoryAtAzimuth";
+            dynamicPathConstruction << naos::convertRadiansToDegree( coneAngleAzimuth );
+            dynamicPathConstruction << ".csv";
+
+            std::ostringstream regolithAroundUREFilePath;
+            regolithAroundUREFilePath << dynamicPathConstruction.str( );
+
+            naos::calculateRegolithTrajectory( alpha,
+                                               beta,
+                                               gamma,
+                                               gravitationalParameter,
+                                               density,
+                                               W,
+                                               Wmagnitude,
+                                               aXValue,
+                                               aYValue,
+                                               aZValue,
+                                               coneAngleAzimuth,
+                                               coneAngleDeclination,
+                                               velocityMagnitudeFactor,
+                                               integrationStepSize,
+                                               startTime,
+                                               endTime,
+                                               dataSaveIntervals,
+                                               regolithAroundUREFilePath );
+        }
 
         double wallTimeEnd = naos::getWallTime< double >( );
         double cpuTimeEnd = naos::getCPUTime< double >( );
