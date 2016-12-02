@@ -20,6 +20,7 @@
 #include "NAOS/basicAstro.hpp"
 #include "NAOS/misc.hpp"
 #include "NAOS/ellipsoidGravitationalAcceleration.hpp"
+#include "NAOS/ellipsoidPotential.hpp"
 
 namespace naos
 {
@@ -324,6 +325,123 @@ void singleRegolithTrajectoryCalculator( const double alpha,
                             currentTime,
                             intermediateEndTime,
                             stepSizeGuess );
+
+        //! check if the particle is on an escape trajectory or not
+        // check for energy if the particle is far away from the asteroid
+        double radialDistance
+            = std::sqrt( currentStateVector[ xPositionIndex ] * currentStateVector[ xPositionIndex ]
+                    + currentStateVector[ yPositionIndex ] * currentStateVector[ yPositionIndex ]
+                    + currentStateVector[ zPositionIndex ] * currentStateVector[ zPositionIndex ] );
+
+        if( radialDistance >= 10.0 * alpha )
+        {
+            // before calculating energy, convert the body frame state vector into inertial frame state vector
+            double rotationAngle = asteroidRotationVector[ zPositionIndex ] * intermediateEndTime;
+
+            std::vector< double > inertialState( 6, 0.0 );
+
+            // get the inertial position
+            inertialState[ xPositionIndex ]
+                        = currentStateVector[ xPositionIndex ] * std::cos( rotationAngle )
+                        - currentStateVector[ yPositionIndex ] * std::sin( rotationAngle );
+
+            inertialState[ yPositionIndex ]
+                        = currentStateVector[ xPositionIndex ] * std::sin( rotationAngle )
+                        + currentStateVector[ yPositionIndex ] * std::cos( rotationAngle );
+
+            inertialState[ zPositionIndex ] = currentStateVector[ zPositionIndex ];
+
+            // get the omega cross position vector for use in the transport theorem
+            std::vector< double > bodyFramePositionVector = { currentStateVector[ xPositionIndex ],
+                                                              currentStateVector[ yPositionIndex ],
+                                                              currentStateVector[ zPositionIndex ] };
+
+            std::vector< double > omegaCrossPosition( 3, 0.0 );
+            omegaCrossPosition = crossProduct( asteroidRotationVector, bodyFramePositionVector );
+
+            // use the transport theorem to get the body frame velocity in inertial coordinates
+            double xBodyFrameVelocityInertialCoordinates
+                        = currentStateVector[ xVelocityIndex ] + omegaCrossPosition[ 0 ];
+
+            double yBodyFrameVelocityInertialCoordinates
+                        = currentStateVector[ yVelocityIndex ] + omegaCrossPosition[ 1 ];
+
+            double zBodyFrameVelocityInertialCoordinates
+                        = currentStateVector[ zVelocityIndex ] + omegaCrossPosition[ 2 ];
+
+            // use the rotation matrix to get the velocity in the inertial frame
+            inertialState[ xVelocityIndex ]
+                        = xBodyFrameVelocityInertialCoordinates * std::cos( rotationAngle )
+                        - yBodyFrameVelocityInertialCoordinates * std::sin( rotationAngle );
+
+            inertialState[ yVelocityIndex ]
+                        = xBodyFrameVelocityInertialCoordinates * std::sin( rotationAngle )
+                        + yBodyFrameVelocityInertialCoordinates * std::cos( rotationAngle );
+
+            inertialState[ zVelocityIndex ] = zBodyFrameVelocityInertialCoordinates;
+
+            // calculate the orbital elements and check the sign of the eccentricity
+            std::vector< double > orbitalElements( 6, 0.0 );
+            convertCartesianCoordinatesToKeplerianElements( inertialState,
+                                                            gravParameter,
+                                                            orbitalElements );
+            bool eccentricityFlag = false;
+            if( orbitalElements[ 1 ] < 0.0 || orbitalElements[ 1 ] >= 1.0 )
+            {
+                eccentricityFlag = true;
+            }
+
+            // calculate energy and check the sign
+            std::vector< double > inertialPositionVector = { inertialState[ xPositionIndex ],
+                                                             inertialState[ yPositionIndex ],
+                                                             inertialState[ zPositionIndex ] };
+
+            std::vector< double > inertialVelocityVector = { inertialState[ xVelocityIndex ],
+                                                             inertialState[ yVelocityIndex ],
+                                                             inertialState[ zVelocityIndex ] };
+
+            double inertialVelocityMagnitude = vectorNorm( inertialVelocityVector );
+
+            double inertialPositionMagnitude = vectorNorm( inertialPositionVector );
+
+            double gravPotential;
+            computeEllipsoidGravitationalPotential( alpha,
+                                                    beta,
+                                                    gamma,
+                                                    gravParameter,
+                                                    inertialPositionVector[ xPositionIndex ],
+                                                    inertialPositionVector[ yPositionIndex ],
+                                                    inertialPositionVector[ zPositionIndex ],
+                                                    gravPotential );
+            double particleEnergy
+                    = inertialVelocityMagnitude * inertialVelocityMagnitude / 2.0
+                    - gravPotential;
+
+            bool energyFlag = false;
+            if( particleEnergy > 0.0 )
+            {
+                energyFlag = true;
+            }
+
+            // check the eccentricity and energy flags
+            if( eccentricityFlag && energyFlag )
+            {
+                // particle is on an escape trajectory, save data and stop integration
+                // update the time variables
+                currentTime = intermediateEndTime;
+
+                // save data
+                outputFile << currentStateVector[ xPositionIndex ] << ",";
+                outputFile << currentStateVector[ yPositionIndex ] << ",";
+                outputFile << currentStateVector[ zPositionIndex ] << ",";
+                outputFile << currentStateVector[ xVelocityIndex ] << ",";
+                outputFile << currentStateVector[ yVelocityIndex ] << ",";
+                outputFile << currentStateVector[ zVelocityIndex ] << ",";
+                outputFile << currentTime << std::endl;
+
+                break;
+            }
+        }
 
         //! check if the particle is inside the surface of the asteroid
         double xSquare = currentStateVector[ xPositionIndex ] * currentStateVector[ xPositionIndex ];
