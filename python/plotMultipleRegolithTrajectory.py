@@ -51,9 +51,9 @@ start_time = time.time( )
 
 ## Operations
 beginRange = 0
-endRange = 60
+endRange = 30
 
-for figureIndex in range( 0, 6 ):
+for figureIndex in range( 0, 12 ):
     ## Set up the figure
     fig = plt.figure( )
     ax1 = fig.gca( projection = '3d' )
@@ -125,7 +125,7 @@ for figureIndex in range( 0, 6 ):
                   color=plotColor )
 
     beginRange = endRange
-    endRange = endRange + 60
+    endRange = endRange + 30
     if endRange > 360:
         endRange = 360
 
