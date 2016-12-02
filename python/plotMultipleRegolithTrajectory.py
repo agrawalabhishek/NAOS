@@ -80,6 +80,7 @@ for figureIndex in range( 0, 12 ):
     ax1.hold( True )
 
     ## data in body frame
+    colorIndex = 0;
     for num in range( beginRange, endRange, 10 ):
         dynamicString = '../data/trajectory_for_different_launch_azimuth/'
         dynamicString = dynamicString + 'regolithTrajectoryAtAzimuth'
@@ -93,8 +94,11 @@ for figureIndex in range( 0, 12 ):
         vy = data[ 'vy' ].values
         vz = data[ 'vz' ].values
         t = data[ 't' ].values
-        c = np.random.random( )
-        plotColor = cm.rainbow( c )
+        # c = np.random.random( )
+        # plotColor = cm.rainbow( c )
+        colorTypes = [ 'r', 'b', 'g' ]
+        plotColor = colorTypes[ colorIndex ]
+        colorIndex = colorIndex + 1
 
         ## Plot 3D trajectory of the orbiting particle
         labelString = 'Azimuth = ' + str( num )
