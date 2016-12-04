@@ -110,7 +110,11 @@ if(BUILD_MAIN)
   if(NOT GSL_FOUND)
     add_dependencies(${TEST_NAME} gsl-lib)
   endif(NOT GSL_FOUND)
-  target_link_libraries(${MAIN_NAME} ${LIB_NAME} ${GSL_LIBRARIES})
+  if(NOT SQLITECPP_FOUND)
+    add_dependencies(${LIB_NAME} sqlitecpp-lib)
+  endif(NOT SQLITECPP_FOUND)
+  target_link_libraries(${MAIN_NAME} ${LIB_NAME} ${GSL_LIBRARIES} ${SQLITECPP_LIBRARY}
+    ${SQLITE3_LIBRARY})
 endif(BUILD_MAIN)
 
 if(BUILD_DOXYGEN_DOCS)
@@ -137,7 +141,8 @@ if(BUILD_TESTS)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TEST_PATH})
 
   add_executable(${TEST_NAME} ${TEST_SRC})
-  target_link_libraries(${TEST_NAME} ${LIB_NAME})
+  target_link_libraries(${TEST_NAME} ${LIB_NAME} ${SQLITECPP_LIBRARY}
+    ${SQLITE3_LIBRARY})
   add_test(NAME ${TEST_NAME} COMMAND "${TEST_PATH}/${TEST_NAME}")
 
   if(BUILD_COVERAGE_ANALYSIS)
