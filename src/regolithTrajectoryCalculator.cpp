@@ -14,6 +14,9 @@
 #include <limits>
 #include <stdexcept>
 
+#include <SQLiteCpp/SQLiteCpp.h>
+#include <sqlite3.h>
+
 #include "NAOS/constants.hpp"
 #include "NAOS/basicMath.hpp"
 #include "NAOS/misc.hpp"
@@ -220,7 +223,7 @@ void computeRegolithVelocityVector2( std::vector< double > regolithPositionVecto
 
 }
 
-//! Compute trajectory for regolith ejected from the surface of an asteroid
+//! Compute trajectory for regolith ejected from the surface of an asteroid (data saved in csv file)
 /*!
  * This routine computes the trajectory for a single regolith ejected from the surface of an
  * asteroid by first computing the appropriate initial conditions (IC) and then integrating the
@@ -308,7 +311,7 @@ void calculateRegolithTrajectory( const double alpha,
                                   regolithVelocityVector[ 1 ],
                                   regolithVelocityVector[ 2 ] };
 
-    // calculate the trajectory of the regolith
+    // calculate the trajectory of the regolith (uses csv file to save data)
     singleRegolithTrajectoryCalculator( alpha,
                                         beta,
                                         gamma,
@@ -320,6 +323,102 @@ void calculateRegolithTrajectory( const double alpha,
                                         endTime,
                                         filePath,
                                         dataSaveIntervals );
+}
+
+//! Compute trajectory for regolith ejected from the surface of an asteroid (data saved in SQL db)
+/*!
+ * This routine computes the trajectory for a single regolith ejected from the surface of an
+ * asteroid by first computing the appropriate initial conditions (IC) and then integrating the
+ * equations of motion using those ICs.
+ *
+ */
+void executeRegolithTrajectoryCalculation( const double alpha,
+                                           const double beta,
+                                           const double gamma,
+                                           const double gravitationalParameter,
+                                           const std::vector< double > W,
+                                           const double Wmagnitude,
+                                           const double aXValue,
+                                           const double aYValue,
+                                           const double aZValue,
+                                           const double coneAngleAzimuth,
+                                           const double coneAngleDeclination,
+                                           const double velocityMagnitudeFactor,
+                                           const double integrationStepSize,
+                                           const double startTime,
+                                           const double endTime,
+                                           const double dataSaveIntervals,
+                                           SQLite::Statement &databaseQuery )
+{
+    // get the initial position coordinates for the particle on the surface
+    std::vector< double > aVector { aXValue, aYValue, aZValue };
+    std::vector< double > positionUnitVector = naos::normalize( aVector );
+
+    double xTempTerm
+        = ( positionUnitVector[ xPositionIndex ] * positionUnitVector[ xPositionIndex ] )
+            / ( alpha * alpha );
+    double yTempTerm
+        = ( positionUnitVector[ yPositionIndex ] * positionUnitVector[ yPositionIndex ] )
+            / ( beta * beta );
+    double zTempTerm
+        = ( positionUnitVector[ zPositionIndex ] * positionUnitVector[ zPositionIndex ] )
+            / ( gamma * gamma );
+    double positionMagnitude = std::sqrt( 1.0 / ( xTempTerm + yTempTerm + zTempTerm ) );
+
+    std::vector< double > regolithPositionVector( 3 );
+    regolithPositionVector[ xPositionIndex ]
+                            = positionMagnitude * positionUnitVector[ xPositionIndex ];
+    regolithPositionVector[ yPositionIndex ]
+                            = positionMagnitude * positionUnitVector[ yPositionIndex ];
+    regolithPositionVector[ zPositionIndex ]
+                            = positionMagnitude * positionUnitVector[ zPositionIndex ];
+
+    // get the normal vector for the point on the surface from where the particle is launched
+    // this normal vector is not in the same direction as the position vector unless the central
+    // body is a sphere.
+    std::vector< double > regolithNormalVector
+                               = { regolithPositionVector[ xPositionIndex ] / ( alpha * alpha ),
+                                   regolithPositionVector[ yPositionIndex ] / ( beta * beta ),
+                                   regolithPositionVector[ zPositionIndex ] / ( gamma * gamma ) };
+
+    // get the unit normal vector
+    std::vector< double > regolithNormalUnitVector = naos::normalize( regolithNormalVector );
+
+    // get the velocity vector
+    positionMagnitude = vectorNorm( regolithPositionVector );
+    // velocity magnitude calculated using simple point mass potential formula
+    const double velocityMagnitude = velocityMagnitudeFactor
+                                    * std::sqrt( 2.0 * gravitationalParameter / positionMagnitude );
+
+    std::vector< double > regolithVelocityVector( 3 );
+    computeRegolithVelocityVector2( regolithPositionVector,
+                                    velocityMagnitude,
+                                    coneAngleAzimuth,
+                                    coneAngleDeclination,
+                                    regolithNormalUnitVector,
+                                    regolithVelocityVector );
+
+    naos::Vector6 initialVector { regolithPositionVector[ xPositionIndex ],
+                                  regolithPositionVector[ yPositionIndex ],
+                                  regolithPositionVector[ zPositionIndex ],
+                                  regolithVelocityVector[ 0 ],
+                                  regolithVelocityVector[ 1 ],
+                                  regolithVelocityVector[ 2 ] };
+
+    // calculate the trajectory of the regolith (uses SQL db to save data)
+    executeSingleRegolithTrajectoryCalculation( alpha,
+                                                beta,
+                                                gamma,
+                                                gravitationalParameter,
+                                                W,
+                                                initialVector,
+                                                coneAngleAzimuth,
+                                                coneAngleDeclination,
+                                                integrationStepSize,
+                                                startTime,
+                                                endTime,
+                                                databaseQuery,
+                                                dataSaveIntervals );
 }
 
 } // namespace naos

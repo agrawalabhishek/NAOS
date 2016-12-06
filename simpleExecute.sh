@@ -2,5 +2,5 @@
 cd build
 make
 cd bin
-./NAOS_main executeRegolithTrajectoryCalculation
+./NAOS_main executeRegolithMonteCarlo
 cd ../../

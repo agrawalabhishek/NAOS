@@ -17,6 +17,8 @@
 #include <vector>
 
 #include <boost/numeric/odeint.hpp>
+#include <SQLiteCpp/SQLiteCpp.h>
+#include <sqlite3.h>
 
 #include "NAOS/constants.hpp"
 #include "NAOS/basicMath.hpp"
@@ -60,6 +62,35 @@ void singleRegolithTrajectoryCalculator( const double alpha,
                                          const double endTime,
                                          std::ostringstream &outputFilePath,
                                          const int dataSaveIntervals );
+
+//! Trajectory calculation for regolith around an asteroid (data saved in SQL db)
+/*!
+ * Same as the previous function, except that the initial conditions are now given as a cartesian
+ * state. The initial cartesian state should be given in body fixed frame of the asteroid.
+ */
+void executeSingleRegolithTrajectoryCalculation( const double alpha,
+                                                 const double beta,
+                                                 const double gamma,
+                                                 const double gravParameter,
+                                                 std::vector< double > asteroidRotationVector,
+                                                 std::vector< double > &initialCartesianStateVector,
+                                                 const double launchAzimuth,
+                                                 const double launchDeclination,
+                                                 const double initialStepSize,
+                                                 const double startTime,
+                                                 const double endTime,
+                                                 SQLite::Statement &databaseQuery,
+                                                 const int dataSaveIntervals );
+
+//! convert body frame state vector to inertial frame for a uniformly rotating case
+/*!
+ * this function cnverts a given state vector in asteroid body frame coordinates to inertial frame.
+ * The body frame is rotating uniformly with respect to the inertial frame about the z axis.
+ */
+void convertBodyFrameVectorToInertialFrame( const std::vector< double > &asteroidRotationVector,
+                                            const std::vector< double > &currentStateVector,
+                                            const double currentTime,
+                                            std::vector< double > &inertialState );
 
 } // namespace naos
 

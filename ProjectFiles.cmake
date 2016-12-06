@@ -16,6 +16,7 @@ set(SRC
   "${SRC_PATH}/boostIntegratorRestrictedTwoBodyProblem.cpp"
   "${SRC_PATH}/particleAroundSpheroidAndEllipsoidGravitationalPotential.cpp"
   "${SRC_PATH}/particleAroundUniformlyRotatingEllipsoid.cpp"
+  "${SRC_PATH}/regolithMonteCarlo.cpp"
 )
 
 # Set project main file.

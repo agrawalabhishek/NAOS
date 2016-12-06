@@ -24,6 +24,7 @@
 #include "NAOS/postAnalysis.hpp"
 #include "NAOS/particleAroundUniformlyRotatingEllipsoid.hpp"
 #include "NAOS/regolithTrajectoryCalculator.hpp"
+#include "NAOS/regolithMonteCarlo.hpp"
 // #include "NAOS/particleAroundSpheroidAndElllipsoidGravitationalPotential.hpp"
 // #include "NAOS/boostIntegratorRestrictedTwoBodyProblem.hpp"
 // #include "NAOS/executeOrbiterAroundUREPointMassGravity.hpp"
@@ -230,8 +231,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         std::cout << "Total CPU time for execution = " << cpuTimeEnd - cpuTimeStart << std::endl;
     }
 
-    // compute trajectory evolution for single regolith lofted from the surface of an asteroid
-    else if( userMode.compare( "executeRegolithTrajectoryCalculation" ) == 0 )
+    else if( userMode.compare( "executeRegolithTrajectoryCalculationForVaryingAzimuth" ) == 0 )
     {
         const double integrationStepSize = 0.01;
         const double startTime = 0.0;
@@ -284,6 +284,38 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                                                dataSaveIntervals,
                                                regolithAroundUREFilePath );
         }
+
+        double wallTimeEnd = naos::getWallTime< double >( );
+        double cpuTimeEnd = naos::getCPUTime< double >( );
+
+        std::cout << "Total wall time for execution = " << wallTimeEnd - wallTimeStart << std::endl;
+        std::cout << "Total CPU time for execution = " << cpuTimeEnd - cpuTimeStart << std::endl;
+    }
+
+    else if( userMode.compare( "executeRegolithMonteCarlo" ) == 0 )
+    {
+        const double integrationStepSize = 0.01;
+        const double startTime = 0.0;
+        const double endTime = 1.0 * 30.0 * 24.0 * 60.0 * 60.0;
+        const double dataSaveIntervals = 100;
+
+        double wallTimeStart = naos::getWallTime< double >( );
+        double cpuTimeStart = naos::getCPUTime< double >( );
+
+        std::ostringstream databaseFilePath;
+        databaseFilePath << "../../data/position_and_launch_angles_iterator/regolithMonteCarlo.db";
+
+        naos::executeRegolithMonteCarlo( alpha,
+                                         beta,
+                                         gamma,
+                                         gravitationalParameter,
+                                         W,
+                                         Wmagnitude,
+                                         integrationStepSize,
+                                         startTime,
+                                         endTime,
+                                         dataSaveIntervals,
+                                         databaseFilePath );
 
         double wallTimeEnd = naos::getWallTime< double >( );
         double cpuTimeEnd = naos::getCPUTime< double >( );

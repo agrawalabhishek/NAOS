@@ -15,6 +15,9 @@
 #include <cmath>
 #include <vector>
 
+#include <SQLiteCpp/SQLiteCpp.h>
+#include <sqlite3.h>
+
 #include "NAOS/constants.hpp"
 #include "NAOS/basicMath.hpp"
 #include "NAOS/particleAroundUniformlyRotatingEllipsoid.hpp"
@@ -70,6 +73,31 @@ void calculateRegolithTrajectory( const double alpha,
                                   const double endTime,
                                   const double dataSaveIntervals,
                                   std::ostringstream &filePath );
+
+//! Compute trajectory for regolith ejected from the surface of an asteroid (data saved in SQL db)
+/*!
+ * This routine computes the trajectory for a single regolith ejected from the surface of an
+ * asteroid by first computing the appropriate initial conditions (IC) and then integrating the
+ * equations of motion using those ICs.
+ *
+ */
+void executeRegolithTrajectoryCalculation( const double alpha,
+                                           const double beta,
+                                           const double gamma,
+                                           const double gravitationalParameter,
+                                           const std::vector< double > W,
+                                           const double Wmagnitude,
+                                           const double aXValue,
+                                           const double aYValue,
+                                           const double aZValue,
+                                           const double coneAngleAzimuth,
+                                           const double coneAngleDeclination,
+                                           const double velocityMagnitudeFactor,
+                                           const double integrationStepSize,
+                                           const double startTime,
+                                           const double endTime,
+                                           const double dataSaveIntervals,
+                                           SQLite::Statement &databaseQuery );
 } // namespace naos
 
 #endif // REGOLITH_TRAJECTORY_CALCULATOR
