@@ -689,6 +689,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     // initialize and set flags for crash, escape
     int escapeFlag = 0;
     int crashFlag = 0;
+    int startFlag = 1;
 
     // save the initial state vector(body frame) and orbital elements
     databaseQuery.bind( ":position_x", initialState[ xPositionIndex ] );
@@ -711,8 +712,11 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
     databaseQuery.bind( ":energy", initialParticleEnergy );
 
+    databaseQuery.bind( ":start_flag", startFlag );
     databaseQuery.bind( ":escape_flag", escapeFlag );
     databaseQuery.bind( ":crash_flag", crashFlag );
+
+    startFlag = 0;
 
     // Execute insert query.
     databaseQuery.executeStep( );
@@ -826,6 +830,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
                 databaseQuery.bind( ":energy", particleEnergy );
 
+                databaseQuery.bind( ":start_flag", startFlag );
                 databaseQuery.bind( ":escape_flag", escapeFlag );
                 databaseQuery.bind( ":crash_flag", crashFlag );
 
@@ -911,6 +916,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
             databaseQuery.bind( ":energy", particleEnergy );
 
+            databaseQuery.bind( ":start_flag", startFlag );
             databaseQuery.bind( ":escape_flag", escapeFlag );
             databaseQuery.bind( ":crash_flag", crashFlag );
 
@@ -1030,6 +1036,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
             databaseQuery.bind( ":energy", particleEnergy );
 
+            databaseQuery.bind( ":start_flag", startFlag );
             databaseQuery.bind( ":escape_flag", escapeFlag );
             databaseQuery.bind( ":crash_flag", crashFlag );
 
@@ -1102,6 +1109,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
         databaseQuery.bind( ":energy", particleEnergy );
 
+        databaseQuery.bind( ":start_flag", startFlag );
         databaseQuery.bind( ":escape_flag", escapeFlag );
         databaseQuery.bind( ":crash_flag", crashFlag );
 

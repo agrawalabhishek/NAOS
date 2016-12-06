@@ -303,7 +303,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         double cpuTimeStart = naos::getCPUTime< double >( );
 
         std::ostringstream databaseFilePath;
-        databaseFilePath << "../../data/position_and_launch_angles_iterator/regolithMonteCarlo.db";
+        databaseFilePath << "../../data/regolith_launched_from_leading_edge/leadingEdge.db";
 
         naos::executeRegolithMonteCarlo( alpha,
                                          beta,

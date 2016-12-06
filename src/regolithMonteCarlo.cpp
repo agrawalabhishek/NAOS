@@ -66,6 +66,7 @@ void createDatabaseTable( SQLite::Database &database )
         << "\"ta\"                                      REAL,"
 
         << "\"energy\"                                  REAL,"
+        << "\"start_flag\"                              INTEGER,"
         << "\"escape_flag\"                             INTEGER,"
         << "\"crash_flag\"                              INTEGER"
         <<                                              ");";
@@ -97,12 +98,12 @@ void executeRegolithMonteCarlo( const double alpha,
                                 const double dataSaveIntervals,
                                 std::ostringstream &databaseFilePath )
 {
-    const double aXValue = 1.0;
-    const double aYValue = 1.0;
-    const double aZValue = 1.0;
+    double aXValue = 1.0;
+    double aYValue = 1.0;
+    double aZValue = 1.0;
     const double velocityMagnitudeFactor = 0.9;
     const double coneAngleDeclination = naos::convertDegreeToRadians( 45.0 );
-    const double coneAngleAzimuthFactor = 10.0;
+    const double coneAngleAzimuthFactor = 1.0;
 
     // Open database in read/write mode.
     SQLite::Database database( databaseFilePath.str( ),
@@ -136,6 +137,7 @@ void executeRegolithMonteCarlo( const double alpha,
         << ":aop,"
         << ":ta,"
         << ":energy,"
+        << ":start_flag,"
         << ":escape_flag,"
         << ":crash_flag"
         << ");";
@@ -143,7 +145,7 @@ void executeRegolithMonteCarlo( const double alpha,
     SQLite::Statement databaseQuery( database, regolithTrajectoryTableInsert.str( ) );
 
     // azimuth angle iterator begins here
-    for( int azimuthIterator = 0; azimuthIterator < 36; azimuthIterator++ )
+    for( int azimuthIterator = 0; azimuthIterator < 360; azimuthIterator++ )
     {
         // calculate the azimuth angle
         const double coneAngleAzimuth
@@ -166,7 +168,8 @@ void executeRegolithMonteCarlo( const double alpha,
                                               endTime,
                                               dataSaveIntervals,
                                               databaseQuery );
-    }
+    } // end of azimuth angle iterator loop
+
     transaction.commit( );
 }
 
