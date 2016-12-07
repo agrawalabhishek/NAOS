@@ -81,11 +81,23 @@ print "Fetching scan data from database ..."
 
 # Connect to SQLite database.
 try:
-        database = sqlite3.connect("../data/position_and_launch_angles_iterator/regolithMonteCarlo.db")
+        database = sqlite3.connect("../data/regolith_launched_from_leading_edge/leadingEdge.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
         sys.exit(1)
+
+# data = pd.read_sql( "SELECT     position_x,                             \
+#                                 position_y,                             \
+#                                 position_z,                             \
+#                                 velocity_x,                             \
+#                                 velocity_y,                             \
+#                                 velocity_z,                             \
+#                                 time                                    \
+#                      FROM       regolith_trajectory_results             \
+#                      WHERE      ROUND( launch_azimuth ) > 208.0         \
+#                      AND        ROUND( launch_azimuth ) < 210.0;",      \
+#                      database )
 
 data = pd.read_sql( "SELECT     position_x,                             \
                                 position_y,                             \
@@ -95,8 +107,7 @@ data = pd.read_sql( "SELECT     position_x,                             \
                                 velocity_z,                             \
                                 time                                    \
                      FROM       regolith_trajectory_results             \
-                     WHERE      launch_azimuth > 349.0                  \
-                     AND        launch_azimuth < 351.0;",               \
+                     WHERE      ROUND( launch_azimuth ) = 347.0;",      \
                      database )
 
 data.columns = [ 'x',                                                   \
@@ -114,20 +125,10 @@ vx = data[ 'vx' ]
 vy = data[ 'vy' ]
 vz = data[ 'vz' ]
 
-# check whether the final coordinate is on the surface of asteroid or not
-finalPoint = len( x ) - 1
-crashCheck = x[ finalPoint ]**2 / alpha**2                              \
-            + y[ finalPoint ]**2 / beta**2                              \
-            + z[ finalPoint ]**2 / gamma**2                             \
-            - 1.0
-
-c = np.random.random( )
-plotColor = cm.rainbow( c )
+plotColor = 'r'
 
 ## Plot 3D trajectory of the orbiting particle
-labelString = 'Azimuth = '
-ax1.plot( x, y, z, zdir = 'z', color=plotColor, label=labelString )
-
+ax1.plot( x, y, z, zdir = 'z', color=plotColor )
 
 ## indicate starting point
 ax1.text( x[0], y[0], z[0], 'start', size=10, zorder=1, color=plotColor )
@@ -146,7 +147,7 @@ ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
 ax1.set_title( 'Particle trajectory around asteroid Eros (Body frame)' )
 
 ## Show the plot
-plt.legend( )
+# plt.legend( )
 plt.tight_layout( )
 plt.grid( )
 plt.show( )
