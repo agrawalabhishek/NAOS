@@ -55,6 +55,13 @@ void createDatabaseTable( SQLite::Database &database )
         << "\"velocity_z\"                              REAL,"
         << "\"time\"                                    REAL,"
 
+        << "\"inertial_position_x\"                     REAL,"
+        << "\"inertial_position_y\"                     REAL,"
+        << "\"inertial_position_z\"                     REAL,"
+        << "\"inertial_velocity_x\"                     REAL,"
+        << "\"inertial_velocity_y\"                     REAL,"
+        << "\"inertial_velocity_z\"                     REAL,"
+
         << "\"launch_azimuth\"                          REAL,"
         << "\"launch_declination\"                      REAL,"
 
@@ -65,7 +72,10 @@ void createDatabaseTable( SQLite::Database &database )
         << "\"aop\"                                     REAL,"
         << "\"ta\"                                      REAL,"
 
-        << "\"energy\"                                  REAL,"
+        << "\"kinetic_energy\"                          REAL,"
+        << "\"potential_energy\"                        REAL,"
+        << "\"total_energy\"                            REAL,"
+
         << "\"start_flag\"                              INTEGER,"
         << "\"escape_flag\"                             INTEGER,"
         << "\"crash_flag\"                              INTEGER"
@@ -128,6 +138,12 @@ void executeRegolithMonteCarlo( const double alpha,
         << ":velocity_y,"
         << ":velocity_z,"
         << ":time,"
+        << ":inertial_position_x,"
+        << ":inertial_position_y,"
+        << ":inertial_position_z,"
+        << ":inertial_velocity_x,"
+        << ":inertial_velocity_y,"
+        << ":inertial_velocity_z,"
         << ":launch_azimuth,"
         << ":launch_declination,"
         << ":sma,"
@@ -136,6 +152,8 @@ void executeRegolithMonteCarlo( const double alpha,
         << ":raan,"
         << ":aop,"
         << ":ta,"
+        << ":kinetic_energy,"
+        << ":potential_energy,"
         << ":energy,"
         << ":start_flag,"
         << ":escape_flag,"
