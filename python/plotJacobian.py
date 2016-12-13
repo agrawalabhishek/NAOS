@@ -8,6 +8,7 @@ See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 # I/O
 import csv
 from pprint import pprint
+import sqlite3
 
 # Numerical
 import numpy as np
@@ -51,10 +52,29 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-data = pd.read_csv( '../data/solutionParticleAroundUniformlyRotatingEllipsoid_jacobian.csv' )
+# data = pd.read_csv( '../data/solutionParticleAroundUniformlyRotatingEllipsoid_jacobian.csv' )
+# t = data['time'].values
+# jacobian = data['jacobian'].values
 
-t = data[ 'time' ].values
-jacobian = data[ 'jacobian' ].values
+# Connect to SQLite database.
+try:
+        database = sqlite3.connect("../data/regolith_launched_from_leading_edge/leadingEdge.db")
+
+except sqlite3.Error, e:
+        print "Error %s:" % e.args[0]
+        sys.exit(1)
+
+data = pd.read_sql( "SELECT     jacobi_integral,                        \
+                                time                                    \
+                     FROM       regolith_trajectory_results             \
+                     WHERE      ROUND( launch_azimuth ) = 349.0;",      \
+                     database )
+
+data.columns = [ 'jacobi_integral',                                     \
+                 'time' ]
+
+t = data[ 'time' ]
+jacobian = data[ 'jacobi_integral' ]
 
 # convert time in seconds to earth days
 t = t / ( 24.0 * 60.0 * 60.0 )
@@ -74,7 +94,7 @@ ax2 = plt.subplot( gs[ 1 ] )
 ## plot the jacobian
 ax1.plot( t, jacobian, color=colors.cnames['purple'] )
 ax1.set_xlabel('time [Earth days]')
-ax1.set_ylabel('jacobian')
+ax1.set_ylabel('Jacobi integral')
 ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useOffset=False)
 ax1.grid( )
 
@@ -84,7 +104,7 @@ relativeChangeInJacobian = (jacobian - initialJacobian) / initialJacobian
 
 ax2.plot( t, relativeChangeInJacobian, color=colors.cnames['purple'] )
 ax2.set_xlabel('time [Earth days]')
-ax2.set_ylabel('Relative change in jacobian')
+ax2.set_ylabel('Relative change in Jacobi integral')
 ax2.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useOffset=False)
 ax2.grid( )
 

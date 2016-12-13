@@ -76,6 +76,8 @@ void createDatabaseTable( SQLite::Database &database )
         << "\"potential_energy\"                        REAL,"
         << "\"total_energy\"                            REAL,"
 
+        << "\"jacobi_integral\"                         REAL,"
+
         << "\"start_flag\"                              INTEGER,"
         << "\"escape_flag\"                             INTEGER,"
         << "\"crash_flag\"                              INTEGER"
@@ -155,12 +157,36 @@ void executeRegolithMonteCarlo( const double alpha,
         << ":kinetic_energy,"
         << ":potential_energy,"
         << ":energy,"
+        << ":jacobi_integral,"
         << ":start_flag,"
         << ":escape_flag,"
         << ":crash_flag"
         << ");";
 
     SQLite::Statement databaseQuery( database, regolithTrajectoryTableInsert.str( ) );
+
+
+    //! Sanity check for the use of "executeSingleRegolithTrajectoryCalculation" function
+    // std::vector < double > initialCartesianStateVector = { 15813.65855301109,
+    //                                                        27226.38435085693,
+    //                                                        949.8412226219427,
+    //                                                        4.289020920685013,
+    //                                                        -2.524160650707516,
+    //                                                        0.9461114675116752 };
+
+    // executeSingleRegolithTrajectoryCalculation( alpha,
+    //                                             beta,
+    //                                             gamma,
+    //                                             gravitationalParameter,
+    //                                             angularVelocityVector,
+    //                                             initialCartesianStateVector,
+    //                                             0.0,
+    //                                             0.0,
+    //                                             integrationStepSize,
+    //                                             startTime,
+    //                                             endTime,
+    //                                             databaseQuery,
+    //                                             dataSaveIntervals );
 
     // azimuth angle iterator begins here
     for( int azimuthIterator = 0; azimuthIterator < 360; azimuthIterator++ )

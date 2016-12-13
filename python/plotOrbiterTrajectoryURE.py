@@ -8,6 +8,7 @@ See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 # I/O
 import csv
 from pprint import pprint
+import sqlite3
 
 # Numerical
 import numpy as np
@@ -53,14 +54,61 @@ start_time = time.time( )
 # Read data in csv file. data returned as a panda series.
 
 ## data in body frame
-data = pd.read_csv( '../data/trajectory_for_different_launch_azimuth/regolithTrajectoryAtAzimuth210.csv' )
-x = data[ 'x' ].values
-y = data[ 'y' ].values
-z = data[ 'z' ].values
-vx = data[ 'vx' ].values
-vy = data[ 'vy' ].values
-vz = data[ 'vz' ].values
-t = data[ 't' ].values
+# data = pd.read_csv( '../data/trajectory_for_different_launch_azimuth/regolithTrajectoryAtAzimuth210.csv' )
+# x = data[ 'x' ].values
+# y = data[ 'y' ].values
+# z = data[ 'z' ].values
+# vx = data[ 'vx' ].values
+# vy = data[ 'vy' ].values
+# vz = data[ 'vz' ].values
+# t = data[ 't' ].values
+
+# Connect to SQLite database.
+try:
+        database = sqlite3.connect("../data/regolith_launched_from_leading_edge/leadingEdge.db")
+
+except sqlite3.Error, e:
+        print "Error %s:" % e.args[0]
+        sys.exit(1)
+
+# data = pd.read_sql( "SELECT     position_x,                             \
+#                                 position_y,                             \
+#                                 position_z,                             \
+#                                 velocity_x,                             \
+#                                 velocity_y,                             \
+#                                 velocity_z,                             \
+#                                 time                                    \
+#                      FROM       regolith_trajectory_results             \
+#                      WHERE      ROUND( launch_azimuth ) > 208.0         \
+#                      AND        ROUND( launch_azimuth ) < 210.0;",      \
+#                      database )
+
+data = pd.read_sql( "SELECT     position_x,                             \
+                                position_y,                             \
+                                position_z,                             \
+                                velocity_x,                             \
+                                velocity_y,                             \
+                                velocity_z,                             \
+                                time                                    \
+                     FROM       regolith_trajectory_results             \
+                     WHERE      ROUND( launch_azimuth ) = 359.0;",      \
+                     database )
+
+data.columns = [ 'x',                                                   \
+                 'y',                                                   \
+                 'z',                                                   \
+                 'vx',                                                  \
+                 'vy',                                                  \
+                 'vz',                                                  \
+                 'time' ]
+
+x = data[ 'x' ]
+y = data[ 'y' ]
+z = data[ 'z' ]
+vx = data[ 'vx' ]
+vy = data[ 'vy' ]
+vz = data[ 'vz' ]
+t = data[ 'time' ]
 
 ## data in inertial frame
 # data = pd.read_csv( '../data/solutionParticleAroundUniformlyRotatingEllipsoid_orbitalElements.csv' )

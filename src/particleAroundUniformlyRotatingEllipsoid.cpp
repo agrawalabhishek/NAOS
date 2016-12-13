@@ -665,6 +665,31 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     double potentialEnergy = -initialGravPotential;
     double initialParticleEnergy = kineticEnergy + potentialEnergy;
 
+    //! get the initial jacobi integral
+    double xVelocitySquare = initialState[ xVelocityIndex ] * initialState[ xVelocityIndex ];
+    double yVelocitySquare = initialState[ yVelocityIndex ] * initialState[ yVelocityIndex ];
+    double zVelocitySquare = initialState[ zVelocityIndex ] * initialState[ zVelocityIndex ];
+
+    double xPositionSquare = initialState[ xPositionIndex ] * initialState[ xPositionIndex ];
+    double yPositionSquare = initialState[ yPositionIndex ] * initialState[ yPositionIndex ];
+
+    double omegaSquare = asteroidRotationVector[ zPositionIndex ] * asteroidRotationVector[ zPositionIndex ];
+
+    double bodyFrameGravPotential;
+    computeEllipsoidGravitationalPotential( alpha,
+                                            beta,
+                                            gamma,
+                                            gravParameter,
+                                            initialState[ xPositionIndex ],
+                                            initialState[ yPositionIndex ],
+                                            initialState[ zPositionIndex ],
+                                            bodyFrameGravPotential );
+
+    double jacobiIntegral
+        = 0.5 * ( xVelocitySquare + yVelocitySquare + zVelocitySquare )
+        - 0.5 * omegaSquare * ( xPositionSquare + yPositionSquare )
+        - bodyFrameGravPotential;
+
     // set up boost odeint
     const double absoluteTolerance = 1.0e-15;
     const double relativeTolerance = 1.0e-15;
@@ -720,6 +745,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     databaseQuery.bind( ":kinetic_energy", kineticEnergy );
     databaseQuery.bind( ":potential_energy", potentialEnergy );
     databaseQuery.bind( ":energy", initialParticleEnergy );
+
+    databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
     databaseQuery.bind( ":start_flag", startFlag );
     databaseQuery.bind( ":escape_flag", escapeFlag );
@@ -811,6 +838,31 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             // check the eccentricity and energy flags
             if( eccentricityFlag && energyFlag )
             {
+                //! get the jacobi integral
+                xVelocitySquare = currentStateVector[ xVelocityIndex ] * currentStateVector[ xVelocityIndex ];
+                yVelocitySquare = currentStateVector[ yVelocityIndex ] * currentStateVector[ yVelocityIndex ];
+                zVelocitySquare = currentStateVector[ zVelocityIndex ] * currentStateVector[ zVelocityIndex ];
+
+                xPositionSquare = currentStateVector[ xPositionIndex ] * currentStateVector[ xPositionIndex ];
+                yPositionSquare = currentStateVector[ yPositionIndex ] * currentStateVector[ yPositionIndex ];
+
+                omegaSquare = asteroidRotationVector[ zPositionIndex ] * asteroidRotationVector[ zPositionIndex ];
+
+                bodyFrameGravPotential;
+                computeEllipsoidGravitationalPotential( alpha,
+                                                        beta,
+                                                        gamma,
+                                                        gravParameter,
+                                                        currentStateVector[ xPositionIndex ],
+                                                        currentStateVector[ yPositionIndex ],
+                                                        currentStateVector[ zPositionIndex ],
+                                                        bodyFrameGravPotential );
+
+                jacobiIntegral
+                    = 0.5 * ( xVelocitySquare + yVelocitySquare + zVelocitySquare )
+                    - 0.5 * omegaSquare * ( xPositionSquare + yPositionSquare )
+                    - bodyFrameGravPotential;
+
                 // particle is on an escape trajectory, save data and stop integration
                 // update the time variables
                 currentTime = intermediateEndTime;
@@ -848,6 +900,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                 databaseQuery.bind( ":kinetic_energy", kineticEnergy );
                 databaseQuery.bind( ":potential_energy", potentialEnergy );
                 databaseQuery.bind( ":energy", particleEnergy );
+
+                databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
                 databaseQuery.bind( ":start_flag", startFlag );
                 databaseQuery.bind( ":escape_flag", escapeFlag );
@@ -915,6 +969,31 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             potentialEnergy = -gravPotential;
             double particleEnergy = kineticEnergy + potentialEnergy;
 
+            //! get the jacobi integral
+            xVelocitySquare = currentStateVector[ xVelocityIndex ] * currentStateVector[ xVelocityIndex ];
+            yVelocitySquare = currentStateVector[ yVelocityIndex ] * currentStateVector[ yVelocityIndex ];
+            zVelocitySquare = currentStateVector[ zVelocityIndex ] * currentStateVector[ zVelocityIndex ];
+
+            xPositionSquare = currentStateVector[ xPositionIndex ] * currentStateVector[ xPositionIndex ];
+            yPositionSquare = currentStateVector[ yPositionIndex ] * currentStateVector[ yPositionIndex ];
+
+            omegaSquare = asteroidRotationVector[ zPositionIndex ] * asteroidRotationVector[ zPositionIndex ];
+
+            bodyFrameGravPotential;
+            computeEllipsoidGravitationalPotential( alpha,
+                                                    beta,
+                                                    gamma,
+                                                    gravParameter,
+                                                    currentStateVector[ xPositionIndex ],
+                                                    currentStateVector[ yPositionIndex ],
+                                                    currentStateVector[ zPositionIndex ],
+                                                    bodyFrameGravPotential );
+
+            jacobiIntegral
+                = 0.5 * ( xVelocitySquare + yVelocitySquare + zVelocitySquare )
+                - 0.5 * omegaSquare * ( xPositionSquare + yPositionSquare )
+                - bodyFrameGravPotential;
+
             // save data
             databaseQuery.bind( ":position_x", currentStateVector[ xPositionIndex ] );
             databaseQuery.bind( ":position_y", currentStateVector[ yPositionIndex ] );
@@ -944,6 +1023,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             databaseQuery.bind( ":kinetic_energy", kineticEnergy );
             databaseQuery.bind( ":potential_energy", potentialEnergy );
             databaseQuery.bind( ":energy", particleEnergy );
+
+            databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
             databaseQuery.bind( ":start_flag", startFlag );
             databaseQuery.bind( ":escape_flag", escapeFlag );
@@ -1045,6 +1126,31 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             potentialEnergy = -gravPotential;
             double particleEnergy = kineticEnergy + potentialEnergy;
 
+            //! get the jacobi integral
+            xVelocitySquare = currentStateVector[ xVelocityIndex ] * currentStateVector[ xVelocityIndex ];
+            yVelocitySquare = currentStateVector[ yVelocityIndex ] * currentStateVector[ yVelocityIndex ];
+            zVelocitySquare = currentStateVector[ zVelocityIndex ] * currentStateVector[ zVelocityIndex ];
+
+            xPositionSquare = currentStateVector[ xPositionIndex ] * currentStateVector[ xPositionIndex ];
+            yPositionSquare = currentStateVector[ yPositionIndex ] * currentStateVector[ yPositionIndex ];
+
+            omegaSquare = asteroidRotationVector[ zPositionIndex ] * asteroidRotationVector[ zPositionIndex ];
+
+            bodyFrameGravPotential;
+            computeEllipsoidGravitationalPotential( alpha,
+                                                    beta,
+                                                    gamma,
+                                                    gravParameter,
+                                                    currentStateVector[ xPositionIndex ],
+                                                    currentStateVector[ yPositionIndex ],
+                                                    currentStateVector[ zPositionIndex ],
+                                                    bodyFrameGravPotential );
+
+            jacobiIntegral
+                = 0.5 * ( xVelocitySquare + yVelocitySquare + zVelocitySquare )
+                - 0.5 * omegaSquare * ( xPositionSquare + yPositionSquare )
+                - bodyFrameGravPotential;
+
             // save data
             databaseQuery.bind( ":position_x", currentStateVector[ xPositionIndex ] );
             databaseQuery.bind( ":position_y", currentStateVector[ yPositionIndex ] );
@@ -1074,6 +1180,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             databaseQuery.bind( ":kinetic_energy", kineticEnergy );
             databaseQuery.bind( ":potential_energy", potentialEnergy );
             databaseQuery.bind( ":energy", particleEnergy );
+
+            databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
             databaseQuery.bind( ":start_flag", startFlag );
             databaseQuery.bind( ":escape_flag", escapeFlag );
@@ -1128,6 +1236,31 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
         potentialEnergy = -gravPotential;
         double particleEnergy = kineticEnergy + potentialEnergy;
 
+        //! get the jacobi integral
+        xVelocitySquare = currentStateVector[ xVelocityIndex ] * currentStateVector[ xVelocityIndex ];
+        yVelocitySquare = currentStateVector[ yVelocityIndex ] * currentStateVector[ yVelocityIndex ];
+        zVelocitySquare = currentStateVector[ zVelocityIndex ] * currentStateVector[ zVelocityIndex ];
+
+        xPositionSquare = currentStateVector[ xPositionIndex ] * currentStateVector[ xPositionIndex ];
+        yPositionSquare = currentStateVector[ yPositionIndex ] * currentStateVector[ yPositionIndex ];
+
+        omegaSquare = asteroidRotationVector[ zPositionIndex ] * asteroidRotationVector[ zPositionIndex ];
+
+        bodyFrameGravPotential;
+        computeEllipsoidGravitationalPotential( alpha,
+                                                beta,
+                                                gamma,
+                                                gravParameter,
+                                                currentStateVector[ xPositionIndex ],
+                                                currentStateVector[ yPositionIndex ],
+                                                currentStateVector[ zPositionIndex ],
+                                                bodyFrameGravPotential );
+
+        jacobiIntegral
+            = 0.5 * ( xVelocitySquare + yVelocitySquare + zVelocitySquare )
+            - 0.5 * omegaSquare * ( xPositionSquare + yPositionSquare )
+            - bodyFrameGravPotential;
+
         // save data
         databaseQuery.bind( ":position_x", currentStateVector[ xPositionIndex ] );
         databaseQuery.bind( ":position_y", currentStateVector[ yPositionIndex ] );
@@ -1157,6 +1290,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
         databaseQuery.bind( ":kinetic_energy", kineticEnergy );
         databaseQuery.bind( ":potential_energy", potentialEnergy );
         databaseQuery.bind( ":energy", particleEnergy );
+
+        databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
         databaseQuery.bind( ":start_flag", startFlag );
         databaseQuery.bind( ":escape_flag", escapeFlag );
