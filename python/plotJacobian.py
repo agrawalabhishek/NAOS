@@ -67,7 +67,7 @@ except sqlite3.Error, e:
 data = pd.read_sql( "SELECT     jacobi_integral,                        \
                                 time                                    \
                      FROM       regolith_trajectory_results             \
-                     WHERE      ROUND( launch_azimuth ) = 349.0;",      \
+                     WHERE      ROUND( launch_azimuth ) = 100.0;",      \
                      database )
 
 data.columns = [ 'jacobi_integral',                                     \
