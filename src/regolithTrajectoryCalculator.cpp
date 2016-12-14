@@ -22,6 +22,7 @@
 #include "NAOS/misc.hpp"
 #include "NAOS/particleAroundUniformlyRotatingEllipsoid.hpp"
 #include "NAOS/regolithTrajectoryCalculator.hpp"
+#include "NAOS/ellipsoidPotential.hpp"
 
 namespace naos
 {
@@ -283,11 +284,12 @@ void calculateRegolithTrajectory( const double alpha,
     // get the unit normal vector
     std::vector< double > regolithNormalUnitVector = naos::normalize( regolithNormalVector );
 
-    // get the velocity vector
-    positionMagnitude = vectorNorm( regolithPositionVector );
     // velocity magnitude calculated using simple point mass potential formula
+    positionMagnitude = vectorNorm( regolithPositionVector );
     const double velocityMagnitude = velocityMagnitudeFactor
                                     * std::sqrt( 2.0 * gravitationalParameter / positionMagnitude );
+
+    // get the velocity vector
     std::vector< double > regolithVelocityVector( 3 );
 
     // computeRegolithVelocityVector( regolithPositionVector,
@@ -304,6 +306,7 @@ void calculateRegolithTrajectory( const double alpha,
                                     regolithNormalUnitVector,
                                     regolithVelocityVector );
 
+    // form the initial state vector
     naos::Vector6 initialVector { regolithPositionVector[ xPositionIndex ],
                                   regolithPositionVector[ yPositionIndex ],
                                   regolithPositionVector[ zPositionIndex ],
@@ -385,10 +388,43 @@ void executeRegolithTrajectoryCalculation( const double alpha,
     std::vector< double > regolithNormalUnitVector = naos::normalize( regolithNormalVector );
 
     // get the velocity vector
+    // calculate local normal escape speed (ref: DJ Scheeres, orbits close to asteroid 4769 castalia)
+    double velocityMagnitude = 0.0;
+
+    std::vector< double > omegaCrossPosition( 3, 0.0 );
+    omegaCrossPosition = crossProduct( W, regolithPositionVector );
+    double omegaCrossPositionSquare = dotProduct( omegaCrossPosition, omegaCrossPosition );
+
+    double normalDotOmegaCrossPosition = dotProduct( regolithNormalVector, omegaCrossPosition );
+    double normalDotOmegaCrossPositionSquare = normalDotOmegaCrossPosition * normalDotOmegaCrossPosition;
+
     positionMagnitude = vectorNorm( regolithPositionVector );
-    // velocity magnitude calculated using simple point mass potential formula
-    const double velocityMagnitude = velocityMagnitudeFactor
-                                    * std::sqrt( 2.0 * gravitationalParameter / positionMagnitude );
+    double pointMassGravPotential = gravitationalParameter / positionMagnitude;
+
+    double ellipsoidGravPotential;
+    computeEllipsoidGravitationalPotential( alpha,
+                                            beta,
+                                            gamma,
+                                            gravitationalParameter,
+                                            regolithPositionVector[ xPositionIndex ],
+                                            regolithPositionVector[ yPositionIndex ],
+                                            regolithPositionVector[ zPositionIndex ],
+                                            ellipsoidGravPotential );
+    double maxPotentialValue = 0.0;
+    if( ellipsoidGravPotential > pointMassGravPotential )
+    {
+        maxPotentialValue = ellipsoidGravPotential;
+    }
+    else
+    {
+        maxPotentialValue = pointMassGravPotential;
+    }
+
+    double localNormalEscapeSpeed
+        = -1.0 * normalDotOmegaCrossPosition
+            + std::sqrt( normalDotOmegaCrossPositionSquare + 2.0 * maxPotentialValue - omegaCrossPositionSquare );
+
+    velocityMagnitude = velocityMagnitudeFactor * localNormalEscapeSpeed;
 
     std::vector< double > regolithVelocityVector( 3 );
     computeRegolithVelocityVector2( regolithPositionVector,
