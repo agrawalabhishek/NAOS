@@ -9,9 +9,8 @@
 #include <stdexcept>
 #include <sstream>
 #include <iostream>
-#include <gsl/gsl_sf_ellint.h>
-#include <gsl/gsl_mode.h>
-#include <gsl/gsl_errno.h>
+
+#include <boost/math/special_functions/ellint_rd.hpp>
 
 #include "NAOS/cubicRoot.hpp"
 #include "NAOS/constants.hpp"
@@ -88,55 +87,26 @@ namespace naos
                                                 coefficientA0 );
     }
 
-    // Set default error handler of GSL off to manually handle GSL errors.
-    gsl_set_error_handler_off( );
-
     // Evaluate Ux.
-    gsl_sf_result result_Ux;
-    int status_Ux = gsl_sf_ellint_RD_e( ( betaSquare + lambda ),
-                                        ( gammaSquare + lambda ),
-                                        ( alphaSquare + lambda ),
-                                        GSL_PREC_DOUBLE,
-                                        &result_Ux );
+    double xResult = boost::math::ellint_rd( ( betaSquare + lambda ),
+                                             ( gammaSquare + lambda ),
+                                             ( alphaSquare + lambda ) );
 
-    const double Ux = -1.0 * gravParameter * xCoordinate * result_Ux.val;
+    const double Ux = -1.0 * gravParameter * xCoordinate * xResult;
 
     // Evaluate Uy.
-    gsl_sf_result result_Uy;
-    int status_Uy = gsl_sf_ellint_RD_e( ( gammaSquare + lambda ),
-                                        ( alphaSquare + lambda ),
-                                        ( betaSquare + lambda ),
-                                        GSL_PREC_DOUBLE,
-                                        &result_Uy );
+    double yResult = boost::math::ellint_rd( ( gammaSquare + lambda ),
+                                             ( alphaSquare + lambda ),
+                                             ( betaSquare + lambda ) );
 
-    const double Uy = -1.0 * gravParameter * yCoordinate * result_Uy.val;
+    const double Uy = -1.0 * gravParameter * yCoordinate * yResult;
 
     // Evaluate Uz.
-    gsl_sf_result result_Uz;
-    int status_Uz = gsl_sf_ellint_RD_e( ( alphaSquare + lambda ),
-                                        ( betaSquare + lambda ),
-                                        ( gammaSquare + lambda ),
-                                        GSL_PREC_DOUBLE,
-                                        &result_Uz );
+    double zResult = boost::math::ellint_rd( ( alphaSquare + lambda ),
+                                             ( betaSquare + lambda ),
+                                             ( gammaSquare + lambda ) );
 
-    const double Uz = -1.0 * gravParameter * zCoordinate * result_Uz.val;
-
-    // Checking the status of evaluation, a non-zero status is an error
-    if( status_Ux != GSL_SUCCESS || status_Uy != GSL_SUCCESS || status_Uz != GSL_SUCCESS )
-    {
-        std::cout << std::endl;
-        std::cout << "Error in ellipsoid gravitational acceleration computation!" << std::endl;
-        std::cout << "Parameteric values that resulted in the error:" << std::endl;
-        std::cout << "x Coordinate = " << xCoordinate << std::endl;
-        std::cout << "y Coordinate = " << yCoordinate << std::endl;
-        std::cout << "z Coordinate = " << zCoordinate << std::endl;
-        std::cout << "lambda = " << lambda << std::endl;
-        std::cout << "Phi =  " << phi << std::endl;
-
-        std::string errorMessage;
-        errorMessage = gsl_strerror( status_Ux );
-        throw std::runtime_error( errorMessage );
-    }
+    const double Uz = -1.0 * gravParameter * zCoordinate * zResult;
 
     // Store the final gravitational acceleration values.
     gravAcceleration[ 0 ] = Ux;

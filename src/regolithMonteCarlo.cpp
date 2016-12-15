@@ -28,6 +28,7 @@
 #include "NAOS/postAnalysis.hpp"
 #include "NAOS/particleAroundUniformlyRotatingEllipsoid.hpp"
 #include "NAOS/regolithTrajectoryCalculator.hpp"
+#include "NAOS/misc.hpp"
 
 namespace naos
 {
@@ -165,54 +166,101 @@ void executeRegolithMonteCarlo( const double alpha,
 
     SQLite::Statement databaseQuery( database, regolithTrajectoryTableInsert.str( ) );
 
+    //! sanity check for ellipsoid grav acceleration and potential (match values with ones given by nicola)
+    const double testGravitationalParameter = 446382.0;
+    std::vector< double > testLocation = { 10000.0,
+                                           13000.0,
+                                           8000.0 };
+
+    std::vector< double > testAcceleration( 3, 0.0 );
+    computeEllipsoidGravitationalAcceleration( alpha,
+                                               beta,
+                                               gamma,
+                                               testGravitationalParameter,
+                                               testLocation[ xPositionIndex ],
+                                               testLocation[ yPositionIndex ],
+                                               testLocation[ zPositionIndex ],
+                                               testAcceleration );
+
+    double testGravPotential = 0.0;
+    computeEllipsoidGravitationalPotential( alpha,
+                                            beta,
+                                            gamma,
+                                            testGravitationalParameter,
+                                            testLocation[ xPositionIndex ],
+                                            testLocation[ yPositionIndex ],
+                                            testLocation[ zPositionIndex ],
+                                            testGravPotential );
+
+    std::cout.precision( 15 );
+    printVector( testAcceleration, 3 );
+    std::cout << testGravPotential << std::endl << std::endl;
 
     //! Sanity check for the use of "executeSingleRegolithTrajectoryCalculation" function
-    // std::vector < double > initialCartesianStateVector = { 15813.65855301109,
-    //                                                        27226.38435085693,
-    //                                                        949.8412226219427,
-    //                                                        4.289020920685013,
-    //                                                        -2.524160650707516,
-    //                                                        0.9461114675116752 };
+    std::vector< double > initialKeplerianState = { 24400.0,
+                                                    0.1,
+                                                    20.0,
+                                                    00.0,
+                                                    00.0,
+                                                    0.0 };
 
-    // executeSingleRegolithTrajectoryCalculation( alpha,
-    //                                             beta,
-    //                                             gamma,
-    //                                             gravitationalParameter,
-    //                                             angularVelocityVector,
-    //                                             initialCartesianStateVector,
-    //                                             0.0,
-    //                                             0.0,
-    //                                             integrationStepSize,
-    //                                             startTime,
-    //                                             endTime,
-    //                                             databaseQuery,
-    //                                             dataSaveIntervals );
+    std::vector< double > initialCartesianStateVector
+        = convertKeplerianElementsToCartesianCoordinates( initialKeplerianState,
+                                                          gravitationalParameter );
+
+    // since simulation starts at t=0 seconds, inertial and body frame are aligned, but
+    // fix the body frame velocity
+    initialCartesianStateVector[ xVelocityIndex ]
+        = initialCartesianStateVector[ xVelocityIndex ]
+            - angularVelocityVector[ 2 ] * initialCartesianStateVector[ xPositionIndex ];
+
+    initialCartesianStateVector[ yVelocityIndex ]
+        = initialCartesianStateVector[ yVelocityIndex ]
+            - angularVelocityVector[ 2 ] * initialCartesianStateVector[ yPositionIndex ];
+
+    initialCartesianStateVector[ zVelocityIndex ]
+        = initialCartesianStateVector[ zVelocityIndex ]
+            - angularVelocityVector[ 2 ] * initialCartesianStateVector[ zPositionIndex ];
+
+    executeSingleRegolithTrajectoryCalculation( alpha,
+                                                beta,
+                                                gamma,
+                                                gravitationalParameter,
+                                                angularVelocityVector,
+                                                initialCartesianStateVector,
+                                                0.0,
+                                                0.0,
+                                                integrationStepSize,
+                                                startTime,
+                                                endTime,
+                                                databaseQuery,
+                                                dataSaveIntervals );
 
     // azimuth angle iterator begins here
-    for( int azimuthIterator = 0; azimuthIterator < 360; azimuthIterator++ )
-    {
-        // calculate the azimuth angle
-        const double coneAngleAzimuth
-                = naos::convertDegreeToRadians( coneAngleAzimuthFactor * azimuthIterator );
+    // for( int azimuthIterator = 0; azimuthIterator < 360; azimuthIterator++ )
+    // {
+    //     // calculate the azimuth angle
+    //     const double coneAngleAzimuth
+    //             = naos::convertDegreeToRadians( coneAngleAzimuthFactor * azimuthIterator );
 
-        executeRegolithTrajectoryCalculation( alpha,
-                                              beta,
-                                              gamma,
-                                              gravitationalParameter,
-                                              angularVelocityVector,
-                                              angularVelocityMagnitude,
-                                              aXValue,
-                                              aYValue,
-                                              aZValue,
-                                              coneAngleAzimuth,
-                                              coneAngleDeclination,
-                                              velocityMagnitudeFactor,
-                                              integrationStepSize,
-                                              startTime,
-                                              endTime,
-                                              dataSaveIntervals,
-                                              databaseQuery );
-    } // end of azimuth angle iterator loop
+    //     executeRegolithTrajectoryCalculation( alpha,
+    //                                           beta,
+    //                                           gamma,
+    //                                           gravitationalParameter,
+    //                                           angularVelocityVector,
+    //                                           angularVelocityMagnitude,
+    //                                           aXValue,
+    //                                           aYValue,
+    //                                           aZValue,
+    //                                           coneAngleAzimuth,
+    //                                           coneAngleDeclination,
+    //                                           velocityMagnitudeFactor,
+    //                                           integrationStepSize,
+    //                                           startTime,
+    //                                           endTime,
+    //                                           dataSaveIntervals,
+    //                                           databaseQuery );
+    // } // end of azimuth angle iterator loop
 
     transaction.commit( );
 }

@@ -12,9 +12,9 @@
 #include <stdexcept>
 #include <sstream>
 #include <iostream>
-#include <gsl/gsl_sf_ellint.h>
-#include <gsl/gsl_mode.h>
-#include <gsl/gsl_errno.h>
+
+#include <boost/math/special_functions/ellint_rd.hpp>
+#include <boost/math/special_functions/ellint_rf.hpp>
 
 #include "NAOS/cubicRoot.hpp"
 #include "NAOS/constants.hpp"
@@ -91,48 +91,33 @@ void computeEllipsoidGravitationalPotential(
                                                 coefficientA0 );
     }
 
-    // Set default error handler of GSL off to manually handle GSL errors.
-    gsl_set_error_handler_off( );
-
     // Evaluate part 1 of the potential equation, V1
-    gsl_sf_result result_V1;
-    int status_V1 = gsl_sf_ellint_RD_e( ( betaSquare + lambda ),
-                                        ( gammaSquare + lambda ),
-                                        ( alphaSquare + lambda ),
-                                        GSL_PREC_DOUBLE,
-                                        &result_V1 );
+    Real result_V1 = boost::math::ellint_rd( ( betaSquare + lambda ),
+                                             ( gammaSquare + lambda ),
+                                             ( alphaSquare + lambda ) );
 
-    const Real V1 = -1.0 * gravParameter * xCoordinateSquare * result_V1.val / 2.0;
+    const Real V1 = -1.0 * gravParameter * xCoordinateSquare * result_V1 / 2.0;
 
     // Evaluate part 2 of the potential equation, V2
-    gsl_sf_result result_V2;
-    int status_V2 = gsl_sf_ellint_RD_e( ( gammaSquare + lambda ),
-                                        ( alphaSquare + lambda ),
-                                        ( betaSquare + lambda ),
-                                        GSL_PREC_DOUBLE,
-                                        &result_V2 );
+    Real result_V2 = boost::math::ellint_rd( ( gammaSquare + lambda ),
+                                             ( alphaSquare + lambda ),
+                                             ( betaSquare + lambda ) );
 
-    const Real V2 = -1.0 * gravParameter * yCoordinateSquare * result_V2.val / 2.0;
+    const Real V2 = -1.0 * gravParameter * yCoordinateSquare * result_V2 / 2.0;
 
     // Evaluate part 3 of the potential equation, V3
-    gsl_sf_result result_V3;
-    int status_V3 = gsl_sf_ellint_RD_e( ( alphaSquare + lambda ),
-                                        ( betaSquare + lambda ),
-                                        ( gammaSquare + lambda ),
-                                        GSL_PREC_DOUBLE,
-                                        &result_V3 );
+    Real result_V3 = boost::math::ellint_rd( ( alphaSquare + lambda ),
+                                             ( betaSquare + lambda ),
+                                             ( gammaSquare + lambda ) );
 
-    const Real V3 = -1.0 * gravParameter * zCoordinateSquare * result_V3.val / 2.0;
+    const Real V3 = -1.0 * gravParameter * zCoordinateSquare * result_V3 / 2.0;
 
     // Evaluate part 4 of the potential equation, V4
-    gsl_sf_result result_V4;
-    int status_V4 = gsl_sf_ellint_RF_e( ( alphaSquare + lambda ),
-                                        ( betaSquare + lambda ),
-                                        ( gammaSquare + lambda ),
-                                        GSL_PREC_DOUBLE,
-                                        &result_V4 );
+    Real result_V4 = boost::math::ellint_rf( ( alphaSquare + lambda ),
+                                             ( betaSquare + lambda ),
+                                             ( gammaSquare + lambda ) );
 
-    const Real V4 = 3.0 * gravParameter * result_V4.val / 2.0;
+    const Real V4 = 3.0 * gravParameter * result_V4 / 2.0;
 
     // final potential value
     gravPotential = V1 + V2 + V3 + V4;
