@@ -76,9 +76,9 @@ void computeEllipsoidGravitationalPotential(
     // Perform a check on the sign of phi(r,0) to determine the value of lambda [3].
     double phi = ( xCoordinateSquare / alphaSquare )
                  + ( yCoordinateSquare / betaSquare )
-                 + ( zCoordinateSquare / gammaSquare ) - 1.0;
+                 + ( zCoordinateSquare / gammaSquare );
     Real lambda;
-    if( phi <= 0 )
+    if( ( phi - 1.0 ) <= 1.0e-10 || ( phi - 1.0 ) == 0.0 )
     {
         // The case where the point is on the surface or inside the ellipsoid.
         lambda = 0;
