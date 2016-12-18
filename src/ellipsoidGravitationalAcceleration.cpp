@@ -70,7 +70,7 @@ namespace naos
                                     - ( zCoordinateSquare * alphaSquare * betaSquare );
 
     // Perform a check on the sign of phi(r,0) to determine the value of lambda [3].
-    int phi = ( xCoordinateSquare / alphaSquare )
+    double phi = ( xCoordinateSquare / alphaSquare )
                  + ( yCoordinateSquare / betaSquare )
                  + ( zCoordinateSquare / gammaSquare ) - 1.0;
     double lambda;
