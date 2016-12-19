@@ -52,36 +52,42 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-# data = pd.read_csv( '../data/solutionParticleAroundUniformlyRotatingEllipsoid_jacobian.csv' )
-# t = data['time'].values
-# jacobian = data['jacobian'].values
+data = pd.read_csv( '../data/regolith_launched_from_leading_edge_test/test.csv' )
+x = data['x'].values
+y = data['y'].values
+z = data['z'].values
+vx = data['vx'].values
+vy = data['vy'].values
+vz = data['vz'].values
+t = data['t'].values
+jacobian = data['jacobi'].values
 
 # Connect to SQLite database.
-try:
-        database = sqlite3.connect("../data/regolith_launched_from_leading_edge/leadingEdge.db")
+# try:
+#         database = sqlite3.connect("../data/regolith_launched_from_leading_edge/leadingEdge.db")
 
-except sqlite3.Error, e:
-        print "Error %s:" % e.args[0]
-        sys.exit(1)
+# except sqlite3.Error, e:
+#         print "Error %s:" % e.args[0]
+#         sys.exit(1)
 
-data = pd.read_sql( "SELECT     jacobi_integral,                        \
-                                time                                    \
-                     FROM       regolith_trajectory_results             \
-                     WHERE      ROUND( launch_azimuth ) = 100.0;",      \
-                     database )
+# data = pd.read_sql( "SELECT     jacobi_integral,                        \
+#                                 time                                    \
+#                      FROM       regolith_trajectory_results             \
+#                      WHERE      ROUND( launch_azimuth ) = 100.0;",      \
+#                      database )
 
-data.columns = [ 'jacobi_integral',                                     \
-                 'time' ]
+# data.columns = [ 'jacobi_integral',                                     \
+#                  'time' ]
 
-t = data[ 'time' ]
-jacobian = data[ 'jacobi_integral' ]
+# t = data[ 'time' ]
+# jacobian = data[ 'jacobi_integral' ]
 
 # convert time in seconds to earth days
-t = t / ( 24.0 * 60.0 * 60.0 )
+# t = t / ( 24.0 * 60.0 * 60.0 )
 
-# upto 4 significant digits after the decimal point in jacobian
-# for index in range( 0, len(jacobian) ):
-#     jacobian[index] = float( "{0:.4f}".format(jacobian[index]) )
+# upto 7 significant digits after the decimal point in jacobian
+for index in range( 0, len(jacobian) ):
+    jacobian[index] = float( "{0:.7f}".format(jacobian[index]) )
 
 ## Set up the figure
 fig = plt.figure( )
@@ -99,32 +105,32 @@ ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useOffset=False)
 ax1.grid( )
 
 ## plot relative change in jacobian
-initialJacobian = jacobian[ 0 ];
-relativeChangeInJacobian = (jacobian - initialJacobian) / initialJacobian
+# initialJacobian = jacobian[ 0 ];
+# relativeChangeInJacobian = (jacobian - initialJacobian) / initialJacobian
 
-ax2.plot( t, relativeChangeInJacobian, color=colors.cnames['purple'] )
-ax2.set_xlabel('time [Earth days]')
-ax2.set_ylabel('Relative change in Jacobi integral')
-ax2.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useOffset=False)
-ax2.grid( )
+# ax2.plot( t, relativeChangeInJacobian, color=colors.cnames['purple'] )
+# ax2.set_xlabel('time [Earth days]')
+# ax2.set_ylabel('Relative change in Jacobi integral')
+# ax2.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useOffset=False)
+# ax2.grid( )
 
 ## plot meta data
-# endIndex = np.size( x )
-# ax2.axis( 'off' )
-# metadata_table = []
-# metadata_table.append( [ "Initial X coordinate", x[0], "[m]" ] )
-# metadata_table.append( [ "Initial Y coordinate", y[0], "[m]" ] )
-# metadata_table.append( [ "Initial Z coordinate", z[0], "[m]" ] )
-# metadata_table.append( [ "Initial X velocity", vx[0], "[m/s]" ] )
-# metadata_table.append( [ "Initial Y velocity", vy[0], "[m/s]" ] )
-# metadata_table.append( [ "Initial Z velocity", vz[0], "[m/s]" ] )
-# metadata_table.append( [ "Simulation time", t[endIndex-1], "[s]" ] )
-# table = ax2.table( cellText = metadata_table, colLabels = None, cellLoc = 'center', loc = 'center' )
-# table_properties = table.properties( )
-# table_cells = table_properties[ 'child_artists' ]
-# for cell in table_cells: cell.set_height( 0.15 )
-# cell_dict = table.get_celld( )
-# for row in xrange( 0, 7 ): cell_dict[ ( row, 2 ) ].set_width( 0.1 )
+endIndex = np.size( x )
+ax2.axis( 'off' )
+metadata_table = []
+metadata_table.append( [ "Initial X coordinate", x[0], "[m]" ] )
+metadata_table.append( [ "Initial Y coordinate", y[0], "[m]" ] )
+metadata_table.append( [ "Initial Z coordinate", z[0], "[m]" ] )
+metadata_table.append( [ "Initial X velocity", vx[0], "[m/s]" ] )
+metadata_table.append( [ "Initial Y velocity", vy[0], "[m/s]" ] )
+metadata_table.append( [ "Initial Z velocity", vz[0], "[m/s]" ] )
+metadata_table.append( [ "Simulation time", t[endIndex-1], "[s]" ] )
+table = ax2.table( cellText = metadata_table, colLabels = None, cellLoc = 'center', loc = 'center' )
+table_properties = table.properties( )
+table_cells = table_properties[ 'child_artists' ]
+for cell in table_cells: cell.set_height( 0.15 )
+cell_dict = table.get_celld( )
+for row in xrange( 0, 7 ): cell_dict[ ( row, 2 ) ].set_width( 0.1 )
 
 ## show plot
 plt.tight_layout( )

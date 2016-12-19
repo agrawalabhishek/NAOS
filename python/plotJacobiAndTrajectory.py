@@ -59,7 +59,7 @@ except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
         sys.exit(1)
 
-angleArray = range( 0, 1, 1 )
+angleArray = range( 0, 360, 10 )
 
 for angleValue in angleArray:
     data = pd.read_sql( "SELECT     position_x,                                                 \
@@ -91,6 +91,11 @@ for angleValue in angleArray:
     vz = data[ 'vz' ]
     t = data[ 'time' ]
     jacobi = data[ 'jacobi_integral' ]
+
+    # upto 7 significant digits after the decimal point in jacobian
+    for index in range( 0, len(jacobi) ):
+        jacobi[index] = float( "{0:.7f}".format(jacobi[index]) )
+
 
     ## Set up the figure
     fig = plt.figure( )
