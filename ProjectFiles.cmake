@@ -8,15 +8,13 @@ set(SRC
   "${SRC_PATH}/cubicRoot.cpp"
   "${SRC_PATH}/ellipsoidGravitationalAcceleration.cpp"
   "${SRC_PATH}/computeEllipsoidSurfaceGravitationalAcceleration.cpp"
-  "${SRC_PATH}/executeOrbiterAroundURE.cpp"
-  "${SRC_PATH}/gslIntegratorOrbiterAroundURE.cpp"
-  "${SRC_PATH}/gslIntegratorOrbiterAroundUREPointMassGravity.cpp"
-  "${SRC_PATH}/regolithTrajectoryCalculator.cpp"
   "${SRC_PATH}/postAnalysis.cpp"
   "${SRC_PATH}/boostIntegratorRestrictedTwoBodyProblem.cpp"
   "${SRC_PATH}/particleAroundSpheroidAndEllipsoidGravitationalPotential.cpp"
   "${SRC_PATH}/particleAroundUniformlyRotatingEllipsoid.cpp"
   "${SRC_PATH}/regolithMonteCarlo.cpp"
+  "${SRC_PATH}/regolithTrajectoryCalculator.cpp"
+  "${SRC_PATH}/regolithAroundUniformlyRotatingAsteroid.cpp"
 )
 
 # Set project main file.
