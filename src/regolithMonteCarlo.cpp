@@ -24,14 +24,176 @@
 #include "NAOS/basicAstro.hpp"
 #include "NAOS/computeEllipsoidSurfaceGravitationalAcceleration.hpp"
 #include "NAOS/ellipsoidPotential.hpp"
-#include "NAOS/springMassIntegratorTest.hpp"
-#include "NAOS/postAnalysis.hpp"
+#include "NAOS/misc.hpp"
 #include "NAOS/particleAroundUniformlyRotatingEllipsoid.hpp"
 #include "NAOS/regolithTrajectoryCalculator.hpp"
-#include "NAOS/misc.hpp"
+#include "NAOS/regolithAroundUniformlyRotatingAsteroid.hpp"
 
 namespace naos
 {
+
+//! Function to perform sanity check on the regolith trajectory propagator
+/*!
+ * This function bypasses the function that calculates the initial position and velocity of regolith
+ * on the surface of the asteroid, and directly calls the trajectory calculator function. This
+ * function is meant to be used only as a test bed.
+ */
+void testBedForRegolithTrajectoryCalculator( const double alpha,
+                                             const double beta,
+                                             const double gamma,
+                                             const double gravitationalParameter,
+                                             const std::vector< double > &angularVelocityVector,
+                                             const double integrationStepSize,
+                                             const double startTime,
+                                             const double dataSaveIntervals,
+                                             SQLite::Statement &databaseQuery )
+{
+    //! Sanity check for the use of "executeSingleRegolithTrajectoryCalculation" function
+    std::vector< double > initialKeplerianState = { 28000.0,
+                                                    0.01,
+                                                    20.0,
+                                                    10.0,
+                                                    10.0,
+                                                    0.0 };
+
+    std::vector< double > initialStateInertial
+        = convertKeplerianElementsToCartesianCoordinates( initialKeplerianState,
+                                                          gravitationalParameter );
+
+    // account for non-zero start time value and calculate the initial state in body frame
+    double phi = angularVelocityVector[ zPositionIndex ] * startTime;
+
+    std::vector< double > initialState( 6, 0.0 );
+
+    // get the initial body frame position
+    initialState[ xPositionIndex ]
+            = initialStateInertial[ xPositionIndex ] * std::cos( phi )
+            + initialStateInertial[ yPositionIndex ] * std::sin( phi );
+
+    initialState[ yPositionIndex ]
+            = -1.0 * initialStateInertial[ xPositionIndex ] * std::sin( phi )
+            + initialStateInertial[ yPositionIndex ] * std::cos( phi );
+
+    initialState[ zPositionIndex ] = initialStateInertial[ zPositionIndex ];
+
+    // get the initial body frame velocity
+    std::vector< double > inertialPositionVector = { initialStateInertial[ xPositionIndex ],
+                                                     initialStateInertial[ yPositionIndex ],
+                                                     initialStateInertial[ zPositionIndex ] };
+
+    std::vector< double > omegaCrossPosition( 3, 0.0 );
+    omegaCrossPosition = crossProduct( angularVelocityVector, inertialPositionVector );
+
+    double xBodyFrameVelocityInInertialComponents
+                = initialStateInertial[ xVelocityIndex ] - omegaCrossPosition[ 0 ];
+
+    double yBodyFrameVelocityInInertialComponents
+                = initialStateInertial[ yVelocityIndex ] - omegaCrossPosition[ 1 ];
+
+    double zBodyFrameVelocityInInertialComponents
+                = initialStateInertial[ zVelocityIndex ] - omegaCrossPosition[ 2 ];
+
+    initialState[ xVelocityIndex ]
+            = xBodyFrameVelocityInInertialComponents * std::cos( phi )
+            + yBodyFrameVelocityInInertialComponents * std::sin( phi );
+
+    initialState[ yVelocityIndex ]
+            = -1.0 * xBodyFrameVelocityInInertialComponents * std::sin( phi )
+            + yBodyFrameVelocityInInertialComponents * std::cos( phi );
+
+    initialState[ zVelocityIndex] = zBodyFrameVelocityInInertialComponents;
+
+    executeSingleRegolithTrajectoryCalculation( alpha,
+                                                beta,
+                                                gamma,
+                                                gravitationalParameter,
+                                                angularVelocityVector,
+                                                initialState,
+                                                0.0,
+                                                0.0,
+                                                integrationStepSize,
+                                                startTime,
+                                                50000.0,
+                                                databaseQuery,
+                                                dataSaveIntervals );
+}
+
+//! Function that performs sanity check for ellipsoid acceleration and potential
+/*!
+ * This function performs a simple sanity check for the ellipsoid gravitation and potential functions
+ * by comparing the values of acceleration and potential for a particlur point outside the ellipsoid
+ * with the ones computed by 'Nicola' from his own routine in matlab.
+ */
+void sanityCheckForEllipsoidAccelerationAndPotential( const double alpha,
+                                                      const double beta,
+                                                      const double gamma )
+{
+    //! sanity check for ellipsoid grav acceleration and potential
+    // (match values with ones given by nicola)
+    const double testGravitationalParameter = 446382.0;
+    std::vector< double > testLocation = { 10000.0,
+                                           13000.0,
+                                           8000.0 };
+
+    std::vector< double > testAcceleration( 3, 0.0 );
+    computeEllipsoidGravitationalAcceleration( alpha,
+                                               beta,
+                                               gamma,
+                                               testGravitationalParameter,
+                                               testLocation[ xPositionIndex ],
+                                               testLocation[ yPositionIndex ],
+                                               testLocation[ zPositionIndex ],
+                                               testAcceleration );
+
+    double testGravPotential = 0.0;
+    computeEllipsoidGravitationalPotential( alpha,
+                                            beta,
+                                            gamma,
+                                            testGravitationalParameter,
+                                            testLocation[ xPositionIndex ],
+                                            testLocation[ yPositionIndex ],
+                                            testLocation[ zPositionIndex ],
+                                            testGravPotential );
+
+    const double potentialValueCheck = 2.37100525543964e-05 * 1.0e6;
+    const std::vector< double > gravAccelerationValuesCheck = { -4.47629167383408e-07 * 1.0e3,
+                                                                -9.6233888139995e-07 * 1.0e3,
+                                                                -5.92208542399969e-07 * 1.0e3 };
+
+    std::cout.precision( 15 );
+
+    if( std::fabs( testGravPotential - potentialValueCheck ) >= 1.0e-12 )
+    {
+        std::cout << std::endl;
+        std::cout << "ERROR!: Ellipsoid potential sanity check failed!" << std::endl;
+        std::cout << "Computed Value = " << testGravPotential << std::endl;
+        std::cout << "Test Value = " << potentialValueCheck << std::endl << std::endl;
+    }
+
+    if( std::fabs( testAcceleration[ 0 ] - gravAccelerationValuesCheck[ 0 ] ) >= 1.0e-12 )
+    {
+        std::cout << std::endl;
+        std::cout << "ERROR!: Ellipsoid grav. acceleration 'X' component sanity check failed!" << std::endl;
+        std::cout << "Computed Value = " << testAcceleration[ 0 ] << std::endl;
+        std::cout << "Test Value = " << gravAccelerationValuesCheck[ 0 ] << std::endl << std::endl;
+    }
+
+    if( std::fabs( testAcceleration[ 1 ] - gravAccelerationValuesCheck[ 1 ] ) >= 1.0e-12 )
+    {
+        std::cout << std::endl;
+        std::cout << "ERROR!: Ellipsoid grav. acceleration 'Y' component sanity check failed!" << std::endl;
+        std::cout << "Computed Value = " << testAcceleration[ 1 ] << std::endl;
+        std::cout << "Test Value = " << gravAccelerationValuesCheck[ 1 ] << std::endl << std::endl;
+    }
+
+    if( std::fabs( testAcceleration[ 2 ] - gravAccelerationValuesCheck[ 2 ] ) >= 1.0e-12 )
+    {
+        std::cout << std::endl;
+        std::cout << "ERROR!: Ellipsoid grav. acceleration 'Z' component sanity check failed!" << std::endl;
+        std::cout << "Computed Value = " << testAcceleration[ 2 ] << std::endl;
+        std::cout << "Test Value = " << gravAccelerationValuesCheck[ 2 ] << std::endl << std::endl;
+    }
+}
 
 //! create table to store the regolith trajectory results
 /*!
@@ -166,78 +328,20 @@ void executeRegolithMonteCarlo( const double alpha,
 
     SQLite::Statement databaseQuery( database, regolithTrajectoryTableInsert.str( ) );
 
-    //! sanity check for ellipsoid grav acceleration and potential (match values with ones given by nicola)
-    const double testGravitationalParameter = 446382.0;
-    std::vector< double > testLocation = { 10000.0,
-                                           13000.0,
-                                           8000.0 };
+    sanityCheckForEllipsoidAccelerationAndPotential( alpha, beta, gamma );
 
-    std::vector< double > testAcceleration( 3, 0.0 );
-    computeEllipsoidGravitationalAcceleration( alpha,
-                                               beta,
-                                               gamma,
-                                               testGravitationalParameter,
-                                               testLocation[ xPositionIndex ],
-                                               testLocation[ yPositionIndex ],
-                                               testLocation[ zPositionIndex ],
-                                               testAcceleration );
-
-    double testGravPotential = 0.0;
-    computeEllipsoidGravitationalPotential( alpha,
+    testBedForRegolithTrajectoryCalculator( alpha,
                                             beta,
                                             gamma,
-                                            testGravitationalParameter,
-                                            testLocation[ xPositionIndex ],
-                                            testLocation[ yPositionIndex ],
-                                            testLocation[ zPositionIndex ],
-                                            testGravPotential );
-
-    std::cout.precision( 15 );
-    printVector( testAcceleration, 3 );
-    std::cout << testGravPotential << std::endl << std::endl;
-
-    //! Sanity check for the use of "executeSingleRegolithTrajectoryCalculation" function
-    std::vector< double > initialKeplerianState = { 24400.0,
-                                                    0.1,
-                                                    20.0,
-                                                    00.0,
-                                                    00.0,
-                                                    0.0 };
-
-    std::vector< double > initialCartesianStateVector
-        = convertKeplerianElementsToCartesianCoordinates( initialKeplerianState,
-                                                          gravitationalParameter );
-
-    // since simulation starts at t=0 seconds, inertial and body frame are aligned, but
-    // fix the body frame velocity
-    initialCartesianStateVector[ xVelocityIndex ]
-        = initialCartesianStateVector[ xVelocityIndex ]
-            - angularVelocityVector[ 2 ] * initialCartesianStateVector[ xPositionIndex ];
-
-    initialCartesianStateVector[ yVelocityIndex ]
-        = initialCartesianStateVector[ yVelocityIndex ]
-            - angularVelocityVector[ 2 ] * initialCartesianStateVector[ yPositionIndex ];
-
-    initialCartesianStateVector[ zVelocityIndex ]
-        = initialCartesianStateVector[ zVelocityIndex ]
-            - angularVelocityVector[ 2 ] * initialCartesianStateVector[ zPositionIndex ];
-
-    executeSingleRegolithTrajectoryCalculation( alpha,
-                                                beta,
-                                                gamma,
-                                                gravitationalParameter,
-                                                angularVelocityVector,
-                                                initialCartesianStateVector,
-                                                0.0,
-                                                0.0,
-                                                integrationStepSize,
-                                                startTime,
-                                                endTime,
-                                                databaseQuery,
-                                                dataSaveIntervals );
+                                            gravitationalParameter,
+                                            angularVelocityVector,
+                                            integrationStepSize,
+                                            startTime,
+                                            dataSaveIntervals,
+                                            databaseQuery );
 
     // azimuth angle iterator begins here
-    // for( int azimuthIterator = 0; azimuthIterator < 360; azimuthIterator++ )
+    // for( int azimuthIterator = 0; azimuthIterator < 360; azimuthIterator = azimuthIterator + 10 )
     // {
     //     // calculate the azimuth angle
     //     const double coneAngleAzimuth

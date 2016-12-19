@@ -297,13 +297,13 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         const double integrationStepSize = 0.01;
         const double startTime = 0.0;
         const double endTime = 1.0 * 30.0 * 24.0 * 60.0 * 60.0;
-        const double dataSaveIntervals = 100;
+        const double dataSaveIntervals = 10.0;
 
         double wallTimeStart = naos::getWallTime< double >( );
         double cpuTimeStart = naos::getCPUTime< double >( );
 
         std::ostringstream databaseFilePath;
-        databaseFilePath << "../../data/regolith_launched_from_leading_edge_test/leadingEdgeTest.db";
+        databaseFilePath << "../../data/regolith_trajectory_test/regolithTrajectoryTest.db";
 
         naos::executeRegolithMonteCarlo( alpha,
                                          beta,

@@ -35,6 +35,32 @@
 namespace naos
 {
 
+//! Function to perform sanity check on the regolith trajectory propagator
+/*!
+ * This function bypasses the function that calculates the initial position and velocity of regolith
+ * on the surface of the asteroid, and directly calls the trajectory calculator function. This
+ * function is meant to be used only as a test bed.
+ */
+void testBedForRegolithTrajectoryCalculator( const double alpha,
+                                             const double beta,
+                                             const double gamma,
+                                             const double gravitationalParameter,
+                                             const std::vector< double > &angularVelocityVector,
+                                             const double integrationStepSize,
+                                             const double startTime,
+                                             const double dataSaveIntervals,
+                                             SQLite::Statement &databaseQuery );
+
+//! function that performs sanity check for ellipsoid acceleration and potential
+/*!
+ * This function performs a simple sanity check for the ellipsoid gravitation and potential functions
+ * by comparing the values of acceleration and potential for a particlur point outside the ellipsoid
+ * with the ones computed by 'Nicola' from his own routine in matlab.
+ */
+void sanityCheckForEllipsoidAccelerationAndPotential( const double alpha,
+                                                      const double beta,
+                                                      const double gamma );
+
 //! create table to store the regolith trajectory results
 /*!
  * this function creates a table in the database everytime it is called
