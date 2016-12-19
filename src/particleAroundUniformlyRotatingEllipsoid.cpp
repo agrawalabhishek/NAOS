@@ -140,6 +140,7 @@ void executeParticleAroundEllipsoid( const double alpha,
     outputFile << "vx" << ",";
     outputFile << "vy" << ",";
     outputFile << "vz" << ",";
+    outputFile << "jacobi" << ",";
     outputFile << "t" << std::endl;
     outputFile.precision( 16 );
 
@@ -172,24 +173,24 @@ void executeParticleAroundEllipsoid( const double alpha,
     std::vector< double > omegaCrossPosition( 3, 0.0 );
     omegaCrossPosition = crossProduct( asteroidRotationVector, inertialPositionVector );
 
-    double xbodyFrameVelocityInertialCoordinates
+    double xBodyFrameVelocityInInertialComponents
                 = initialStateInertial[ xVelocityIndex ] - omegaCrossPosition[ 0 ];
 
-    double ybodyFrameVelocityInertialCoordinates
+    double yBodyFrameVelocityInInertialComponents
                 = initialStateInertial[ yVelocityIndex ] - omegaCrossPosition[ 1 ];
 
-    double zbodyFrameVelocityInertialCoordinates
+    double zBodyFrameVelocityInInertialComponents
                 = initialStateInertial[ zVelocityIndex ] - omegaCrossPosition[ 2 ];
 
     initialState[ xVelocityIndex ]
-            = xbodyFrameVelocityInertialCoordinates * std::cos( phi )
-            + ybodyFrameVelocityInertialCoordinates * std::sin( phi );
+            = xBodyFrameVelocityInInertialComponents * std::cos( phi )
+            + yBodyFrameVelocityInInertialComponents * std::sin( phi );
 
     initialState[ yVelocityIndex ]
-            = -1.0 * xbodyFrameVelocityInertialCoordinates * std::sin( phi )
-            + ybodyFrameVelocityInertialCoordinates * std::cos( phi );
+            = -1.0 * xBodyFrameVelocityInInertialComponents * std::sin( phi )
+            + yBodyFrameVelocityInInertialComponents * std::cos( phi );
 
-    initialState[ zVelocityIndex] = zbodyFrameVelocityInertialCoordinates;
+    initialState[ zVelocityIndex] = zBodyFrameVelocityInInertialComponents;
 
     // set up boost odeint
     const double absoluteTolerance = 1.0e-15;
@@ -212,6 +213,31 @@ void executeParticleAroundEllipsoid( const double alpha,
     double currentTime = startTime;
     double intermediateEndTime = currentTime + dataSaveIntervals;
 
+    //! get the initial jacobi integral
+    double xVelocitySquare = initialState[ xVelocityIndex ] * initialState[ xVelocityIndex ];
+    double yVelocitySquare = initialState[ yVelocityIndex ] * initialState[ yVelocityIndex ];
+    double zVelocitySquare = initialState[ zVelocityIndex ] * initialState[ zVelocityIndex ];
+
+    double xPositionSquare = initialState[ xPositionIndex ] * initialState[ xPositionIndex ];
+    double yPositionSquare = initialState[ yPositionIndex ] * initialState[ yPositionIndex ];
+
+    double omegaSquare = asteroidRotationVector[ zPositionIndex ] * asteroidRotationVector[ zPositionIndex ];
+
+    double bodyFrameGravPotential;
+    computeEllipsoidGravitationalPotential( alpha,
+                                            beta,
+                                            gamma,
+                                            gravParameter,
+                                            initialState[ xPositionIndex ],
+                                            initialState[ yPositionIndex ],
+                                            initialState[ zPositionIndex ],
+                                            bodyFrameGravPotential );
+
+    double jacobiIntegral
+        = 0.5 * ( xVelocitySquare + yVelocitySquare + zVelocitySquare )
+        - 0.5 * omegaSquare * ( xPositionSquare + yPositionSquare )
+        - bodyFrameGravPotential;
+
     // save the initial state vector
     outputFile << currentStateVector[ xPositionIndex ] << ",";
     outputFile << currentStateVector[ yPositionIndex ] << ",";
@@ -219,6 +245,7 @@ void executeParticleAroundEllipsoid( const double alpha,
     outputFile << currentStateVector[ xVelocityIndex ] << ",";
     outputFile << currentStateVector[ yVelocityIndex ] << ",";
     outputFile << currentStateVector[ zVelocityIndex ] << ",";
+    outputFile << jacobiIntegral << ",";
     outputFile << currentTime << std::endl;
 
     // start the integration outer loop
@@ -237,6 +264,31 @@ void executeParticleAroundEllipsoid( const double alpha,
         currentTime = intermediateEndTime;
         intermediateEndTime = currentTime + dataSaveIntervals;
 
+        //! get the jacobi integral
+        xVelocitySquare = currentStateVector[ xVelocityIndex ] * currentStateVector[ xVelocityIndex ];
+        yVelocitySquare = currentStateVector[ yVelocityIndex ] * currentStateVector[ yVelocityIndex ];
+        zVelocitySquare = currentStateVector[ zVelocityIndex ] * currentStateVector[ zVelocityIndex ];
+
+        xPositionSquare = currentStateVector[ xPositionIndex ] * currentStateVector[ xPositionIndex ];
+        yPositionSquare = currentStateVector[ yPositionIndex ] * currentStateVector[ yPositionIndex ];
+
+        omegaSquare = asteroidRotationVector[ zPositionIndex ] * asteroidRotationVector[ zPositionIndex ];
+
+        bodyFrameGravPotential;
+        computeEllipsoidGravitationalPotential( alpha,
+                                                beta,
+                                                gamma,
+                                                gravParameter,
+                                                currentStateVector[ xPositionIndex ],
+                                                currentStateVector[ yPositionIndex ],
+                                                currentStateVector[ zPositionIndex ],
+                                                bodyFrameGravPotential );
+
+        jacobiIntegral
+            = 0.5 * ( xVelocitySquare + yVelocitySquare + zVelocitySquare )
+            - 0.5 * omegaSquare * ( xPositionSquare + yPositionSquare )
+            - bodyFrameGravPotential;
+
         // save data
         outputFile << currentStateVector[ xPositionIndex ] << ",";
         outputFile << currentStateVector[ yPositionIndex ] << ",";
@@ -244,6 +296,7 @@ void executeParticleAroundEllipsoid( const double alpha,
         outputFile << currentStateVector[ xVelocityIndex ] << ",";
         outputFile << currentStateVector[ yVelocityIndex ] << ",";
         outputFile << currentStateVector[ zVelocityIndex ] << ",";
+        outputFile << jacobiIntegral << ",";
         outputFile << currentTime << std::endl;
 
     } // end of outer while loop for integration
@@ -586,26 +639,109 @@ void convertBodyFrameVectorToInertialFrame( const std::vector< double > &asteroi
     std::vector< double > omegaCrossPosition( 3, 0.0 );
     omegaCrossPosition = crossProduct( asteroidRotationVector, bodyFramePositionVector );
 
-    // use the transport theorem to get the body frame velocity in inertial coordinates
-    double xBodyFrameVelocityInertialCoordinates
+    // use the transport theorem to get the inertial velocity in body frame components
+    double xinertialVelocityInBodyFrameComponents
                 = currentStateVector[ xVelocityIndex ] + omegaCrossPosition[ 0 ];
 
-    double yBodyFrameVelocityInertialCoordinates
+    double yinertialVelocityInBodyFrameComponents
                 = currentStateVector[ yVelocityIndex ] + omegaCrossPosition[ 1 ];
 
-    double zBodyFrameVelocityInertialCoordinates
+    double zinertialVelocityInBodyFrameComponents
                 = currentStateVector[ zVelocityIndex ] + omegaCrossPosition[ 2 ];
 
     // use the rotation matrix to get the velocity in the inertial frame
     inertialState[ xVelocityIndex ]
-                = xBodyFrameVelocityInertialCoordinates * std::cos( rotationAngle )
-                - yBodyFrameVelocityInertialCoordinates * std::sin( rotationAngle );
+                = xinertialVelocityInBodyFrameComponents * std::cos( rotationAngle )
+                - yinertialVelocityInBodyFrameComponents * std::sin( rotationAngle );
 
     inertialState[ yVelocityIndex ]
-                = xBodyFrameVelocityInertialCoordinates * std::sin( rotationAngle )
-                + yBodyFrameVelocityInertialCoordinates * std::cos( rotationAngle );
+                = xinertialVelocityInBodyFrameComponents * std::sin( rotationAngle )
+                + yinertialVelocityInBodyFrameComponents * std::cos( rotationAngle );
 
-    inertialState[ zVelocityIndex ] = zBodyFrameVelocityInertialCoordinates;
+    inertialState[ zVelocityIndex ] = zinertialVelocityInBodyFrameComponents;
+}
+
+//! Calculate particle energy
+/*!
+ * The routine calculates the energy of the orbiting particle, kinetic, potential and total energy.
+ */
+void computeParticleEnergy( const double alpha,
+                            const double beta,
+                            const double gamma,
+                            const double gravParameter,
+                            std::vector< double > inertialState,
+                            double &kineticEnergy,
+                            double &potentialEnergy,
+                            double &totalEnergy )
+{
+    double gravPotential;
+    computeEllipsoidGravitationalPotential( alpha,
+                                            beta,
+                                            gamma,
+                                            gravParameter,
+                                            inertialState[ xPositionIndex ],
+                                            inertialState[ yPositionIndex ],
+                                            inertialState[ zPositionIndex ],
+                                            gravPotential );
+
+    std::vector< double > velocityVector = { inertialState[ xVelocityIndex ],
+                                             inertialState[ yVelocityIndex ],
+                                             inertialState[ zVelocityIndex ] };
+
+    double velocityMagnitude = vectorNorm( velocityVector );
+
+    kineticEnergy = velocityMagnitude * velocityMagnitude / 2.0;
+    potentialEnergy = -1.0 * gravPotential;
+    totalEnergy = kineticEnergy + potentialEnergy;
+}
+
+//! check jacobi conservation
+/*!
+ * this routine compares current jacobi with the previous jacobi value at every time step of the
+ * integration to see if the value is conserved.
+ */
+void jacobiChecker( const double currentJacobi,
+                    const double previousJacobi,
+                    const double eventTime,
+                    const double xPosition,
+                    const double yPosition,
+                    const double zPosition,
+                    const double xVelocity,
+                    const double yVelocity,
+                    const double zVelocity,
+                    const double gravAcceleration,
+                    const double gravPotential,
+                    std::ostringstream &location )
+{
+    // check if jacobi value is same as the last computed value, it should remain constant
+    if( std::fabs( currentJacobi - previousJacobi ) >= 1.0e-10 )
+    {
+        // something's went wrong and that is why we are here
+        std::cout << "Jacobi integral not conserved!" << std::endl;
+        std::cout << "Simulator at " << location.str( ) << std::endl;
+        std::cout << "time = " << eventTime << std::endl << std::endl;
+
+        double range = std::sqrt( xPosition * xPosition
+                                + yPosition * yPosition
+                                + zPosition * zPosition );
+
+        std::cout << "x = " << xPosition << std::endl;
+        std::cout << "y = " << yPosition << std::endl;
+        std::cout << "z = " << zPosition << std::endl;
+        std::cout << "range = " << range << std::endl;
+
+        double velocity = std::sqrt( xVelocity * xVelocity
+                                   + yVelocity * yVelocity
+                                   + zVelocity * zVelocity );
+
+        std::cout << "vx = " << xVelocity << std::endl;
+        std::cout << "vy = " << yVelocity << std::endl;
+        std::cout << "vz = " << zVelocity << std::endl;
+        std::cout << "velocity = " << velocity << std::endl;
+
+        std::cout << "grav. potential = " << gravPotential << std::endl;
+        std::cout << "grav. acceleration = " << gravAcceleration << std::endl << std::endl;
+    }
 }
 
 //! Trajectory calculation for regolith around an asteroid (modelled as ellipsoid here)
@@ -633,6 +769,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
     //! get the initial orbital elements
     std::vector< double > initialOrbitalElements( 6, 0.0 );
+
     // convert the initial body frame state to inertial frame first
     std::vector< double > initialInertialState( 6, 0.0 );
     convertBodyFrameVectorToInertialFrame( asteroidRotationVector,
@@ -645,25 +782,18 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                     initialOrbitalElements );
 
     //! get the initial energy of the particle
-    double initialGravPotential;
-    computeEllipsoidGravitationalPotential( alpha,
-                                            beta,
-                                            gamma,
-                                            gravParameter,
-                                            initialInertialState[ xPositionIndex ],
-                                            initialInertialState[ yPositionIndex ],
-                                            initialInertialState[ zPositionIndex ],
-                                            initialGravPotential );
+    double kineticEnergy = 0.0;
+    double potentialEnergy = 0.0;
+    double initialParticleEnergy = 0.0;
 
-    std::vector< double > initialInertialVelocityVector = { initialInertialState[ xVelocityIndex ],
-                                                            initialInertialState[ yVelocityIndex ],
-                                                            initialInertialState[ zVelocityIndex ] };
-
-    double initialInertialVelocityMagnitude = vectorNorm( initialInertialVelocityVector );
-
-    double kineticEnergy = initialInertialVelocityMagnitude * initialInertialVelocityMagnitude / 2.0;
-    double potentialEnergy = -initialGravPotential;
-    double initialParticleEnergy = kineticEnergy + potentialEnergy;
+    computeParticleEnergy( alpha,
+                           beta,
+                           gamma,
+                           gravParameter,
+                           initialInertialState,
+                           kineticEnergy,
+                           potentialEnergy,
+                           initialParticleEnergy );
 
     //! get the initial jacobi integral
     double xVelocitySquare = initialState[ xVelocityIndex ] * initialState[ xVelocityIndex ];
@@ -766,6 +896,9 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
         // save the last know state vector for when the particle is outside the asteroid
         std::vector< double > lastStateVector = currentStateVector;
 
+        // save the last calculated jacobi integral value
+        double previousJacobi = jacobiIntegral;
+
         // perform integration, integrated result stored in currentStateVector
         size_t steps = boost::numeric::odeint::integrate_adaptive(
                             make_controlled( absoluteTolerance, relativeTolerance, stepperType( ) ),
@@ -803,31 +936,15 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             }
 
             // calculate energy and check the sign
-            std::vector< double > inertialPositionVector = { inertialState[ xPositionIndex ],
-                                                             inertialState[ yPositionIndex ],
-                                                             inertialState[ zPositionIndex ] };
-
-            std::vector< double > inertialVelocityVector = { inertialState[ xVelocityIndex ],
-                                                             inertialState[ yVelocityIndex ],
-                                                             inertialState[ zVelocityIndex ] };
-
-            double inertialVelocityMagnitude = vectorNorm( inertialVelocityVector );
-
-            double inertialPositionMagnitude = vectorNorm( inertialPositionVector );
-
-            double gravPotential;
-            computeEllipsoidGravitationalPotential( alpha,
-                                                    beta,
-                                                    gamma,
-                                                    gravParameter,
-                                                    inertialPositionVector[ xPositionIndex ],
-                                                    inertialPositionVector[ yPositionIndex ],
-                                                    inertialPositionVector[ zPositionIndex ],
-                                                    gravPotential );
-
-            kineticEnergy = inertialVelocityMagnitude * inertialVelocityMagnitude / 2.0;
-            potentialEnergy = -gravPotential;
-            double particleEnergy = kineticEnergy + potentialEnergy;
+            double particleEnergy = 0.0;
+            computeParticleEnergy( alpha,
+                                   beta,
+                                   gamma,
+                                   gravParameter,
+                                   inertialState,
+                                   kineticEnergy,
+                                   potentialEnergy,
+                                   particleEnergy );
 
             bool energyFlag = false;
             if( particleEnergy > 0.0 )
@@ -949,25 +1066,15 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                             gravParameter,
                                                             orbitalElements );
 
-            std::vector< double > inertialVelocityVector = { inertialState[ xVelocityIndex ],
-                                                             inertialState[ yVelocityIndex ],
-                                                             inertialState[ zVelocityIndex ] };
-
-            double inertialVelocityMagnitude = vectorNorm( inertialVelocityVector );
-
-            double gravPotential;
-            computeEllipsoidGravitationalPotential( alpha,
-                                                    beta,
-                                                    gamma,
-                                                    gravParameter,
-                                                    currentStateVector[ xPositionIndex ],
-                                                    currentStateVector[ yPositionIndex ],
-                                                    currentStateVector[ zPositionIndex ],
-                                                    gravPotential );
-
-            kineticEnergy = inertialVelocityMagnitude * inertialVelocityMagnitude / 2.0;
-            potentialEnergy = -gravPotential;
-            double particleEnergy = kineticEnergy + potentialEnergy;
+            double particleEnergy = 0.0;
+            computeParticleEnergy( alpha,
+                                   beta,
+                                   gamma,
+                                   gravParameter,
+                                   inertialState,
+                                   kineticEnergy,
+                                   potentialEnergy,
+                                   particleEnergy );
 
             //! get the jacobi integral
             xVelocitySquare = currentStateVector[ xVelocityIndex ] * currentStateVector[ xVelocityIndex ];
@@ -1106,25 +1213,15 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                             gravParameter,
                                                             orbitalElements );
 
-            std::vector< double > inertialVelocityVector = { inertialState[ xVelocityIndex ],
-                                                             inertialState[ yVelocityIndex ],
-                                                             inertialState[ zVelocityIndex ] };
-
-            double inertialVelocityMagnitude = vectorNorm( inertialVelocityVector );
-
-            double gravPotential;
-            computeEllipsoidGravitationalPotential( alpha,
-                                                    beta,
-                                                    gamma,
-                                                    gravParameter,
-                                                    currentStateVector[ xPositionIndex ],
-                                                    currentStateVector[ yPositionIndex ],
-                                                    currentStateVector[ zPositionIndex ],
-                                                    gravPotential );
-
-            kineticEnergy = inertialVelocityMagnitude * inertialVelocityMagnitude / 2.0;
-            potentialEnergy = -gravPotential;
-            double particleEnergy = kineticEnergy + potentialEnergy;
+            double particleEnergy = 0.0;
+            computeParticleEnergy( alpha,
+                                   beta,
+                                   gamma,
+                                   gravParameter,
+                                   inertialState,
+                                   kineticEnergy,
+                                   potentialEnergy,
+                                   particleEnergy );
 
             //! get the jacobi integral
             xVelocitySquare = currentStateVector[ xVelocityIndex ] * currentStateVector[ xVelocityIndex ];
@@ -1216,25 +1313,15 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                         gravParameter,
                                                         orbitalElements );
 
-        std::vector< double > inertialVelocityVector = { inertialState[ xVelocityIndex ],
-                                                         inertialState[ yVelocityIndex ],
-                                                         inertialState[ zVelocityIndex ] };
-
-        double inertialVelocityMagnitude = vectorNorm( inertialVelocityVector );
-
-        double gravPotential;
-        computeEllipsoidGravitationalPotential( alpha,
-                                                beta,
-                                                gamma,
-                                                gravParameter,
-                                                currentStateVector[ xPositionIndex ],
-                                                currentStateVector[ yPositionIndex ],
-                                                currentStateVector[ zPositionIndex ],
-                                                gravPotential );
-
-        kineticEnergy = inertialVelocityMagnitude * inertialVelocityMagnitude / 2.0;
-        potentialEnergy = -gravPotential;
-        double particleEnergy = kineticEnergy + potentialEnergy;
+        double particleEnergy = 0.0;
+        computeParticleEnergy( alpha,
+                               beta,
+                               gamma,
+                               gravParameter,
+                               inertialState,
+                               kineticEnergy,
+                               potentialEnergy,
+                               particleEnergy );
 
         //! get the jacobi integral
         xVelocitySquare = currentStateVector[ xVelocityIndex ] * currentStateVector[ xVelocityIndex ];

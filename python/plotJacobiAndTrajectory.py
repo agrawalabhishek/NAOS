@@ -59,7 +59,7 @@ except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
         sys.exit(1)
 
-angleArray = range( 0, 1, 1 )
+angleArray = range( 0, 360, 10 )
 
 for angleValue in angleArray:
     data = pd.read_sql( "SELECT     position_x,                                                 \

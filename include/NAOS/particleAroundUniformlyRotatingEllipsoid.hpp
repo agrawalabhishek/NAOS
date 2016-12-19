@@ -92,6 +92,37 @@ void convertBodyFrameVectorToInertialFrame( const std::vector< double > &asteroi
                                             const double currentTime,
                                             std::vector< double > &inertialState );
 
+//! Calculate particle energy
+/*!
+ * The routine calculates the energy of the orbiting particle, kinetic, potential and total energy.
+ */
+void computeParticleEnergy( const double alpha,
+                            const double beta,
+                            const double gamma,
+                            const double gravParameter,
+                            std::vector< double > inertialState,
+                            double &kineticEnergy,
+                            double &potentialEnergy,
+                            double &totalEnergy );
+
+//! check jacobi conservation
+/*!
+ * this routine compares current jacobi with the previous jacobi value at every time step of the
+ * integration to see if the value is conserved.
+ */
+void jacobiChecker( const double currentJacobi,
+                    const double previousJacobi,
+                    const double eventTime,
+                    const double xPosition,
+                    const double yPosition,
+                    const double zPosition,
+                    const double xVelocity,
+                    const double yVelocity,
+                    const double zVelocity,
+                    const double gravAcceleration,
+                    const double gravPotential,
+                    std::ostringstream &location );
+
 } // namespace naos
 
 #endif // PARTICLE_AROUND_UNIFORMLY_ROTATING_ELLIPSOID

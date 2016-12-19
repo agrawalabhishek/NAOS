@@ -330,41 +330,41 @@ void executeRegolithMonteCarlo( const double alpha,
 
     sanityCheckForEllipsoidAccelerationAndPotential( alpha, beta, gamma );
 
-    testBedForRegolithTrajectoryCalculator( alpha,
-                                            beta,
-                                            gamma,
-                                            gravitationalParameter,
-                                            angularVelocityVector,
-                                            integrationStepSize,
-                                            startTime,
-                                            dataSaveIntervals,
-                                            databaseQuery );
+    // testBedForRegolithTrajectoryCalculator( alpha,
+    //                                         beta,
+    //                                         gamma,
+    //                                         gravitationalParameter,
+    //                                         angularVelocityVector,
+    //                                         integrationStepSize,
+    //                                         startTime,
+    //                                         dataSaveIntervals,
+    //                                         databaseQuery );
 
     // azimuth angle iterator begins here
-    // for( int azimuthIterator = 0; azimuthIterator < 360; azimuthIterator = azimuthIterator + 10 )
-    // {
-    //     // calculate the azimuth angle
-    //     const double coneAngleAzimuth
-    //             = naos::convertDegreeToRadians( coneAngleAzimuthFactor * azimuthIterator );
+    for( int azimuthIterator = 0; azimuthIterator < 360; azimuthIterator = azimuthIterator + 10 )
+    {
+        // calculate the azimuth angle
+        const double coneAngleAzimuth
+                = naos::convertDegreeToRadians( coneAngleAzimuthFactor * azimuthIterator );
 
-    //     executeRegolithTrajectoryCalculation( alpha,
-    //                                           beta,
-    //                                           gamma,
-    //                                           gravitationalParameter,
-    //                                           angularVelocityVector,
-    //                                           angularVelocityMagnitude,
-    //                                           aXValue,
-    //                                           aYValue,
-    //                                           aZValue,
-    //                                           coneAngleAzimuth,
-    //                                           coneAngleDeclination,
-    //                                           velocityMagnitudeFactor,
-    //                                           integrationStepSize,
-    //                                           startTime,
-    //                                           endTime,
-    //                                           dataSaveIntervals,
-    //                                           databaseQuery );
-    // } // end of azimuth angle iterator loop
+        executeRegolithTrajectoryCalculation( alpha,
+                                              beta,
+                                              gamma,
+                                              gravitationalParameter,
+                                              angularVelocityVector,
+                                              angularVelocityMagnitude,
+                                              aXValue,
+                                              aYValue,
+                                              aZValue,
+                                              coneAngleAzimuth,
+                                              coneAngleDeclination,
+                                              velocityMagnitudeFactor,
+                                              integrationStepSize,
+                                              startTime,
+                                              endTime,
+                                              dataSaveIntervals,
+                                              databaseQuery );
+    } // end of azimuth angle iterator loop
 
     transaction.commit( );
 }
