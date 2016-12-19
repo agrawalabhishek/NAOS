@@ -341,7 +341,7 @@ void executeRegolithMonteCarlo( const double alpha,
     //                                         databaseQuery );
 
     // azimuth angle iterator begins here
-    for( int azimuthIterator = 0; azimuthIterator < 360; azimuthIterator = azimuthIterator + 10 )
+    for( int azimuthIterator = 0; azimuthIterator < 360; azimuthIterator = azimuthIterator + 1 )
     {
         // calculate the azimuth angle
         const double coneAngleAzimuth
