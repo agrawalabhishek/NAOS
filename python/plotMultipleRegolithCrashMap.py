@@ -8,6 +8,7 @@ See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 # I/O
 import csv
 from pprint import pprint
+import sqlite3
 
 # Numerical
 import numpy as np
@@ -50,65 +51,120 @@ print ""
 start_time = time.time( )
 
 ## Operations
-beginRange = 0
-endRange = 360
-
 alpha = 20000.0
 beta = 7000.0
 gamma = 7000.0
 
 ## Set up the figure
 fig = plt.figure( )
-ax1 = fig.add_subplot(111)
+gs = gridspec.GridSpec( 2, 1, height_ratios = [ 2.5, 1 ] )
+ax1 = plt.subplot( gs[ 0 ] )
+ax2 = plt.subplot( gs[ 1 ] )
+# ax1 = fig.add_subplot(211)
+# ax2 = fig.add_subplot(212)
 
-## data in body frame
-for num in range( beginRange, endRange, 10 ):
-    dynamicString = '../data/trajectory_for_different_launch_azimuth/'
-    dynamicString = dynamicString + 'regolithTrajectoryAtAzimuth'
-    dynamicString = dynamicString + str(num) + '.csv'
+## Operations
+# Connect to SQLite database.
+try:
+        database = sqlite3.connect("../data/regolith_launched_from_leading_edge/leadingEdge.db")
 
-    data = pd.read_csv( dynamicString )
-    x = data[ 'x' ].values
-    y = data[ 'y' ].values
-    z = data[ 'z' ].values
-    vx = data[ 'vx' ].values
-    vy = data[ 'vy' ].values
-    vz = data[ 'vz' ].values
-    t = data[ 't' ].values
+except sqlite3.Error, e:
+        print "Error %s:" % e.args[0]
+        sys.exit(1)
 
-    # check whether the final coordinate is on the surface of asteroid or not
-    finalPoint = len( x ) - 1
-    crashCheck = x[ finalPoint ]**2 / alpha**2       \
-                    + y[ finalPoint ]**2 / beta**2   \
-                    + z[ finalPoint ]**2 / gamma**2  \
-                    - 1.0
+# for angleValue in tqdm(angleArray):
+data1 = pd.read_sql( "SELECT    position_x,                                                 \
+                                position_y,                                                 \
+                                position_z,                                                 \
+                                velocity_x,                                                 \
+                                velocity_y,                                                 \
+                                velocity_z,                                                 \
+                                time,                                                       \
+                                crash_flag,                                                 \
+                                ROUND( launch_azimuth )                                     \
+                     FROM       regolith_trajectory_results                                 \
+                     WHERE      ( crash_flag = 1 );",                                       \
+                     database )
 
-    if abs( crashCheck ) <= 1.0e-12:
-        c = np.random.random( )
-        plotColor = cm.rainbow( num )
+data1.columns = [ 'x',                                                   \
+                  'y',                                                   \
+                  'z',                                                   \
+                  'vx',                                                  \
+                  'vy',                                                  \
+                  'vz',                                                  \
+                  'time',                                                \
+                  'crash_flag',                                          \
+                  'launch_azimuth' ]
 
-        ## calculate the lat long for starting point
-        startRadialDistance = np.sqrt( x[0]**2 + y[0]**2 + z[0]**2 )
-        startLongitude = np.arctan2( y[0], x[0] ) * 180.0 / np.pi
-        startLatitude = np.arcsin( z[0] / startRadialDistance ) * 180 / np.pi
+x           = data1[ 'x' ]
+y           = data1[ 'y' ]
+z           = data1[ 'z' ]
+vx          = data1[ 'vx' ]
+vy          = data1[ 'vy' ]
+vz          = data1[ 'vz' ]
+t           = data1[ 'time' ]
+crashFlag   = data1[ 'crash_flag' ]
+azimuth     = data1[ 'launch_azimuth' ]
 
-        ## calculate lat long for end points
-        endRadialDistance = np.sqrt( x[finalPoint]**2 + y[finalPoint]**2 + z[finalPoint]**2 )
-        endLongitude = np.arctan2( y[finalPoint], x[finalPoint] ) * 180 / np.pi
-        endLatitude = np.arcsin( z[finalPoint] / endRadialDistance ) * 180 / np.pi
+# all ejecta have the same starting point in this particular case
+data2 = pd.read_sql( "SELECT     position_x,                                                 \
+                                 position_y,                                                 \
+                                 position_z,                                                 \
+                                 velocity_x,                                                 \
+                                 velocity_y,                                                 \
+                                 velocity_z,                                                 \
+                                 time,                                                       \
+                                 ROUND( launch_azimuth )                                     \
+                     FROM        regolith_trajectory_results                                 \
+                     WHERE       ( start_flag = 1 )                                          \
+                     AND         ( ROUND( launch_azimuth ) = 0 );",                          \
+                     database )
 
-        ## indicate starting point
-        ax1.scatter( startLongitude, startLatitude, color='black' )
-        ax1.text( startLongitude, startLatitude, 'start', size=10, zorder=1, color='black' )
+data2.columns = [ 'x',                                                   \
+                  'y',                                                   \
+                  'z',                                                   \
+                  'vx',                                                  \
+                  'vy',                                                  \
+                  'vz',                                                  \
+                  'time',                                                \
+                  'launch_azimuth' ]
 
-        ## Plot end points on lat long map
-        labelString = 'Azimuth = ' + str( num )
-        ax1.scatter( endLongitude, endLatitude, color=plotColor, label=labelString )
+xPositionStart = data2[ 'x' ]
+yPositionStart = data2[ 'y' ]
+zPositionStart = data2[ 'z' ]
+xVelocityStart = data2[ 'vx' ]
+yVelocityStart = data2[ 'vy' ]
+zVelocityStart = data2[ 'vz' ]
 
-        ## indicate ending point
-        ax1.text( endLongitude, endLatitude, 'end', size=10, zorder=1, color=plotColor )
-    else:
-        continue
+# get the unique declination angle
+data3 = pd.read_sql( "SELECT     DISTINCT launch_declination                                 \
+                     FROM        regolith_trajectory_results                                 \
+                     WHERE       ( crash_flag = 1 );",                                       \
+                     database )
+
+data3.columns = [ 'declination' ]
+launchDeclination = data3[ 'declination' ]
+
+## calculate the lat long for starting point
+startRadialDistance = np.sqrt( xPositionStart**2 + yPositionStart**2 + zPositionStart**2 )
+startLongitude = np.arctan2( yPositionStart, xPositionStart ) * 180.0 / np.pi
+startLatitude = np.arcsin( zPositionStart / startRadialDistance ) * 180 / np.pi
+
+## calculate lat long for end points
+endRadialDistance = np.sqrt( x**2 + y**2 + z**2 )
+endLongitude = np.arctan2( y, x ) * 180 / np.pi
+endLatitude = np.arcsin( z / endRadialDistance ) * 180 / np.pi
+
+## indicate starting point
+ax1.scatter( startLongitude, startLatitude, color='green' )
+ax1.text( startLongitude, startLatitude, 'start', size=10, zorder=1, color='green' )
+
+## Plot end points on lat long map
+ax1.scatter( endLongitude, endLatitude, color='red' )
+
+## indicate ending point
+for index in range( 0, len( azimuth ) ):
+    ax1.text( endLongitude[index], endLatitude[index], str(azimuth[index]), size=10, zorder=1, color='black' )
 
 ## format axis and title
 ax1.set_xlabel('longitude [degree]')
@@ -117,7 +173,25 @@ ax1.set_xlim( -180.0, 180.0 )
 ax1.set_ylim( -90.0, 90.0 )
 # ax1.ticklabel_format(style='plain', axis='both', useoffset=False)
 ax1.set_title( 'Regolith crash map for asteroid Eros' )
-ax1.legend( loc='center left', bbox_to_anchor=( 0.995,0.5 ) )
+# ax1.legend( loc='center left', bbox_to_anchor=( 0.995,0.5 ) )
+ax1.grid( )
+
+## Plot the metadata (launch initial conditions)
+ax2.axis( 'off' )
+metadata_table = []
+metadata_table.append( [ "Initial X coordinate", xPositionStart[0], "[m]" ] )
+metadata_table.append( [ "Initial Y coordinate", yPositionStart[0], "[m]" ] )
+metadata_table.append( [ "Initial Z coordinate", zPositionStart[0], "[m]" ] )
+metadata_table.append( [ "Initial X velocity", xVelocityStart[0], "[m/s]" ] )
+metadata_table.append( [ "Initial Y velocity", yVelocityStart[0], "[m/s]" ] )
+metadata_table.append( [ "Initial Z velocity", zVelocityStart[0], "[m/s]" ] )
+metadata_table.append( [ "Launch declination", launchDeclination[0], "[deg]" ] )
+table = ax2.table( cellText = metadata_table, colLabels = None, cellLoc = 'center', loc = 'center' )
+table_properties = table.properties( )
+table_cells = table_properties[ 'child_artists' ]
+for cell in table_cells: cell.set_height( 0.15 )
+cell_dict = table.get_celld( )
+for row in xrange( 0, 7 ): cell_dict[ ( row, 2 ) ].set_width( 0.1 )
 
 ## Show the plot
 # plt.legend( )
