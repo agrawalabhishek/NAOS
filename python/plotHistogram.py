@@ -149,7 +149,14 @@ launchDeclination = data3[ 'declination' ]
 ## Plot histogram - number of particles against time to crash
 asteroidPeriod = 2 * np.pi / Wz
 t = t / asteroidPeriod
-ax1.hist( t, 50, facecolor='green' )
+
+# plotting only until certain time values for reimpact
+newT = []
+for temp in t:
+    if temp <= 20: newT.append( temp )
+
+# ax1.hist( t, 50, facecolor='green' )
+ax1.hist( newT, 50, facecolor='green' )
 
 ## format axis and title
 ax1.set_ylabel('Number of particles')
