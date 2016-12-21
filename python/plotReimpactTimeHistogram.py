@@ -67,7 +67,7 @@ ax2 = plt.subplot( gs[ 1 ] )
 ## Operations
 # Connect to SQLite database.
 try:
-        database = sqlite3.connect("../data/regolith_launched_from_leading_edge/leadingEdge.db")
+        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/longestEdge.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -149,14 +149,14 @@ launchDeclination = data3[ 'declination' ]
 ## Plot histogram - number of particles against time to crash
 asteroidPeriod = 2 * np.pi / Wz
 t = t / asteroidPeriod
-# ax1.hist( t, 50, facecolor='green' )
+ax1.hist( t, 50, facecolor='green' )
 
 # plotting only until certain time values for reimpact
-newT = []
-for temp in t:
-    if temp <= 20: newT.append( temp )
+# newT = []
+# for temp in t:
+#     if temp <= 20: newT.append( temp )
 
-ax1.hist( newT, 50, facecolor='green' )
+# ax1.hist( newT, 50, facecolor='green' )
 
 ## format axis and title
 ax1.set_ylabel('Number of particles')

@@ -274,8 +274,8 @@ void executeRegolithMonteCarlo( const double alpha,
                                 std::ostringstream &databaseFilePath )
 {
     double aXValue = 1.0;
-    double aYValue = 1.0;
-    double aZValue = 1.0;
+    double aYValue = 0.0;
+    double aZValue = 0.0;
     const double velocityMagnitudeFactor = 0.9;
     const double coneAngleDeclination = naos::convertDegreeToRadians( 45.0 );
     const double coneAngleAzimuthFactor = 1.0;
