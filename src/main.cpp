@@ -50,6 +50,8 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     const double density = 3.2 * ( 10.0e-3 ) / ( 10.0e-6 );
     const double mass = ( 4.0 * naos::PI / 3.0 ) * density * alpha * beta * gamma;
     const double gravitationalParameter = naos::GRAVITATIONAL_CONSTANT * mass;
+    std::cout << std::endl << std::endl << "Gravitational Parameter = " << gravitationalParameter;
+    std::cout << std::endl << std::endl;
     const double Wx = 0.0; // rotational rate around principal x axis [rad/s]
     const double Wy = 0.0; // rotational rate around principal y axis [rad/s]
     const double Wz = 0.00033118202125129593; // rotational rate around principal z axis [rad/s]
