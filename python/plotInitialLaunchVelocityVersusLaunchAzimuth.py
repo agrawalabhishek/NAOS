@@ -68,7 +68,7 @@ ax2 = plt.subplot( gs[ 1 ] )
 ## Operations
 # Connect to SQLite database.
 try:
-        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/longestEdge.db")
+        database = sqlite3.connect("../data/regolith_launched_from_leading_edge/leadingEdge.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
