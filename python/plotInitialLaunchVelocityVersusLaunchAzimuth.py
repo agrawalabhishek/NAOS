@@ -68,7 +68,7 @@ ax2 = plt.subplot( gs[ 1 ] )
 ## Operations
 # Connect to SQLite database.
 try:
-        database = sqlite3.connect("../data/regolith_launched_from_leading_edge/leadingEdge.db")
+        database = sqlite3.connect("../data/regolith_trajectory_test/regolithTrajectoryTest.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -81,28 +81,34 @@ data1 = pd.read_sql( "SELECT    velocity_x,                                     
                                 inertial_velocity_y,                                        \
                                 inertial_velocity_z,                                        \
                                 time,                                                       \
+                                directional_escape_speed,                                   \
+                                directional_inertial_escape_speed,                          \
                                 ROUND( launch_azimuth )                                     \
                      FROM       regolith_trajectory_results                                 \
                      WHERE      ( start_flag = 1 );",                                       \
                      database )
 
-data1.columns = [ 'rotFrame_vx',                                                  \
-                  'rotFrame_vy',                                                  \
-                  'rotFrame_vz',                                                  \
-                  'inertial_vx',                                                  \
-                  'inertial_vy',                                                  \
-                  'inertial_vz',                                                  \
-                  'time',                                                         \
+data1.columns = [ 'rotFrame_vx',                                                            \
+                  'rotFrame_vy',                                                            \
+                  'rotFrame_vz',                                                            \
+                  'inertial_vx',                                                            \
+                  'inertial_vy',                                                            \
+                  'inertial_vz',                                                            \
+                  'time',                                                                   \
+                  'directional_escape_speed',                                               \
+                  'directional_inertial_escape_speed',                                      \
                   'launch_azimuth' ]
 
-rotFrame_vx           = data1[ 'rotFrame_vx' ]
-rotFrame_vy           = data1[ 'rotFrame_vy' ]
-rotFrame_vz           = data1[ 'rotFrame_vz' ]
-inertial_vx           = data1[ 'inertial_vx' ]
-inertial_vy           = data1[ 'inertial_vy' ]
-inertial_vz           = data1[ 'inertial_vz' ]
-t                     = data1[ 'time' ]
-azimuth               = data1[ 'launch_azimuth' ]
+rotFrame_vx                     = data1[ 'rotFrame_vx' ]
+rotFrame_vy                     = data1[ 'rotFrame_vy' ]
+rotFrame_vz                     = data1[ 'rotFrame_vz' ]
+inertial_vx                     = data1[ 'inertial_vx' ]
+inertial_vy                     = data1[ 'inertial_vy' ]
+inertial_vz                     = data1[ 'inertial_vz' ]
+t                               = data1[ 'time' ]
+directionalEscapeSpeed          = data1[ 'directional_escape_speed' ]
+inertialDirectionalEscapeSpeed  = data1[ 'directional_inertial_escape_speed' ]
+azimuth                         = data1[ 'launch_azimuth' ]
 
 ## get azimuth values for escape and reimpact cases
 data2 = pd.read_sql( "SELECT    ROUND( launch_azimuth )                                     \
@@ -123,19 +129,22 @@ crash_azimuth = data3[ 'crash_azimuth' ]
 
 ## plot launch azimuth versus rot frame initial velocity
 rotFrameInitialVelocity = np.sqrt( rotFrame_vx**2 + rotFrame_vy**2 + rotFrame_vz**2 )
-ax1.plot( azimuth, rotFrameInitialVelocity, color=colors.cnames['green'] )
+ax1Handle1 = ax1.plot( azimuth, rotFrameInitialVelocity, color=colors.cnames['purple'], label='actual speed' )
+ax1Handle2 = ax1.plot( azimuth, directionalEscapeSpeed, color=colors.cnames['black'], label='directional escape speed' )
 
 ## format axis and title
 ax1.set_xlabel('Launch azimuth [deg]')
 ax1.set_ylabel('$V_{initial}$ [m/s]')
 ax1.set_xlim( 0, 360 )
 ax1.set_title( 'Regolith initial velocity versus launch azimuth (rotating frame)' )
+ax1.legend( )
 # ax1.legend( loc='center left', bbox_to_anchor=( 0.995,0.5 ) )
 ax1.grid( )
 
 ## Plot launch azimuth versus inertial initial velocity
 inertialInitialVelocity = np.sqrt( inertial_vx**2 + inertial_vy**2 + inertial_vz**2 )
-ax2.plot( azimuth, inertialInitialVelocity, color=colors.cnames['purple'] )
+ax2Handle1, = ax2.plot( azimuth, inertialInitialVelocity, color=colors.cnames['purple'], label='actual speed' )
+ax2Handle2, = ax2.plot( azimuth, inertialDirectionalEscapeSpeed, color=colors.cnames['black'], label='directional escape speed' )
 
 # Find bounds for azimuths that lead to escape
 escapeBoundMins = []
@@ -163,9 +172,11 @@ crashBoundMaxs.append( max( crash_azimuth ) )
 
 for index in range( len( escapeBoundMins ) ):
     escapeBoundHandle = ax2.axvspan( escapeBoundMins[ index ], escapeBoundMaxs[ index ], color='red', alpha=0.2, label='escape' )
+    ax1EscapeHandle = ax1.axvspan( escapeBoundMins[ index ], escapeBoundMaxs[ index ], color='red', alpha=0.2, label='escape' )
 
 for index in range( len( crashBoundMins ) ):
     crashBoundHandle = ax2.axvspan( crashBoundMins[ index ], crashBoundMaxs[ index ], color='green', alpha=0.2, label='reimpact' )
+    ax1CrashHandle = ax1.axvspan( crashBoundMins[ index ], crashBoundMaxs[ index ], color='green', alpha=0.2, label='reimpact' )
 
 ## format axis and title
 ax2.set_xlabel('Launch azimuth [deg]')
@@ -177,7 +188,10 @@ ax2.set_title( 'Regolith initial velocity versus launch azimuth (inertial frame)
 ax2.grid( )
 
 ## Show the plot
-plt.legend( handles = [ escapeBoundHandle, crashBoundHandle ] )
+plt.legend( handles = [ ax2Handle1, ax2Handle2, escapeBoundHandle, crashBoundHandle ],
+            bbox_to_anchor = ( 0.95, 0.5 ),
+            loc = 1 )
+# plt.legend( bbox_to_anchor=(1.0, 1), loc=1, borderaxespad=0. )
 # plt.tight_layout( )
 # plt.grid( )
 plt.show( )
