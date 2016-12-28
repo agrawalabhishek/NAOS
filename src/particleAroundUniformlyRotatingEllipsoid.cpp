@@ -758,6 +758,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                  std::vector< double > &initialCartesianStateVector,
                                                  const double launchAzimuth,
                                                  const double launchDeclination,
+                                                 const double localRegolithDirectionEscapeSpeed,
+                                                 const double inertialDirectionalEscapeSpeed,
                                                  const double initialStepSize,
                                                  const double startTime,
                                                  const double endTime,
@@ -864,6 +866,9 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
     databaseQuery.bind( ":launch_azimuth", convertRadiansToDegree( launchAzimuth ) );
     databaseQuery.bind( ":launch_declination", convertRadiansToDegree( launchDeclination ) );
+
+    databaseQuery.bind( ":directional_escape_speed", localRegolithDirectionEscapeSpeed );
+    databaseQuery.bind( ":directional_inertial_escape_speed", inertialDirectionalEscapeSpeed );
 
     databaseQuery.bind( ":sma", initialOrbitalElements[ 0 ] );
     databaseQuery.bind( ":eccentricity", initialOrbitalElements[ 1 ] );
@@ -1007,6 +1012,9 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                 databaseQuery.bind( ":launch_azimuth", convertRadiansToDegree( launchAzimuth ) );
                 databaseQuery.bind( ":launch_declination", convertRadiansToDegree( launchDeclination ) );
 
+                databaseQuery.bind( ":directional_escape_speed", localRegolithDirectionEscapeSpeed );
+                databaseQuery.bind( ":directional_inertial_escape_speed", inertialDirectionalEscapeSpeed );
+
                 databaseQuery.bind( ":sma", orbitalElements[ 0 ] );
                 databaseQuery.bind( ":eccentricity", orbitalElements[ 1 ] );
                 databaseQuery.bind( ":inclination", orbitalElements[ 2 ] );
@@ -1119,6 +1127,9 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
             databaseQuery.bind( ":launch_azimuth", convertRadiansToDegree( launchAzimuth ) );
             databaseQuery.bind( ":launch_declination", convertRadiansToDegree( launchDeclination ) );
+
+            databaseQuery.bind( ":directional_escape_speed", localRegolithDirectionEscapeSpeed );
+            databaseQuery.bind( ":directional_inertial_escape_speed", inertialDirectionalEscapeSpeed );
 
             databaseQuery.bind( ":sma", orbitalElements[ 0 ] );
             databaseQuery.bind( ":eccentricity", orbitalElements[ 1 ] );
@@ -1267,6 +1278,9 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             databaseQuery.bind( ":launch_azimuth", convertRadiansToDegree( launchAzimuth ) );
             databaseQuery.bind( ":launch_declination", convertRadiansToDegree( launchDeclination ) );
 
+            databaseQuery.bind( ":directional_escape_speed", localRegolithDirectionEscapeSpeed );
+            databaseQuery.bind( ":directional_inertial_escape_speed", inertialDirectionalEscapeSpeed );
+
             databaseQuery.bind( ":sma", orbitalElements[ 0 ] );
             databaseQuery.bind( ":eccentricity", orbitalElements[ 1 ] );
             databaseQuery.bind( ":inclination", orbitalElements[ 2 ] );
@@ -1366,6 +1380,9 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
         databaseQuery.bind( ":launch_azimuth", convertRadiansToDegree( launchAzimuth ) );
         databaseQuery.bind( ":launch_declination", convertRadiansToDegree( launchDeclination ) );
+
+        databaseQuery.bind( ":directional_escape_speed", localRegolithDirectionEscapeSpeed );
+        databaseQuery.bind( ":directional_inertial_escape_speed", inertialDirectionalEscapeSpeed );
 
         databaseQuery.bind( ":sma", orbitalElements[ 0 ] );
         databaseQuery.bind( ":eccentricity", orbitalElements[ 1 ] );

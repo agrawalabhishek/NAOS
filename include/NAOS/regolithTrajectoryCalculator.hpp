@@ -46,7 +46,8 @@ void computeRegolithVelocityVector2( std::vector< double > regolithPositionVecto
                                      const double coneAngleAzimuth,
                                      const double coneAngleDeclination,
                                      std::vector< double > &unitNormalVector,
-                                     std::vector< double > &regolithVelocityVector );
+                                     std::vector< double > &regolithVelocityVector,
+                                     std::vector< double > &regolithDirectionUnitVector );
 
 //! Compute trajectory for regolith ejected from the surface of an asteroid
 /*!

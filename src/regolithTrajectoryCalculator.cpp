@@ -160,7 +160,8 @@ void computeRegolithVelocityVector2( std::vector< double > regolithPositionVecto
                                      const double coneAngleAzimuth,
                                      const double coneAngleDeclination,
                                      std::vector< double > &unitNormalVector,
-                                     std::vector< double > &regolithVelocityVector )
+                                     std::vector< double > &regolithVelocityVector,
+                                     std::vector< double > &regolithDirectionUnitVector )
 {
     // get the z basis vector of the surface frame
     std::vector< double > zUnitVector = unitNormalVector;
@@ -222,6 +223,19 @@ void computeRegolithVelocityVector2( std::vector< double > regolithPositionVecto
                                                         + sinDelta * cosGamma * xUnitVector[ 2 ]
                                                         + sinDelta * sinGamma * yUnitVector[ 2 ] );
 
+    regolithDirectionUnitVector[ 0 ] = 1.0 * ( cosDelta * zUnitVector[ 0 ]
+                                               + sinDelta * cosGamma * xUnitVector[ 0 ]
+                                               + sinDelta * sinGamma * yUnitVector[ 0 ] );
+
+    regolithDirectionUnitVector[ 1 ] = 1.0 * ( cosDelta * zUnitVector[ 1 ]
+                                               + sinDelta * cosGamma * xUnitVector[ 1 ]
+                                               + sinDelta * sinGamma * yUnitVector[ 1 ] );
+
+    regolithDirectionUnitVector[ 2 ] = 1.0 * ( cosDelta * zUnitVector[ 2 ]
+                                               + sinDelta * cosGamma * xUnitVector[ 2 ]
+                                               + sinDelta * sinGamma * yUnitVector[ 2 ] );
+
+    regolithDirectionUnitVector = normalize( regolithDirectionUnitVector );
 }
 
 //! Compute trajectory for regolith ejected from the surface of an asteroid (data saved in csv file)
@@ -292,6 +306,9 @@ void calculateRegolithTrajectory( const double alpha,
     // get the velocity vector
     std::vector< double > regolithVelocityVector( 3 );
 
+    // get the regolith launch direction unit vector
+    std::vector< double > regolithDirectionUnitVector( 3, 0.0 );
+
     // computeRegolithVelocityVector( regolithPositionVector,
     //                                velocityMagnitude,
     //                                coneAngleAzimuth,
@@ -304,7 +321,8 @@ void calculateRegolithTrajectory( const double alpha,
                                     coneAngleAzimuth,
                                     coneAngleDeclination,
                                     regolithNormalUnitVector,
-                                    regolithVelocityVector );
+                                    regolithVelocityVector,
+                                    regolithDirectionUnitVector );
 
     // form the initial state vector
     naos::Vector6 initialVector { regolithPositionVector[ xPositionIndex ],
@@ -395,7 +413,7 @@ void executeRegolithTrajectoryCalculation( const double alpha,
     omegaCrossPosition = crossProduct( W, regolithPositionVector );
     double omegaCrossPositionSquare = dotProduct( omegaCrossPosition, omegaCrossPosition );
 
-    double normalDotOmegaCrossPosition = dotProduct( regolithNormalVector, omegaCrossPosition );
+    double normalDotOmegaCrossPosition = dotProduct( regolithNormalUnitVector, omegaCrossPosition );
     double normalDotOmegaCrossPositionSquare = normalDotOmegaCrossPosition * normalDotOmegaCrossPosition;
 
     positionMagnitude = vectorNorm( regolithPositionVector );
@@ -427,13 +445,68 @@ void executeRegolithTrajectoryCalculation( const double alpha,
     velocityMagnitude = velocityMagnitudeFactor * localNormalEscapeSpeed;
 
     std::vector< double > regolithVelocityVector( 3 );
+
+    // get the regolith launch direction unit vector
+    std::vector< double > regolithDirectionUnitVector( 3, 0.0 );
+
     computeRegolithVelocityVector2( regolithPositionVector,
                                     velocityMagnitude,
                                     coneAngleAzimuth,
                                     coneAngleDeclination,
                                     regolithNormalUnitVector,
-                                    regolithVelocityVector );
+                                    regolithVelocityVector,
+                                    regolithDirectionUnitVector );
 
+    // check if the unit velocity vector and the direction vector are same
+    // std::vector< double > regolithVelocityUnitVector( 3, 0.0 );
+    // regolithVelocityUnitVector = normalize( regolithVelocityVector );
+    // std:: cout << "------" << std::endl;
+    // printVector( regolithVelocityUnitVector, 3 );
+    // printVector( regolithDirectionUnitVector, 3 );
+    // std:: cout << "------" << std::endl;
+
+    // compute local escape velocity magnitude in the direction of the launched regolith
+    // i.e. not in the normal direction!
+    double regolithDirectionDotOmegaCrossPosition = dotProduct( regolithDirectionUnitVector,
+                                                                omegaCrossPosition );
+    double regolithDirectionDotOmegaCrossPositionSquare
+                = regolithDirectionDotOmegaCrossPosition * regolithDirectionDotOmegaCrossPosition;
+
+    const double localRegolithDirectionEscapeSpeed
+                        = -1.0 * regolithDirectionDotOmegaCrossPosition
+                            + std::sqrt( regolithDirectionDotOmegaCrossPositionSquare
+                            + 2.0 * maxPotentialValue - omegaCrossPositionSquare );
+
+    // get the inertial directional escape velocity magnitude.
+    // Note - accounting for non-zero start time
+    std::vector< double > inertialDirectionalEscapeVelocityInBodyComponents( 3, 0.0 );
+    std::vector< double > inertialDirectionalEscapeVelocity( 3, 0.0 );
+
+    inertialDirectionalEscapeVelocityInBodyComponents[ 0 ]
+        = localRegolithDirectionEscapeSpeed * regolithDirectionUnitVector[ 0 ] + omegaCrossPosition[ 0 ];
+
+    inertialDirectionalEscapeVelocityInBodyComponents[ 1 ]
+        = localRegolithDirectionEscapeSpeed * regolithDirectionUnitVector[ 1 ] + omegaCrossPosition[ 1 ];
+
+    inertialDirectionalEscapeVelocityInBodyComponents[ 2 ]
+        = localRegolithDirectionEscapeSpeed * regolithDirectionUnitVector[ 2 ] + omegaCrossPosition[ 2 ];
+
+    // use the rotation matrix to get the escape velocity in the inertial frame
+    double rotationAngle = W[ 2 ] * startTime;
+
+    inertialDirectionalEscapeVelocity[ 0 ]
+                = inertialDirectionalEscapeVelocityInBodyComponents[ 0 ] * std::cos( rotationAngle )
+                - inertialDirectionalEscapeVelocityInBodyComponents[ 1 ] * std::sin( rotationAngle );
+
+    inertialDirectionalEscapeVelocity[ 1 ]
+                = inertialDirectionalEscapeVelocityInBodyComponents[ 0 ] * std::sin( rotationAngle )
+                + inertialDirectionalEscapeVelocityInBodyComponents[ 1 ] * std::cos( rotationAngle );
+
+    inertialDirectionalEscapeVelocity[ 2 ] = inertialDirectionalEscapeVelocityInBodyComponents[ 2 ];
+
+    const double inertialDirectionalEscapeSpeed = vectorNorm( inertialDirectionalEscapeVelocity );
+
+    // form the initial state vector defined in body frame
     naos::Vector6 initialVector { regolithPositionVector[ xPositionIndex ],
                                   regolithPositionVector[ yPositionIndex ],
                                   regolithPositionVector[ zPositionIndex ],
@@ -450,6 +523,8 @@ void executeRegolithTrajectoryCalculation( const double alpha,
                                                 initialVector,
                                                 coneAngleAzimuth,
                                                 coneAngleDeclination,
+                                                localRegolithDirectionEscapeSpeed,
+                                                inertialDirectionalEscapeSpeed,
                                                 integrationStepSize,
                                                 startTime,
                                                 endTime,

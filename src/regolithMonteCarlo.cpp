@@ -111,6 +111,8 @@ void testBedForRegolithTrajectoryCalculator( const double alpha,
                                                 initialState,
                                                 0.0,
                                                 0.0,
+                                                0.0,
+                                                0.0,
                                                 integrationStepSize,
                                                 startTime,
                                                 50000.0,
@@ -228,6 +230,9 @@ void createDatabaseTable( SQLite::Database &database )
         << "\"launch_azimuth\"                          REAL,"
         << "\"launch_declination\"                      REAL,"
 
+        << "\"directional_escape_speed\"                REAL,"
+        << "\"directional_inertial_escape_speed\"       REAL,"
+
         << "\"sma\"                                     REAL,"
         << "\"eccentricity\"                            REAL,"
         << "\"inclination\"                             REAL,"
@@ -274,8 +279,8 @@ void executeRegolithMonteCarlo( const double alpha,
                                 std::ostringstream &databaseFilePath )
 {
     double aXValue = 1.0;
-    double aYValue = 0.0;
-    double aZValue = 0.0;
+    double aYValue = 1.0;
+    double aZValue = 1.0;
     const double velocityMagnitudeFactor = 0.9;
     const double coneAngleDeclination = naos::convertDegreeToRadians( 45.0 );
     const double coneAngleAzimuthFactor = 1.0;
@@ -311,6 +316,8 @@ void executeRegolithMonteCarlo( const double alpha,
         << ":inertial_velocity_z,"
         << ":launch_azimuth,"
         << ":launch_declination,"
+        << ":directional_escape_speed,"
+        << ":directional_inertial_escape_speed,"
         << ":sma,"
         << ":eccentricity,"
         << ":inclination,"
