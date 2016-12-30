@@ -12,6 +12,7 @@
 #include <cmath>
 #include <limits>
 #include <vector>
+#include <stdexcept>
 
 #include <boost/numeric/odeint.hpp>
 #include <SQLiteCpp/SQLiteCpp.h>
@@ -669,7 +670,8 @@ void computeParticleEnergy( const double alpha,
                             const double beta,
                             const double gamma,
                             const double gravParameter,
-                            std::vector< double > inertialState,
+                            const std::vector< double > &inertialState,
+                            const std::vector< double > &bodyFrameStateVector,
                             double &kineticEnergy,
                             double &potentialEnergy,
                             double &totalEnergy )
@@ -679,9 +681,9 @@ void computeParticleEnergy( const double alpha,
                                             beta,
                                             gamma,
                                             gravParameter,
-                                            inertialState[ xPositionIndex ],
-                                            inertialState[ yPositionIndex ],
-                                            inertialState[ zPositionIndex ],
+                                            bodyFrameStateVector[ xPositionIndex ],
+                                            bodyFrameStateVector[ yPositionIndex ],
+                                            bodyFrameStateVector[ zPositionIndex ],
                                             gravPotential );
 
     std::vector< double > velocityVector = { inertialState[ xVelocityIndex ],
@@ -793,6 +795,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                            gamma,
                            gravParameter,
                            initialInertialState,
+                           initialState,
                            kineticEnergy,
                            potentialEnergy,
                            initialParticleEnergy );
@@ -804,6 +807,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
     double xPositionSquare = initialState[ xPositionIndex ] * initialState[ xPositionIndex ];
     double yPositionSquare = initialState[ yPositionIndex ] * initialState[ yPositionIndex ];
+    double zPositionSquare = initialState[ zPositionIndex ] * initialState[ zPositionIndex ];
 
     double omegaSquare = asteroidRotationVector[ zPositionIndex ] * asteroidRotationVector[ zPositionIndex ];
 
@@ -821,6 +825,10 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
         = 0.5 * ( xVelocitySquare + yVelocitySquare + zVelocitySquare )
         - 0.5 * omegaSquare * ( xPositionSquare + yPositionSquare )
         - bodyFrameGravPotential;
+
+    //! get the initial position and velocity magnitudes
+    double initialPositionMagnitude = std::sqrt( xPositionSquare + yPositionSquare + zPositionSquare );
+    double initialVelocityMagnitude = std::sqrt( xVelocitySquare + yVelocitySquare + zVelocitySquare );
 
     // set up boost odeint
     const double absoluteTolerance = 1.0e-15;
@@ -847,8 +855,25 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     int escapeFlag = 0;
     int crashFlag = 0;
     int startFlag = 1;
+    int endFlag = 0;
 
     // save the initial state vector(body frame) and orbital elements
+    databaseQuery.bind( ":initial_position_x", initialState[ xPositionIndex ] );
+    databaseQuery.bind( ":initial_position_y", initialState[ yPositionIndex ] );
+    databaseQuery.bind( ":initial_position_z", initialState[ zPositionIndex ] );
+    databaseQuery.bind( ":initial_position_magnitude", initialPositionMagnitude );
+    databaseQuery.bind( ":initial_velocity_x", initialState[ xVelocityIndex ] );
+    databaseQuery.bind( ":initial_velocity_y", initialState[ yVelocityIndex ] );
+    databaseQuery.bind( ":initial_velocity_z", initialState[ zVelocityIndex ] );
+    databaseQuery.bind( ":initial_velocity_magnitude", initialVelocityMagnitude );
+
+    databaseQuery.bind( ":initial_inertial_position_x", initialInertialState[ xPositionIndex ] );
+    databaseQuery.bind( ":initial_inertial_position_y", initialInertialState[ yPositionIndex ] );
+    databaseQuery.bind( ":initial_inertial_position_z", initialInertialState[ zPositionIndex ] );
+    databaseQuery.bind( ":initial_inertial_velocity_x", initialInertialState[ xVelocityIndex ] );
+    databaseQuery.bind( ":initial_inertial_velocity_y", initialInertialState[ yVelocityIndex ] );
+    databaseQuery.bind( ":initial_inertial_velocity_z", initialInertialState[ zVelocityIndex ] );
+
     databaseQuery.bind( ":position_x", initialState[ xPositionIndex ] );
     databaseQuery.bind( ":position_y", initialState[ yPositionIndex ] );
     databaseQuery.bind( ":position_z", initialState[ zPositionIndex ] );
@@ -884,6 +909,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
     databaseQuery.bind( ":start_flag", startFlag );
+    databaseQuery.bind( ":end_flag", endFlag );
     databaseQuery.bind( ":escape_flag", escapeFlag );
     databaseQuery.bind( ":crash_flag", crashFlag );
 
@@ -947,6 +973,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                    gamma,
                                    gravParameter,
                                    inertialState,
+                                   currentStateVector,
                                    kineticEnergy,
                                    potentialEnergy,
                                    particleEnergy );
@@ -954,6 +981,22 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             bool energyFlag = false;
             if( particleEnergy > 0.0 )
             {
+                //! sanity check 1 for energy calculation for escape condition
+                // double sanityCheckEnergy = -1.0 * gravParameter / ( 2.0 * orbitalElements[ 0 ] );
+                // std::cout << std::endl << "Sanity check for energy:" << std::endl;
+                // std::cout << "sanity Check Energy value = " << sanityCheckEnergy << std::endl;
+                // std::cout << "computed energy = " << particleEnergy << std::endl;
+                // std::cout << "eccentricity = " << orbitalElements[ 1 ] << std::endl;
+                // std::cout << "semi-major axis = " << orbitalElements[ 0 ] << std::endl << std::endl;
+                // if( orbitalElements[ 0 ] > 0 )
+                // {
+                //     std::ostringstream errorMessage;
+                //     errorMessage << std::endl;
+                //     errorMessage << "positive energy but semi-major axis is not negative";
+                //     errorMessage << std::endl;
+                //     throw std::runtime_error( errorMessage.str( ) );
+                // }
+
                 energyFlag = true;
             }
 
@@ -994,6 +1037,21 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                 crashFlag = 0;
 
                 // save data
+                databaseQuery.bind( ":initial_position_x", initialState[ xPositionIndex ] );
+                databaseQuery.bind( ":initial_position_y", initialState[ yPositionIndex ] );
+                databaseQuery.bind( ":initial_position_z", initialState[ zPositionIndex ] );
+                databaseQuery.bind( ":initial_position_magnitude", initialPositionMagnitude );
+                databaseQuery.bind( ":initial_velocity_x", initialState[ xVelocityIndex ] );
+                databaseQuery.bind( ":initial_velocity_y", initialState[ yVelocityIndex ] );
+                databaseQuery.bind( ":initial_velocity_z", initialState[ zVelocityIndex ] );
+                databaseQuery.bind( ":initial_velocity_magnitude", initialVelocityMagnitude );
+                databaseQuery.bind( ":initial_inertial_position_x", initialInertialState[ xPositionIndex ] );
+                databaseQuery.bind( ":initial_inertial_position_y", initialInertialState[ yPositionIndex ] );
+                databaseQuery.bind( ":initial_inertial_position_z", initialInertialState[ zPositionIndex ] );
+                databaseQuery.bind( ":initial_inertial_velocity_x", initialInertialState[ xVelocityIndex ] );
+                databaseQuery.bind( ":initial_inertial_velocity_y", initialInertialState[ yVelocityIndex ] );
+                databaseQuery.bind( ":initial_inertial_velocity_z", initialInertialState[ zVelocityIndex ] );
+
                 databaseQuery.bind( ":position_x", currentStateVector[ xPositionIndex ] );
                 databaseQuery.bind( ":position_y", currentStateVector[ yPositionIndex ] );
                 databaseQuery.bind( ":position_z", currentStateVector[ zPositionIndex ] );
@@ -1029,6 +1087,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                 databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
                 databaseQuery.bind( ":start_flag", startFlag );
+                databaseQuery.bind( ":end_flag", endFlag );
                 databaseQuery.bind( ":escape_flag", escapeFlag );
                 databaseQuery.bind( ":crash_flag", crashFlag );
 
@@ -1080,6 +1139,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                    gamma,
                                    gravParameter,
                                    inertialState,
+                                   currentStateVector,
                                    kineticEnergy,
                                    potentialEnergy,
                                    particleEnergy );
@@ -1110,6 +1170,21 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                 - bodyFrameGravPotential;
 
             // save data
+            databaseQuery.bind( ":initial_position_x", initialState[ xPositionIndex ] );
+            databaseQuery.bind( ":initial_position_y", initialState[ yPositionIndex ] );
+            databaseQuery.bind( ":initial_position_z", initialState[ zPositionIndex ] );
+            databaseQuery.bind( ":initial_position_magnitude", initialPositionMagnitude );
+            databaseQuery.bind( ":initial_velocity_x", initialState[ xVelocityIndex ] );
+            databaseQuery.bind( ":initial_velocity_y", initialState[ yVelocityIndex ] );
+            databaseQuery.bind( ":initial_velocity_z", initialState[ zVelocityIndex ] );
+            databaseQuery.bind( ":initial_velocity_magnitude", initialVelocityMagnitude );
+            databaseQuery.bind( ":initial_inertial_position_x", initialInertialState[ xPositionIndex ] );
+            databaseQuery.bind( ":initial_inertial_position_y", initialInertialState[ yPositionIndex ] );
+            databaseQuery.bind( ":initial_inertial_position_z", initialInertialState[ zPositionIndex ] );
+            databaseQuery.bind( ":initial_inertial_velocity_x", initialInertialState[ xVelocityIndex ] );
+            databaseQuery.bind( ":initial_inertial_velocity_y", initialInertialState[ yVelocityIndex ] );
+            databaseQuery.bind( ":initial_inertial_velocity_z", initialInertialState[ zVelocityIndex ] );
+
             databaseQuery.bind( ":position_x", currentStateVector[ xPositionIndex ] );
             databaseQuery.bind( ":position_y", currentStateVector[ yPositionIndex ] );
             databaseQuery.bind( ":position_z", currentStateVector[ zPositionIndex ] );
@@ -1145,6 +1220,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
             databaseQuery.bind( ":start_flag", startFlag );
+            databaseQuery.bind( ":end_flag", endFlag );
             databaseQuery.bind( ":escape_flag", escapeFlag );
             databaseQuery.bind( ":crash_flag", crashFlag );
 
@@ -1230,6 +1306,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                    gamma,
                                    gravParameter,
                                    inertialState,
+                                   currentStateVector,
                                    kineticEnergy,
                                    potentialEnergy,
                                    particleEnergy );
@@ -1260,6 +1337,21 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                 - bodyFrameGravPotential;
 
             // save data
+            databaseQuery.bind( ":initial_position_x", initialState[ xPositionIndex ] );
+            databaseQuery.bind( ":initial_position_y", initialState[ yPositionIndex ] );
+            databaseQuery.bind( ":initial_position_z", initialState[ zPositionIndex ] );
+            databaseQuery.bind( ":initial_position_magnitude", initialPositionMagnitude );
+            databaseQuery.bind( ":initial_velocity_x", initialState[ xVelocityIndex ] );
+            databaseQuery.bind( ":initial_velocity_y", initialState[ yVelocityIndex ] );
+            databaseQuery.bind( ":initial_velocity_z", initialState[ zVelocityIndex ] );
+            databaseQuery.bind( ":initial_velocity_magnitude", initialVelocityMagnitude );
+            databaseQuery.bind( ":initial_inertial_position_x", initialInertialState[ xPositionIndex ] );
+            databaseQuery.bind( ":initial_inertial_position_y", initialInertialState[ yPositionIndex ] );
+            databaseQuery.bind( ":initial_inertial_position_z", initialInertialState[ zPositionIndex ] );
+            databaseQuery.bind( ":initial_inertial_velocity_x", initialInertialState[ xVelocityIndex ] );
+            databaseQuery.bind( ":initial_inertial_velocity_y", initialInertialState[ yVelocityIndex ] );
+            databaseQuery.bind( ":initial_inertial_velocity_z", initialInertialState[ zVelocityIndex ] );
+
             databaseQuery.bind( ":position_x", currentStateVector[ xPositionIndex ] );
             databaseQuery.bind( ":position_y", currentStateVector[ yPositionIndex ] );
             databaseQuery.bind( ":position_z", currentStateVector[ zPositionIndex ] );
@@ -1295,6 +1387,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
             databaseQuery.bind( ":start_flag", startFlag );
+            databaseQuery.bind( ":end_flag", endFlag );
             databaseQuery.bind( ":escape_flag", escapeFlag );
             databaseQuery.bind( ":crash_flag", crashFlag );
 
@@ -1333,6 +1426,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                gamma,
                                gravParameter,
                                inertialState,
+                               currentStateVector,
                                kineticEnergy,
                                potentialEnergy,
                                particleEnergy );
@@ -1363,6 +1457,21 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             - bodyFrameGravPotential;
 
         // save data
+        databaseQuery.bind( ":initial_position_x", initialState[ xPositionIndex ] );
+        databaseQuery.bind( ":initial_position_y", initialState[ yPositionIndex ] );
+        databaseQuery.bind( ":initial_position_z", initialState[ zPositionIndex ] );
+        databaseQuery.bind( ":initial_position_magnitude", initialPositionMagnitude );
+        databaseQuery.bind( ":initial_velocity_x", initialState[ xVelocityIndex ] );
+        databaseQuery.bind( ":initial_velocity_y", initialState[ yVelocityIndex ] );
+        databaseQuery.bind( ":initial_velocity_z", initialState[ zVelocityIndex ] );
+        databaseQuery.bind( ":initial_velocity_magnitude", initialVelocityMagnitude );
+        databaseQuery.bind( ":initial_inertial_position_x", initialInertialState[ xPositionIndex ] );
+        databaseQuery.bind( ":initial_inertial_position_y", initialInertialState[ yPositionIndex ] );
+        databaseQuery.bind( ":initial_inertial_position_z", initialInertialState[ zPositionIndex ] );
+        databaseQuery.bind( ":initial_inertial_velocity_x", initialInertialState[ xVelocityIndex ] );
+        databaseQuery.bind( ":initial_inertial_velocity_y", initialInertialState[ yVelocityIndex ] );
+        databaseQuery.bind( ":initial_inertial_velocity_z", initialInertialState[ zVelocityIndex ] );
+
         databaseQuery.bind( ":position_x", currentStateVector[ xPositionIndex ] );
         databaseQuery.bind( ":position_y", currentStateVector[ yPositionIndex ] );
         databaseQuery.bind( ":position_z", currentStateVector[ zPositionIndex ] );
@@ -1400,6 +1509,17 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
         databaseQuery.bind( ":start_flag", startFlag );
         databaseQuery.bind( ":escape_flag", escapeFlag );
         databaseQuery.bind( ":crash_flag", crashFlag );
+
+        if( currentTime == endTime )
+        {
+            endFlag = 1;
+            databaseQuery.bind( ":end_flag", endFlag );
+        }
+        else
+        {
+            endFlag = 0;
+            databaseQuery.bind( ":end_flag", endFlag );
+        }
 
         // Execute insert query.
         databaseQuery.executeStep( );
