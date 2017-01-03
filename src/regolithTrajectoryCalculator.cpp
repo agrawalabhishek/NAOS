@@ -444,92 +444,94 @@ void executeRegolithTrajectoryCalculation( const double alpha,
 
     velocityMagnitude = velocityMagnitudeFactor * localNormalEscapeSpeed;
 
-    std::vector< double > regolithVelocityVector( 3 );
+    // for( int velocityIterator = 1; velocityIterator <= 20; velocityIterator = velocityIterator + 1 )
+    // {
+    //     // all particles, irrespective of surface location will have the same velocity as computed
+    //     // below.
+    //     velocityMagnitude = 1.0 * velocityIterator;
 
-    // get the regolith launch direction unit vector
-    std::vector< double > regolithDirectionUnitVector( 3, 0.0 );
+        std::vector< double > regolithVelocityVector( 3 );
 
-    computeRegolithVelocityVector2( regolithPositionVector,
-                                    velocityMagnitude,
-                                    coneAngleAzimuth,
-                                    coneAngleDeclination,
-                                    regolithNormalUnitVector,
-                                    regolithVelocityVector,
-                                    regolithDirectionUnitVector );
+        // get the regolith launch direction unit vector
+        std::vector< double > regolithDirectionUnitVector( 3, 0.0 );
 
-    // check if the unit velocity vector and the direction vector are same
-    // std::vector< double > regolithVelocityUnitVector( 3, 0.0 );
-    // regolithVelocityUnitVector = normalize( regolithVelocityVector );
-    // std:: cout << "------" << std::endl;
-    // printVector( regolithVelocityUnitVector, 3 );
-    // printVector( regolithDirectionUnitVector, 3 );
-    // std:: cout << "------" << std::endl;
+        computeRegolithVelocityVector2( regolithPositionVector,
+                                        velocityMagnitude,
+                                        coneAngleAzimuth,
+                                        coneAngleDeclination,
+                                        regolithNormalUnitVector,
+                                        regolithVelocityVector,
+                                        regolithDirectionUnitVector );
 
-    // compute local escape velocity magnitude in the direction of the launched regolith
-    // i.e. not in the normal direction!
-    double regolithDirectionDotOmegaCrossPosition = dotProduct( regolithDirectionUnitVector,
-                                                                omegaCrossPosition );
-    double regolithDirectionDotOmegaCrossPositionSquare
-                = regolithDirectionDotOmegaCrossPosition * regolithDirectionDotOmegaCrossPosition;
+        // compute local escape velocity magnitude in the direction of the launched regolith
+        // i.e. not in the normal direction!
+        double regolithDirectionDotOmegaCrossPosition = dotProduct( regolithDirectionUnitVector,
+                                                                    omegaCrossPosition );
+        double regolithDirectionDotOmegaCrossPositionSquare
+                    = regolithDirectionDotOmegaCrossPosition * regolithDirectionDotOmegaCrossPosition;
 
-    const double localRegolithDirectionEscapeSpeed
-                        = -1.0 * regolithDirectionDotOmegaCrossPosition
+        // conservative inertial escape speed calculation
+        double conservativeInertialEscapeSpeedSquared = 2.0 * maxPotentialValue;
+
+        const double localRegolithDirectionEscapeSpeed
+                            = -1.0 * regolithDirectionDotOmegaCrossPosition
                             + std::sqrt( regolithDirectionDotOmegaCrossPositionSquare
-                            + 2.0 * maxPotentialValue - omegaCrossPositionSquare );
+                            + conservativeInertialEscapeSpeedSquared - omegaCrossPositionSquare );
 
-    // get the inertial directional escape velocity magnitude.
-    // Note - accounting for non-zero start time
-    std::vector< double > inertialDirectionalEscapeVelocityInBodyComponents( 3, 0.0 );
-    std::vector< double > inertialDirectionalEscapeVelocity( 3, 0.0 );
+        // get the inertial directional escape velocity magnitude.
+        // Note - accounting for non-zero start time
+        std::vector< double > inertialDirectionalEscapeVelocityInBodyComponents( 3, 0.0 );
+        std::vector< double > inertialDirectionalEscapeVelocity( 3, 0.0 );
 
-    inertialDirectionalEscapeVelocityInBodyComponents[ 0 ]
-        = localRegolithDirectionEscapeSpeed * regolithDirectionUnitVector[ 0 ] + omegaCrossPosition[ 0 ];
+        inertialDirectionalEscapeVelocityInBodyComponents[ 0 ]
+            = localRegolithDirectionEscapeSpeed * regolithDirectionUnitVector[ 0 ] + omegaCrossPosition[ 0 ];
 
-    inertialDirectionalEscapeVelocityInBodyComponents[ 1 ]
-        = localRegolithDirectionEscapeSpeed * regolithDirectionUnitVector[ 1 ] + omegaCrossPosition[ 1 ];
+        inertialDirectionalEscapeVelocityInBodyComponents[ 1 ]
+            = localRegolithDirectionEscapeSpeed * regolithDirectionUnitVector[ 1 ] + omegaCrossPosition[ 1 ];
 
-    inertialDirectionalEscapeVelocityInBodyComponents[ 2 ]
-        = localRegolithDirectionEscapeSpeed * regolithDirectionUnitVector[ 2 ] + omegaCrossPosition[ 2 ];
+        inertialDirectionalEscapeVelocityInBodyComponents[ 2 ]
+            = localRegolithDirectionEscapeSpeed * regolithDirectionUnitVector[ 2 ] + omegaCrossPosition[ 2 ];
 
-    // use the rotation matrix to get the escape velocity in the inertial frame
-    double rotationAngle = W[ 2 ] * startTime;
+        // use the rotation matrix to get the escape velocity in the inertial frame
+        double rotationAngle = W[ 2 ] * startTime;
 
-    inertialDirectionalEscapeVelocity[ 0 ]
-                = inertialDirectionalEscapeVelocityInBodyComponents[ 0 ] * std::cos( rotationAngle )
-                - inertialDirectionalEscapeVelocityInBodyComponents[ 1 ] * std::sin( rotationAngle );
+        inertialDirectionalEscapeVelocity[ 0 ]
+                    = inertialDirectionalEscapeVelocityInBodyComponents[ 0 ] * std::cos( rotationAngle )
+                    - inertialDirectionalEscapeVelocityInBodyComponents[ 1 ] * std::sin( rotationAngle );
 
-    inertialDirectionalEscapeVelocity[ 1 ]
-                = inertialDirectionalEscapeVelocityInBodyComponents[ 0 ] * std::sin( rotationAngle )
-                + inertialDirectionalEscapeVelocityInBodyComponents[ 1 ] * std::cos( rotationAngle );
+        inertialDirectionalEscapeVelocity[ 1 ]
+                    = inertialDirectionalEscapeVelocityInBodyComponents[ 0 ] * std::sin( rotationAngle )
+                    + inertialDirectionalEscapeVelocityInBodyComponents[ 1 ] * std::cos( rotationAngle );
 
-    inertialDirectionalEscapeVelocity[ 2 ] = inertialDirectionalEscapeVelocityInBodyComponents[ 2 ];
+        inertialDirectionalEscapeVelocity[ 2 ] = inertialDirectionalEscapeVelocityInBodyComponents[ 2 ];
 
-    const double inertialDirectionalEscapeSpeed = vectorNorm( inertialDirectionalEscapeVelocity );
+        const double inertialDirectionalEscapeSpeed = vectorNorm( inertialDirectionalEscapeVelocity );
 
-    // form the initial state vector defined in body frame
-    naos::Vector6 initialVector { regolithPositionVector[ xPositionIndex ],
-                                  regolithPositionVector[ yPositionIndex ],
-                                  regolithPositionVector[ zPositionIndex ],
-                                  regolithVelocityVector[ 0 ],
-                                  regolithVelocityVector[ 1 ],
-                                  regolithVelocityVector[ 2 ] };
+        // form the initial state vector defined in body frame
+        naos::Vector6 initialVector { regolithPositionVector[ xPositionIndex ],
+                                      regolithPositionVector[ yPositionIndex ],
+                                      regolithPositionVector[ zPositionIndex ],
+                                      regolithVelocityVector[ 0 ],
+                                      regolithVelocityVector[ 1 ],
+                                      regolithVelocityVector[ 2 ] };
 
-    // calculate the trajectory of the regolith (uses SQL db to save data)
-    executeSingleRegolithTrajectoryCalculation( alpha,
-                                                beta,
-                                                gamma,
-                                                gravitationalParameter,
-                                                W,
-                                                initialVector,
-                                                coneAngleAzimuth,
-                                                coneAngleDeclination,
-                                                localRegolithDirectionEscapeSpeed,
-                                                inertialDirectionalEscapeSpeed,
-                                                integrationStepSize,
-                                                startTime,
-                                                endTime,
-                                                databaseQuery,
-                                                dataSaveIntervals );
+        // calculate the trajectory of the regolith (uses SQL db to save data)
+        executeSingleRegolithTrajectoryCalculation( alpha,
+                                                    beta,
+                                                    gamma,
+                                                    gravitationalParameter,
+                                                    W,
+                                                    initialVector,
+                                                    coneAngleAzimuth,
+                                                    coneAngleDeclination,
+                                                    localRegolithDirectionEscapeSpeed,
+                                                    inertialDirectionalEscapeSpeed,
+                                                    integrationStepSize,
+                                                    startTime,
+                                                    endTime,
+                                                    databaseQuery,
+                                                    dataSaveIntervals );
+    // } // end of for loop iterating over different magnitudes for the regolith velocity
 }
 
 } // namespace naos
