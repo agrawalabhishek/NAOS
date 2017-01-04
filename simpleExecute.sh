@@ -2,5 +2,6 @@
 cd build
 make
 cd bin
-./NAOS_main executeRegolithMonteCarlo
+# ./NAOS_main executeRegolithMonteCarlo
+./NAOS_main executeSunAsteroidTwoBodyProblem
 cd ../../

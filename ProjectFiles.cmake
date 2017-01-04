@@ -15,6 +15,7 @@ set(SRC
   "${SRC_PATH}/regolithMonteCarlo.cpp"
   "${SRC_PATH}/regolithTrajectoryCalculator.cpp"
   "${SRC_PATH}/regolithAroundUniformlyRotatingAsteroid.cpp"
+  "${SRC_PATH}/sunAsteroidTwoBodyProblem.cpp"
 )
 
 # Set project main file.

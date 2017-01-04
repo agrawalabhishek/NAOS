@@ -25,16 +25,12 @@
 #include "NAOS/particleAroundUniformlyRotatingEllipsoid.hpp"
 #include "NAOS/regolithTrajectoryCalculator.hpp"
 #include "NAOS/regolithMonteCarlo.hpp"
+#include "NAOS/sunAsteroidTwoBodyProblem.hpp"
 // #include "NAOS/particleAroundSpheroidAndElllipsoidGravitationalPotential.hpp"
 // #include "NAOS/boostIntegratorRestrictedTwoBodyProblem.hpp"
 // #include "NAOS/executeOrbiterAroundUREPointMassGravity.hpp"
 // #include "NAOS/executeOrbiterAroundURE.hpp"
 // #include "NAOS/orbiterEquationsOfMotion.hpp"
-// #include "NAOS/rk4.hpp"
-// #include "NAOS/rk54.hpp"
-// #include "NAOS/gslIntegratorOrbiterAroundUREPointMassGravity.hpp"
-// #include "NAOS/gslIntegratorOrbiterAroundURE.hpp"
-// #include "NAOS/bulirschStoer.hpp"
 
 int main( const int numberOfInputs, const char* inputArguments[ ] )
 {
@@ -294,18 +290,70 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         std::cout << "Total CPU time for execution = " << cpuTimeEnd - cpuTimeStart << std::endl;
     }
 
+    else if( userMode.compare( "executeSunAsteroidTwoBodyProblem" ) == 0 )
+    {
+        const double integrationStepSize = 0.01;
+        const double startTime = 0.0;
+        const double endTime = 1.76 * 365.0 * 24.0 * 60.0 * 60.0;
+        const double dataSaveIntervals = 10.0;
+
+        double wallTimeStart = naos::getWallTime< double >( );
+        double cpuTimeStart = naos::getCPUTime< double >( );
+
+        std::ostringstream sunAsteroidFilePath;
+        sunAsteroidFilePath << "../../data/sun_asteroid_2BP/sunAsteroid2BP.csv";
+
+        // data taken from url:
+        // http://ssd.jpl.nasa.gov/sbdb.cgi?sstr=433
+        // accessed 3 jan 2017
+        const double oneAstronomicalUnit = 149597870700.0;
+
+        std::vector< double > initialOrbitalElements = { 1.457945652635353 * oneAstronomicalUnit,
+                                                         0.2225680937603629,
+                                                         10.82771477612614,
+                                                         304.3265065906873,
+                                                         178.8050095729968,
+                                                         0.0 };
+
+        // std::vector< double > initialOrbitalElements = { 1.50 * oneAstronomicalUnit,
+        //                                                  0.30,
+        //                                                  10.0,
+        //                                                  300.0,
+        //                                                  180.0,
+        //                                                  0.0 };
+
+        // accessed 3 jan 2016 from:
+        // http://ssd.jpl.nasa.gov/?constants
+        const double sunGravParameter = 1.32712440018 * 10.0e+20;
+
+        naos::executeSunAsteroidTwoBodyProblem( sunGravParameter,
+                                                W,
+                                                initialOrbitalElements,
+                                                integrationStepSize,
+                                                startTime,
+                                                endTime,
+                                                sunAsteroidFilePath,
+                                                dataSaveIntervals );
+
+        double wallTimeEnd = naos::getWallTime< double >( );
+        double cpuTimeEnd = naos::getCPUTime< double >( );
+
+        std::cout << "Total wall time for execution = " << wallTimeEnd - wallTimeStart << std::endl;
+        std::cout << "Total CPU time for execution = " << cpuTimeEnd - cpuTimeStart << std::endl;
+    }
+
     else if( userMode.compare( "executeRegolithMonteCarlo" ) == 0 )
     {
         const double integrationStepSize = 0.01;
         const double startTime = 0.0;
-        const double endTime = 1.0 * 10.0 * 24.0 * 60.0 * 60.0;
+        const double endTime = 1.0 * 30.0 * 24.0 * 60.0 * 60.0;
         const double dataSaveIntervals = 10.0;
 
         double wallTimeStart = naos::getWallTime< double >( );
         double cpuTimeStart = naos::getCPUTime< double >( );
 
         std::ostringstream databaseFilePath;
-        databaseFilePath << "../../data/regolith_launched_from_leading_edge/single_launch_velocity/leadingEdge.db";
+        databaseFilePath << "../../data/regolith_trajectory_test/test1.db";
 
         naos::executeRegolithMonteCarlo( alpha,
                                          beta,
