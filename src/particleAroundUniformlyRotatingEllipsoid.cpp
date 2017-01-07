@@ -24,6 +24,7 @@
 #include "NAOS/misc.hpp"
 #include "NAOS/ellipsoidGravitationalAcceleration.hpp"
 #include "NAOS/ellipsoidPotential.hpp"
+#include "NAOS/perturbingAccelerations.hpp"
 
 namespace naos
 {
