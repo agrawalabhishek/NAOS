@@ -26,6 +26,7 @@
 #include "NAOS/regolithTrajectoryCalculator.hpp"
 #include "NAOS/regolithMonteCarlo.hpp"
 #include "NAOS/sunAsteroidTwoBodyProblem.hpp"
+#include "NAOS/perturbingAccelerations.hpp"
 // #include "NAOS/particleAroundSpheroidAndElllipsoidGravitationalPotential.hpp"
 // #include "NAOS/boostIntegratorRestrictedTwoBodyProblem.hpp"
 // #include "NAOS/executeOrbiterAroundUREPointMassGravity.hpp"
@@ -43,7 +44,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     const double alpha = 20.0 * 1.0e3;
     const double beta = 7.0 * 1.0e3;
     const double gamma = 7.0 * 1.0e3;
-    const double density = 3.2 * ( 10.0e-3 ) / ( 10.0e-6 );
+    const double density = 3.2 * ( 1.0e-3 ) / ( 1.0e-6 );
     const double mass = ( 4.0 * naos::PI / 3.0 ) * density * alpha * beta * gamma;
     const double gravitationalParameter = naos::GRAVITATIONAL_CONSTANT * mass;
     std::cout << std::endl << std::endl << "Gravitational Parameter = " << gravitationalParameter;
@@ -315,13 +316,6 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                                                          178.8050095729968,
                                                          0.0 };
 
-        // std::vector< double > initialOrbitalElements = { 1.50 * oneAstronomicalUnit,
-        //                                                  0.30,
-        //                                                  10.0,
-        //                                                  300.0,
-        //                                                  180.0,
-        //                                                  0.0 };
-
         // accessed 3 jan 2016 from:
         // http://ssd.jpl.nasa.gov/?constants
         const double sunGravParameter = 1.32712440018 * 10.0e+20;
@@ -334,6 +328,41 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                                                 endTime,
                                                 sunAsteroidFilePath,
                                                 dataSaveIntervals );
+
+        double wallTimeEnd = naos::getWallTime< double >( );
+        double cpuTimeEnd = naos::getCPUTime< double >( );
+
+        std::cout << "Total wall time for execution = " << wallTimeEnd - wallTimeStart << std::endl;
+        std::cout << "Total CPU time for execution = " << cpuTimeEnd - cpuTimeStart << std::endl;
+    }
+
+    else if( userMode.compare( "testPerturbations" ) == 0 )
+    {
+        double wallTimeStart = naos::getWallTime< double >( );
+        double cpuTimeStart = naos::getCPUTime< double >( );
+
+        std::ostringstream databaseFilePath;
+        databaseFilePath << "../../data/regolith_trajectory_test/test1.db";
+
+        std::vector< double > testVector( 7, 0.0 );
+        std::ostringstream sunAsteroidFilePath;
+        sunAsteroidFilePath << "../../data/sun_asteroid_2BP/sunAsteroid2BP.csv";
+        testVector = naos::extractSunEphemeris( 20000.0, sunAsteroidFilePath );
+        naos::printVector( testVector, 7 );
+
+        std::vector< double > testSunThirdBodyPerturbingAcceleration( 3, 0.0 );
+        std::vector< double > testSolarRadiationPerturbingAcceleration( 3, 0.0 );
+        std::vector< double > testRegolithPositionVector = { 25000.0, 0.0, 0.0 };
+
+        testSunThirdBodyPerturbingAcceleration
+            = naos::computeSunThirdBodyEffectAcceleration( testRegolithPositionVector, 20000.0 );
+
+        naos::printVector( testSunThirdBodyPerturbingAcceleration, 3 );
+
+        testSolarRadiationPerturbingAcceleration
+            = naos::computeSolarRadiationPressureAcceleration( testRegolithPositionVector, 20000.0 );
+
+        naos::printVector( testSolarRadiationPerturbingAcceleration, 3 );
 
         double wallTimeEnd = naos::getWallTime< double >( );
         double cpuTimeEnd = naos::getCPUTime< double >( );
