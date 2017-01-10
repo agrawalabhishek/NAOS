@@ -90,6 +90,86 @@ public:
     }
 };
 
+class perturbedEquationsOfMotionParticleAroundEllipsoid
+{
+    // declare parameters, gravitational parameter and the semi major axes of the ellipsoid
+    const double gravParameter;
+    const double alpha;
+    const double beta;
+    const double gamma;
+    const double zRotation;
+
+public:
+    // Default constructor with member initializer list
+    perturbedEquationsOfMotionParticleAroundEllipsoid(
+               const double aGravParameter,
+               const double aAlpha,
+               const double aBeta,
+               const double aGamma,
+               const double aZRotation )
+            : gravParameter( aGravParameter ),
+              alpha( aAlpha ),
+              beta( aBeta ),
+              gamma( aGamma ),
+              zRotation( aZRotation )
+    { }
+    void operator() ( const std::vector< double > &stateVector,
+                      std::vector< double > &dXdt,
+                      const double currentTime )
+    {
+        // calculate the gravitational accelerations first
+        std::vector< double > gravAcceleration( 3, 0.0 );
+
+        computeEllipsoidGravitationalAcceleration( alpha,
+                                                   beta,
+                                                   gamma,
+                                                   gravParameter,
+                                                   stateVector[ xPositionIndex ],
+                                                   stateVector[ yPositionIndex ],
+                                                   stateVector[ zPositionIndex ],
+                                                   gravAcceleration );
+
+        // compute perturbing acceleration from the third body effect of Sun
+        std::vector< double > regolithPositionVector = { stateVector[ xPositionIndex ],
+                                                         stateVector[ yPositionIndex ],
+                                                         stateVector[ zPositionIndex ] };
+
+        int timeValue = ( int ) std::round( currentTime );
+
+        std::vector< double > sunThirdBodyEffectAcceleration( 3, 0.0 );
+        sunThirdBodyEffectAcceleration
+            = computeSunThirdBodyEffectAcceleration( regolithPositionVector,
+                                                     timeValue );
+
+        // compute perturbing acceleration from the solar radiation pressure
+        std::vector< double > solarRadiationPressureAcceleration( 3, 0.0 );
+        solarRadiationPressureAcceleration
+            = computeSolarRadiationPressureAcceleration( regolithPositionVector,
+                                                         timeValue );
+
+        // now calculate the derivatives
+        dXdt[ xPositionIndex ] = stateVector[ xVelocityIndex ];
+        dXdt[ yPositionIndex ] = stateVector[ yVelocityIndex ];
+        dXdt[ zPositionIndex ] = stateVector[ zVelocityIndex ];
+
+        dXdt[ xVelocityIndex ] = gravAcceleration[ xPositionIndex ]
+                                + 2.0 * zRotation * stateVector[ yVelocityIndex ]
+                                + zRotation * zRotation * stateVector[ xPositionIndex ]
+                                + sunThirdBodyEffectAcceleration[ xPositionIndex ]
+                                + solarRadiationPressureAcceleration[ xPositionIndex ];
+
+        dXdt[ yVelocityIndex ] = gravAcceleration[ yPositionIndex ]
+                                - 2.0 * zRotation * stateVector[ xVelocityIndex ]
+                                + zRotation * zRotation * stateVector[ yPositionIndex ]
+                                + sunThirdBodyEffectAcceleration[ yPositionIndex ]
+                                + solarRadiationPressureAcceleration[ yPositionIndex ];
+
+        dXdt[ zVelocityIndex ] = gravAcceleration[ zPositionIndex ]
+                                + sunThirdBodyEffectAcceleration[ zPositionIndex ]
+                                + solarRadiationPressureAcceleration[ zPositionIndex ];
+    }
+};
+
 //! Store intermediate state values and time( if needed )
 /*!
  * This structure contains members that will save all intermediate state values and times when
@@ -665,7 +745,8 @@ void convertBodyFrameVectorToInertialFrame( const std::vector< double > &asteroi
 
 //! Calculate particle energy
 /*!
- * The routine calculates the energy of the orbiting particle, kinetic, potential and total energy.
+ * The routine calculates the energy of the orbiting particle, kinetic, potential and total kepler
+ * energy.
  */
 void computeParticleEnergy( const double alpha,
                             const double beta,
@@ -678,14 +759,20 @@ void computeParticleEnergy( const double alpha,
                             double &totalEnergy )
 {
     double gravPotential;
-    computeEllipsoidGravitationalPotential( alpha,
-                                            beta,
-                                            gamma,
-                                            gravParameter,
-                                            bodyFrameStateVector[ xPositionIndex ],
-                                            bodyFrameStateVector[ yPositionIndex ],
-                                            bodyFrameStateVector[ zPositionIndex ],
-                                            gravPotential );
+    // computeEllipsoidGravitationalPotential( alpha,
+    //                                         beta,
+    //                                         gamma,
+    //                                         gravParameter,
+    //                                         bodyFrameStateVector[ xPositionIndex ],
+    //                                         bodyFrameStateVector[ yPositionIndex ],
+    //                                         bodyFrameStateVector[ zPositionIndex ],
+    //                                         gravPotential );
+
+    std::vector< double > positionVector = { inertialState[ xPositionIndex ],
+                                             inertialState[ yPositionIndex ],
+                                             inertialState[ zPositionIndex ] };
+    double radialDistance = vectorNorm( positionVector );
+    gravPotential = gravParameter / radialDistance;
 
     std::vector< double > velocityVector = { inertialState[ xVelocityIndex ],
                                              inertialState[ yVelocityIndex ],
@@ -841,11 +928,18 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
     // initialize the ode system
     const double zRotation = asteroidRotationVector[ zPositionIndex ];
-    equationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
-                                                                             alpha,
-                                                                             beta,
-                                                                             gamma,
-                                                                             zRotation );
+    // equationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
+    //                                                                          alpha,
+    //                                                                          beta,
+    //                                                                          gamma,
+    //                                                                          zRotation );
+
+    // initialize the (perturbed) ode system
+    perturbedEquationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
+                                                                                      alpha,
+                                                                                      beta,
+                                                                                      gamma,
+                                                                                      zRotation );
 
     // initialize current state vector and time
     std::vector< double > currentStateVector = initialState;
