@@ -80,6 +80,7 @@ std::vector< double > extractSunEphemeris( const double timeValue,
         errorMessage << std::endl;
         errorMessage << "Error in calculating perturbing accelerations cpp file" << std::endl;
         errorMessage << "Sun's ephemeris could not be obtained because of illegal time value" << std::endl;
+        errorMessage << "Time value = " << timeValue << std::endl;
         errorMessage << std::endl;
         throw std::runtime_error( errorMessage.str( ) );
     }
