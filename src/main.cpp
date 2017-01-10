@@ -295,8 +295,8 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     {
         const double integrationStepSize = 0.01;
         const double startTime = 0.0;
-        const double endTime = 1.76 * 365.0 * 24.0 * 60.0 * 60.0;
-        const double dataSaveIntervals = 10.0;
+        const double endTime = 1.0 * 30.0 * 24.0 * 60.0 * 60.0;
+        const double dataSaveIntervals = 1.0;
 
         double wallTimeStart = naos::getWallTime< double >( );
         double cpuTimeStart = naos::getCPUTime< double >( );
@@ -304,16 +304,23 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         std::ostringstream sunAsteroidFilePath;
         sunAsteroidFilePath << "../../data/sun_asteroid_2BP/sunAsteroid2BP.csv";
 
+        const double oneAstronomicalUnit = 149597870700.0;
+
         // data taken from url:
         // http://ssd.jpl.nasa.gov/sbdb.cgi?sstr=433
         // accessed 3 jan 2017
-        const double oneAstronomicalUnit = 149597870700.0;
+        // std::vector< double > initialOrbitalElements = { 1.457945652635353 * oneAstronomicalUnit,
+        //                                                  0.2225680937603629,
+        //                                                  10.82771477612614,
+        //                                                  304.3265065906873,
+        //                                                  178.8050095729968,
+        //                                                  0.0 };
 
-        std::vector< double > initialOrbitalElements = { 1.457945652635353 * oneAstronomicalUnit,
-                                                         0.2225680937603629,
-                                                         10.82771477612614,
-                                                         304.3265065906873,
-                                                         178.8050095729968,
+        std::vector< double > initialOrbitalElements = { 1.50 * oneAstronomicalUnit,
+                                                         0.1,
+                                                         10.0,
+                                                         0.0,
+                                                         100.0,
                                                          0.0 };
 
         // accessed 3 jan 2016 from:
@@ -382,7 +389,8 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         double cpuTimeStart = naos::getCPUTime< double >( );
 
         std::ostringstream databaseFilePath;
-        databaseFilePath << "../../data/regolith_trajectory_test/test1.db";
+        databaseFilePath << "../../data/regolith_launched_from_leading_edge";
+        databaseFilePath<< "/single_launch_velocity_with_perturbations/leadingEdge.db";
 
         naos::executeRegolithMonteCarlo( alpha,
                                          beta,
