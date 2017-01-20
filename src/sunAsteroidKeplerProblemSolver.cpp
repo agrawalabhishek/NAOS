@@ -199,6 +199,40 @@ public:
     }
 };
 
+struct keplerProblemSecondOrder
+{
+    // declare parameters
+    double eccentricity = 0.0;
+    double meanAnomaly = 0.0; // radians
+
+public:
+    // default constructor with member initializer list
+    keplerProblemSecondOrder(
+        const double anEccentricityValue,
+        const double aMeanAnomalyValue )
+        : eccentricity( anEccentricityValue ),
+          meanAnomaly( aMeanAnomalyValue )
+    { }
+    std::tuple< double, double, double > operator() ( double const& eccentricAnomaly )
+    {
+        // NOTE- all angles are in radians
+        // compute f(E)
+        double eccentricAnomalyFunction
+            = eccentricAnomaly - ( eccentricity * std::sin( eccentricAnomaly ) ) - meanAnomaly;
+
+        // compute the first derivative
+        double firstDerivative
+            = 1.0 - ( eccentricity * std::cos( eccentricAnomaly ) );
+
+        // compute second derivative
+        double secondDerivative
+            = eccentricity * std::sin( eccentricAnomaly );
+
+        // return the values
+        return std::make_tuple( eccentricAnomalyFunction, firstDerivative, secondDerivative );
+    }
+};
+
 //! convert mean anomaly to eccentric anomaly
 /*!
  * This function solves the kepler problem by using newton-rhapson method to solve for eccentric
@@ -215,10 +249,10 @@ double convertMeanAnomalyToEccentricAnomaly( const double eccentricity,
     double maxEccentricAnomaly = naos::PI;
 
     // set the desired accuracy
-    const int digits = std::numeric_limits< long double >::digits;
+    const int digits = std::numeric_limits< double >::digits;
     // Accuracy doubles with each step, so stop when we have
     // just over half the digits correct. (BOOST lib)
-    // int binaryAccuracy = static_cast< int >( digits * 0.6 );
+    // int binaryAccuracy = static_cast< int >( digits );
     int binaryAccuracy = digits;
 
     // set max iterations
@@ -227,10 +261,28 @@ double convertMeanAnomalyToEccentricAnomaly( const double eccentricity,
     boost::uintmax_t iterationCounter = maxIterationsAllowed;
 
     // form an object of the struct keplerProblem
-    keplerProblem keplerProblemObject( eccentricity, meanAnomaly );
+    keplerProblemSecondOrder keplerProblemObject( eccentricity, meanAnomaly );
 
     // perform the newton-rhapson iteration
-    double eccentricAnomaly = boost::math::tools::newton_raphson_iterate(
+    // double eccentricAnomaly = boost::math::tools::newton_raphson_iterate(
+    //                                 keplerProblemObject,
+    //                                 initialGuess,
+    //                                 minEccentricAnomaly,
+    //                                 maxEccentricAnomaly,
+    //                                 binaryAccuracy,
+    //                                 iterationCounter );
+
+    // perform the halley's iteration
+    // double eccentricAnomaly = boost::math::tools::halley_iterate(
+    //                                 keplerProblemObject,
+    //                                 initialGuess,
+    //                                 minEccentricAnomaly,
+    //                                 maxEccentricAnomaly,
+    //                                 binaryAccuracy,
+    //                                 iterationCounter );
+
+    // perform the schroder's iteration method
+    double eccentricAnomaly = boost::math::tools::schroder_iterate(
                                     keplerProblemObject,
                                     initialGuess,
                                     minEccentricAnomaly,
