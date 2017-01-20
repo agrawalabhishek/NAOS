@@ -52,7 +52,7 @@ start_time = time.time( )
 
 sunGravParameter = 1.32712440018 * 10.0e+20
 regolithPosition = [ 25000.00, 0.0, 0.0 ]
-sunPosition = [ -4.18691e+10, 1.64314e+11, 2.9683e+08 ]
+sunPosition = [ 1.60463e+11, -5.48052e+10, 3.67516e+08 ]
 sunPositionMagnitude = np.linalg.norm( sunPosition )
 
 sunToRegolithPosition = np.subtract( regolithPosition, sunPosition )

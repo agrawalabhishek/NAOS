@@ -15,7 +15,6 @@ set(SRC
   "${SRC_PATH}/regolithMonteCarlo.cpp"
   "${SRC_PATH}/regolithTrajectoryCalculator.cpp"
   "${SRC_PATH}/regolithAroundUniformlyRotatingAsteroid.cpp"
-  "${SRC_PATH}/sunAsteroidTwoBodyProblem.cpp"
   "${SRC_PATH}/sunAsteroidKeplerProblemSolver.cpp"
   "${SRC_PATH}/perturbingAccelerations.cpp"
 )

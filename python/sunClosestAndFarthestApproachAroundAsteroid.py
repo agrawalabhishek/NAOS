@@ -76,46 +76,51 @@ ta              = data["ta"].values
 jacobian        = data["jacobi"].values
 energy          = data["energy"].values
 
-## find array index for closest approach of sun to the asteroid
-# radiusPerigee = sma * ( 1.0 - eccentricity )
-# print "radius Perigee = " + str( radiusPerigee[ 0 ] )
+radiusPerigee = sma * ( 1.0 - eccentricity )
+print "radius Perigee = " + str( radiusPerigee[ 0 ] )
+
+radiusApogee = sma * ( 1.0 + eccentricity )
+print "radius Apogee = " + str( radiusApogee[ 0 ] )
 
 # extract part of the data since the sun ephemeris comprises of multiple revolutions
 # in days to slice, the divide by ten option is because the data is only saved every 10 seconds in
 # the input csv file. so index value is = desired_time / 10
-timeToSlice = 150 * 24 * 60 * 60 / 10
-xInertialNew = xInertial[ 0:timeToSlice ]
-yInertialNew = yInertial[ 0:timeToSlice ]
-zInertialNew = zInertial[ 0:timeToSlice ]
-tNew         = t[ 0:timeToSlice ]
+# timeToSlice = 150 * 24 * 60 * 60 / 10
+# xInertialNew = xInertial[ 0:timeToSlice ]
+# yInertialNew = yInertial[ 0:timeToSlice ]
+# zInertialNew = zInertial[ 0:timeToSlice ]
+# tNew         = t[ 0:timeToSlice ]
 
-sunRadialDistance = np.sqrt( xInertialNew**2 + yInertialNew**2 + zInertialNew**2 )
+sunRadialDistance = np.sqrt( xInertial**2 + yInertial**2 + zInertial**2 )
 print "min. radial distance of sun from the asteroid =  " + str( min( sunRadialDistance ) )
 print "max. radial distance of sun from the asteroid =  " + str( max( sunRadialDistance ) )
 
-oneAstronomicalUnit = 149597870700.0
-fig = plt.figure( )
-ax1 = fig.add_subplot( 111 )
-ax1.plot( tNew/(24.0*60.0*60.0), sunRadialDistance/oneAstronomicalUnit )
-# ax1.plot( t/(24.0*60.0*60.0), radiusPerigee/oneAstronomicalUnit, color=colors.cnames['purple'] )
-ax1.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
-ax1.set_xlabel( "time [Earth days]" )
-ax1.set_ylabel( "Radial distance to Sun [AU]" )
-plt.grid( )
-plt.show( )
-
-closestApproachIndex = np.where( sunRadialDistance == min( sunRadialDistance ) )
-print "closest Approach Index = " + str( closestApproachIndex )
-timeOfClosestApproach = t[ closestApproachIndex ]
-
-print "time of closest approach = " + str( timeOfClosestApproach )
+# oneAstronomicalUnit = 149597870700.0
+# fig = plt.figure( )
+# ax1 = fig.add_subplot( 111 )
+# ax1.plot( t/(24.0*60.0*60.0), sunRadialDistance/oneAstronomicalUnit )
+# ax1.plot( t/(24.0*60.0*60.0), radiusPerigee/oneAstronomicalUnit, color=colors.cnames['purple'], label='Periapsis distance' )
+# ax1.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
+# ax1.set_xlabel( "time [Earth days]" )
+# ax1.set_ylabel( "Radial distance to Sun [AU]" )
+# plt.legend( )
+# plt.grid( )
+# plt.show( )
 
 ## find array index for farthest approach of sun to the asteroid
 farthestApproachIndex = np.where( sunRadialDistance == max( sunRadialDistance ) )
+# farthestApproachIndex = np.where( sunRadialDistance == radiusApogee[ 0 ] )
 print "farthest approach index = " + str( farthestApproachIndex )
 timeOfFarthestApproach = t[ farthestApproachIndex ]
 
 print "time of farthest approach = " + str( timeOfFarthestApproach )
+
+## error in solving the kepler problem
+apogeeError = np.abs( max( sunRadialDistance ) - radiusApogee[ 0 ] )
+print "error in apogee calculation = " + str( apogeeError / 1000.0 )
+
+perigeeError = np.abs( min( sunRadialDistance ) - radiusPerigee[ 0 ] )
+print "error in perigee calculation = " + str( perigeeError / 1000.0 )
 
 # Stop timer
 end_time = time.time( )
