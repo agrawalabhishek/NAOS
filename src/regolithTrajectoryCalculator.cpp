@@ -444,6 +444,48 @@ void executeRegolithTrajectoryCalculation( const double alpha,
 
     velocityMagnitude = velocityMagnitudeFactor * localNormalEscapeSpeed;
 
+    // set initial conditions for the Sun (to compute perturbations)
+    // NOTE: initial true anomaly for sun's position is independant of the starting time for regolith
+    // simulation
+    const double oneAstronomicalUnit = 149597870700.0;
+    const double initialTimeForSun = 0.0;
+    std::vector< double > initialSunOrbitalElements = { 1.457945652635353 * oneAstronomicalUnit,
+                                                        0.2225680937603629,
+                                                        10.82771477612614,
+                                                        0.0,
+                                                        0.0,
+                                                        0.0 };
+
+    // accessed 3 jan 2016 from:
+    // http://ssd.jpl.nasa.gov/?constants
+    const double sunGravParameter = 1.32712440018 * 10.0e+20;
+
+    // get the initial eccentric anomaly
+    double trueAnomalyRadian = naos::convertDegreeToRadians( initialSunOrbitalElements[ 5 ] );
+    double eccentricity = initialSunOrbitalElements[ 1 ];
+    double eccentricitySquare = eccentricity * eccentricity;
+
+    double sineOfEccentricAnomaly
+        = ( std::sqrt( 1.0 - eccentricitySquare ) * std::sin( trueAnomalyRadian ) )
+        / ( 1.0 + eccentricity * std::cos( trueAnomalyRadian ) );
+
+    double cosineOfEccentricAnomaly
+        = ( eccentricity + std::cos( trueAnomalyRadian ) )
+        / ( 1.0 + eccentricity * std::cos( trueAnomalyRadian ) );
+
+    // value returned in the range of -pi to +pi radians
+    double initialEccentricAnomalyRadian
+        = std::atan2( sineOfEccentricAnomaly, cosineOfEccentricAnomaly );
+
+    // get the initial mean anomaly
+    double initialSunMeanAnomalyRadian
+        = initialEccentricAnomalyRadian - eccentricity * std::sin( initialEccentricAnomalyRadian );
+
+    // get the mean motion
+    double semiMajorAxis = initialSunOrbitalElements[ 0 ];
+    double semiMajorAxisCube = semiMajorAxis * semiMajorAxis * semiMajorAxis;
+    double sunMeanMotion = std::sqrt( sunGravParameter / semiMajorAxisCube );
+
     // for( int velocityIterator = 1; velocityIterator <= 20; velocityIterator = velocityIterator + 1 )
     // {
     //     // all particles, irrespective of surface location will have the same velocity as computed
@@ -529,6 +571,10 @@ void executeRegolithTrajectoryCalculation( const double alpha,
                                                     integrationStepSize,
                                                     startTime,
                                                     endTime,
+                                                    initialSunMeanAnomalyRadian,
+                                                    initialTimeForSun,
+                                                    initialSunOrbitalElements,
+                                                    sunMeanMotion,
                                                     databaseQuery,
                                                     dataSaveIntervals );
     // } // end of for loop iterating over different magnitudes for the regolith velocity
