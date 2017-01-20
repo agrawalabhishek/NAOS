@@ -50,9 +50,35 @@ print ""
 # Start timer.
 start_time = time.time( )
 
+## Operations
+# Read data in csv file. data returned as a panda series.
+data = pd.read_csv( '../data/sun_asteroid_2BP/sunAsteroid2BP.csv' )
+
+xBody           = data["x_body_frame"].values
+yBody           = data["y_body_frame"].values
+zBody           = data["z_body_frame"].values
+vxBody          = data["vx_body_frame"].values
+vyBody          = data["vy_body_frame"].values
+vzBody          = data["vz_body_frame"].values
+t               = data["t"].values
+xInertial       = data["x_inertial_frame"].values
+yInertial       = data["y_inertial_frame"].values
+zInertial       = data["z_inertial_frame"].values
+vxInertial      = data["vx_inertial_frame"].values
+vyInertial      = data["vy_inertial_frame"].values
+vzInertial      = data["vz_inertial_frame"].values
+sma             = data["sma"].values
+eccentricity    = data["eccentricity"].values
+inclination     = data["inclination"].values
+raan            = data["raan"].values
+aop             = data["aop"].values
+ta              = data["ta"].values
+jacobian        = data["jacobi"].values
+energy          = data["energy"].values
+
 sunGravParameter = 1.32712440018 * 10.0e+20
 regolithPosition = [ 25000.00, 0.0, 0.0 ]
-sunPosition = [ 1.60463e+11, -5.48052e+10, 3.67516e+08 ]
+sunPosition = [ xBody[200], yBody[200], zBody[200] ]
 sunPositionMagnitude = np.linalg.norm( sunPosition )
 
 sunToRegolithPosition = np.subtract( regolithPosition, sunPosition )
