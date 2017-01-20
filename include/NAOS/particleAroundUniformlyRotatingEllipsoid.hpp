@@ -81,6 +81,10 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                  const double initialStepSize,
                                                  const double startTime,
                                                  const double endTime,
+                                                 const double initialSunMeanAnomalyRadian,
+                                                 const double initialTimeForSun,
+                                                 const std::vector< double > initialSunOrbitalElements,
+                                                 const double sunMeanMotion,
                                                  SQLite::Statement &databaseQuery,
                                                  const int dataSaveIntervals );
 

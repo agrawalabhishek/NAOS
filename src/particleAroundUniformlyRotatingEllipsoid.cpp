@@ -92,12 +92,17 @@ public:
 
 class perturbedEquationsOfMotionParticleAroundEllipsoid
 {
+private:
     // declare parameters, gravitational parameter and the semi major axes of the ellipsoid
     const double gravParameter;
     const double alpha;
     const double beta;
     const double gamma;
-    const double zRotation;
+    std::vector< double > asteroidRotationVector;
+    const double initialTime;
+    const double initialMeanAnomalyRadian;
+    const std::vector< double > initialSunOrbitalElements;
+    const double sunMeanMotion;
 
 public:
     // Default constructor with member initializer list
@@ -106,12 +111,20 @@ public:
                const double aAlpha,
                const double aBeta,
                const double aGamma,
-               const double aZRotation )
+               std::vector< double > &anAsteroidRotationVector,
+               const double anInitialTime,
+               const double anInitialMeanAnomalyRadian,
+               const std::vector< double > &anInitialSunOrbitalElements,
+               const double aSunMeanMotion )
             : gravParameter( aGravParameter ),
               alpha( aAlpha ),
               beta( aBeta ),
               gamma( aGamma ),
-              zRotation( aZRotation )
+              asteroidRotationVector( anAsteroidRotationVector ),
+              initialTime( anInitialTime ),
+              initialMeanAnomalyRadian( anInitialMeanAnomalyRadian ),
+              initialSunOrbitalElements( anInitialSunOrbitalElements ),
+              sunMeanMotion( aSunMeanMotion )
     { }
     void operator() ( const std::vector< double > &stateVector,
                       std::vector< double > &dXdt,
@@ -134,18 +147,28 @@ public:
                                                          stateVector[ yPositionIndex ],
                                                          stateVector[ zPositionIndex ] };
 
-        int timeValue = ( int ) std::round( currentTime );
-
         std::vector< double > sunThirdBodyEffectAcceleration( 3, 0.0 );
         sunThirdBodyEffectAcceleration
             = computeSunThirdBodyEffectAcceleration( regolithPositionVector,
-                                                     timeValue );
+                                                     asteroidRotationVector,
+                                                     initialTime,
+                                                     initialMeanAnomalyRadian,
+                                                     initialSunOrbitalElements,
+                                                     currentTime,
+                                                     sunMeanMotion );
 
         // compute perturbing acceleration from the solar radiation pressure
         std::vector< double > solarRadiationPressureAcceleration( 3, 0.0 );
         solarRadiationPressureAcceleration
             = computeSolarRadiationPressureAcceleration( regolithPositionVector,
-                                                         timeValue );
+                                                         asteroidRotationVector,
+                                                         initialTime,
+                                                         initialMeanAnomalyRadian,
+                                                         initialSunOrbitalElements,
+                                                         currentTime,
+                                                         sunMeanMotion );
+
+        double zRotation = asteroidRotationVector[ 2 ];
 
         // now calculate the derivatives
         dXdt[ xPositionIndex ] = stateVector[ xVelocityIndex ];
@@ -853,6 +876,10 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                  const double initialStepSize,
                                                  const double startTime,
                                                  const double endTime,
+                                                 const double initialSunMeanAnomalyRadian,
+                                                 const double initialTimeForSun,
+                                                 const std::vector< double > initialSunOrbitalElements,
+                                                 const double sunMeanMotion,
                                                  SQLite::Statement &databaseQuery,
                                                  const int dataSaveIntervals )
 {
@@ -935,11 +962,17 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     //                                                                          zRotation );
 
     // initialize the (perturbed) ode system
+    // Note - initial time for sun's position (corresponding true anomaly for sun) is independant of
+    // start time for regolith trajectory simulation
     perturbedEquationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
                                                                                       alpha,
                                                                                       beta,
                                                                                       gamma,
-                                                                                      zRotation );
+                                                                                      asteroidRotationVector,
+                                                                                      initialTimeForSun,
+                                                                                      initialSunMeanAnomalyRadian,
+                                                                                      initialSunOrbitalElements,
+                                                                                      sunMeanMotion );
 
     // initialize current state vector and time
     std::vector< double > currentStateVector = initialState;

@@ -39,14 +39,24 @@ std::vector< double > extractSunEphemeris( const double timeValue,
  * Compute the perturbing acceleration from the thrid body effect of the sun.
  */
 std::vector< double > computeSunThirdBodyEffectAcceleration( const std::vector< double > &regolithPositionVector,
-                                                             const double timeValue );
+                                                             std::vector< double > &asteroidRotationVector,
+                                                             const double initialTime,
+                                                             const double initialSunMeanAnomalyRadian,
+                                                             const std::vector< double > &initialSunOrbitalElements,
+                                                             const double timeValue,
+                                                             const double sunMeanMotion );
 
 //! Solar radiation pressure
 /*!
  * comupte the perturbing acceleration from solar radition pressure.
  */
 std::vector< double > computeSolarRadiationPressureAcceleration( const std::vector< double > &regolithPositionVector,
-                                                                 const double timeValue );
+                                                                 std::vector< double > &asteroidRotationVector,
+                                                                 const double initialTime,
+                                                                 const double initialSunMeanAnomalyRadian,
+                                                                 const std::vector< double > &initialSunOrbitalElements,
+                                                                 const double timeValue,
+                                                                 const double sunMeanMotion );
 
 } // namespace naos
 
