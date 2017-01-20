@@ -103,21 +103,21 @@ void testBedForRegolithTrajectoryCalculator( const double alpha,
 
     initialState[ zVelocityIndex] = zBodyFrameVelocityInInertialComponents;
 
-    executeSingleRegolithTrajectoryCalculation( alpha,
-                                                beta,
-                                                gamma,
-                                                gravitationalParameter,
-                                                angularVelocityVector,
-                                                initialState,
-                                                0.0,
-                                                0.0,
-                                                0.0,
-                                                0.0,
-                                                integrationStepSize,
-                                                startTime,
-                                                50000.0,
-                                                databaseQuery,
-                                                dataSaveIntervals );
+    // executeSingleRegolithTrajectoryCalculation( alpha,
+    //                                             beta,
+    //                                             gamma,
+    //                                             gravitationalParameter,
+    //                                             angularVelocityVector,
+    //                                             initialState,
+    //                                             0.0,
+    //                                             0.0,
+    //                                             0.0,
+    //                                             0.0,
+    //                                             integrationStepSize,
+    //                                             startTime,
+    //                                             50000.0,
+    //                                             databaseQuery,
+    //                                             dataSaveIntervals );
 }
 
 //! Function that performs sanity check for ellipsoid acceleration and potential
