@@ -25,9 +25,10 @@
 #include "NAOS/particleAroundUniformlyRotatingEllipsoid.hpp"
 #include "NAOS/regolithTrajectoryCalculator.hpp"
 #include "NAOS/regolithMonteCarlo.hpp"
-// #include "NAOS/sunAsteroidTwoBodyProblem.hpp"
 #include "NAOS/sunAsteroidKeplerProblemSolver.hpp"
 #include "NAOS/perturbingAccelerations.hpp"
+#include "NAOS/asteroidSurfaceGravitationalAndPerturbingAccelerations.hpp"
+// #include "NAOS/sunAsteroidTwoBodyProblem.hpp"
 // #include "NAOS/particleAroundSpheroidAndElllipsoidGravitationalPotential.hpp"
 // #include "NAOS/boostIntegratorRestrictedTwoBodyProblem.hpp"
 // #include "NAOS/executeOrbiterAroundUREPointMassGravity.hpp"
@@ -477,6 +478,16 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                                                                sunMeanMotion );
 
         naos::printVector( testSolarRadiationPerturbingAcceleration, 3 );
+
+        // compute surface gravity and perturbing accelerations
+        std::ostringstream filePath;
+        filePath << "../../data/surface_gravity_and_perturbing_acceleration/allAccelerations.csv";
+        naos::computeGravityAndPerturbingAccelerations( alpha,
+                                                        beta,
+                                                        gamma,
+                                                        gravitationalParameter,
+                                                        W,
+                                                        filePath );
 
         double wallTimeEnd = naos::getWallTime< double >( );
         double cpuTimeEnd = naos::getCPUTime< double >( );
