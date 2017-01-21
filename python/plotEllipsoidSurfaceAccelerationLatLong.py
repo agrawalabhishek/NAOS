@@ -50,50 +50,51 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-data = pd.read_csv( '../data/ellipsoidSurfaceAcceleration.csv' )
-# data = pd.read_csv( '../data/nondimensionalellipsoidSurfaceAcceleration.csv' )
-Ux = data['Ux'].values
-Uy = data['Uy'].values
-Uz = data['Uz'].values
-U = data['U'].values
-print U
+data = pd.read_csv( '../data/surface_gravity_and_perturbing_acceleration/allAccelerations.csv' )
+Ux = data['xGravAcceleration'].values
+Uy = data['yGravAcceleration'].values
+Uz = data['zGravAcceleration'].values
+U = data['gravAcceleration'].values
+
 latitude = data['latitude'].values
 longitude = data['longitude'].values
 
 ## Plot magnitude of acceleration due to gravity on surface of an ellipsoid using scatter map
-fig = plt.figure()
-ax1 = fig.add_subplot(111)
-scatterPlotHeat = ax1.scatter( latitude, longitude, c=U )
-cbar = plt.colorbar( scatterPlotHeat, cmap = cm.jet )
-cbar.ax.set_ylabel( 'Gravitational Acceleration [m/s^2]' )
-ax1.set_xlim( latitude.min(), latitude.max() )
-ax1.set_ylim( longitude.min(), longitude.max() )
-formatter = matplotlib.ticker.ScalarFormatter( useOffset=False )
-ax1.xaxis.set_major_formatter( formatter )
-ax1.yaxis.set_major_formatter( formatter )
-ax1.get_yaxis().set_tick_params( direction='out' )
-ax1.get_xaxis().set_tick_params( direction='out' )
-ax1.set_ylabel( 'Latitude [deg]' )
-ax1.set_xlabel( 'Longitude [deg]' )
-ax1.set_title( 'Gravitational acceleration at ellipsoid surface (Eros)' )
+# fig = plt.figure()
+# ax1 = fig.add_subplot(111)
+# scatterPlotHeat = ax1.scatter( latitude, longitude, c=U )
+# cbar = plt.colorbar( scatterPlotHeat, cmap = cm.jet )
+# cbar.ax.set_ylabel( 'Gravitational Acceleration [m/s^2]' )
+# ax1.set_xlim( latitude.min(), latitude.max() )
+# ax1.set_ylim( longitude.min(), longitude.max() )
+# formatter = matplotlib.ticker.ScalarFormatter( useOffset=False )
+# ax1.xaxis.set_major_formatter( formatter )
+# ax1.yaxis.set_major_formatter( formatter )
+# ax1.get_yaxis().set_tick_params( direction='out' )
+# ax1.get_xaxis().set_tick_params( direction='out' )
+# ax1.set_xlabel( 'Latitude [deg]' )
+# ax1.set_ylabel( 'Longitude [deg]' )
+# ax1.set_title( 'Gravitational acceleration at ellipsoid surface (Eros)' )
 # plt.ticklabel_format( style = 'sci', axis = 'x', scilimits = ( 0, 0 ) )
-plt.grid()
+# plt.grid()
 
 ## Plot magnitude of acceleration due to gravity on surface of an ellipsoid using contourf
 fig = plt.figure()
 ax1 = fig.add_subplot(111)
+
 # find number of unique latitudes and longitudes
 numberOfLatitudes = len( data['latitude'].unique() )
 numberOfLongitudes = len( data['longitude'].unique() )
+
 # make 2D arrays without changing data
 y = latitude.reshape( numberOfLatitudes, numberOfLongitudes )
 x = longitude.reshape( numberOfLatitudes, numberOfLongitudes )
 z = U.reshape( numberOfLatitudes, numberOfLongitudes )
-contourHeatPlot = plt.contourf( y, x, z, cmap=cm.jet )
+contourHeatPlot = plt.contourf( x, y, z, cmap=cm.jet )
 cbar = plt.colorbar( contourHeatPlot, cmap=cm.jet )
 cbar.ax.set_ylabel( 'Gravitational Acceleration [m/s^2]' )
-ax1.set_xlim( latitude.min(), latitude.max() )
-ax1.set_ylim( longitude.min(), longitude.max() )
+ax1.set_ylim( latitude.min(), latitude.max() )
+ax1.set_xlim( longitude.min(), longitude.max() )
 formatter = matplotlib.ticker.ScalarFormatter( useOffset=False )
 ax1.xaxis.set_major_formatter( formatter )
 ax1.yaxis.set_major_formatter( formatter )
@@ -103,6 +104,7 @@ ax1.set_ylabel( 'Latitude [deg]' )
 ax1.set_xlabel( 'Longitude [deg]' )
 ax1.set_title( 'Gravitational acceleration at ellipsoid surface (Eros)' )
 # plt.ticklabel_format( style = 'sci', axis = 'x', scilimits = ( 0, 0 ) )
+
 plt.grid()
 plt.show()
 
