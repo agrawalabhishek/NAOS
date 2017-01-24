@@ -297,8 +297,8 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     {
         const double integrationStepSize = 0.01;
         const double startTime = 0.0;
-        const double endTime = 2.0 * 365.0 * 24.0 * 60.0 * 60.0;
-        const double dataSaveIntervals = 100.0;
+        const double endTime = 1.0 * 250.0 * 24.0 * 60.0 * 60.0;
+        const double dataSaveIntervals = 1.0;
 
         double wallTimeStart = naos::getWallTime< double >( );
         double cpuTimeStart = naos::getCPUTime< double >( );
@@ -323,7 +323,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
         std::vector< double > initialOrbitalElements = { 1.457945652635353 * oneAstronomicalUnit,
                                                          0.2225680937603629,
-                                                         10.82771477612614,
+                                                         0.0,
                                                          0.0,
                                                          0.0,
                                                          0.0 };
@@ -372,7 +372,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         const double initialTimeForSun = 0.0;
         std::vector< double > initialSunOrbitalElements = { 1.457945652635353 * oneAstronomicalUnit,
                                                             0.2225680937603629,
-                                                            10.82771477612614,
+                                                            0.0,
                                                             0.0,
                                                             0.0,
                                                             0.0 };
@@ -507,8 +507,8 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         double cpuTimeStart = naos::getCPUTime< double >( );
 
         std::ostringstream databaseFilePath;
-        databaseFilePath << "../../data/regolith_launched_from_leading_edge";
-        databaseFilePath<< "/single_launch_velocity_with_perturbations/leadingEdge.db";
+        databaseFilePath << "../../data/guarantee_escape_speed";
+        databaseFilePath<< "/longest_edge/longestEdge.db";
 
         naos::executeRegolithMonteCarlo( alpha,
                                          beta,

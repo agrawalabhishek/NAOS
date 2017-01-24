@@ -127,7 +127,7 @@ void computeGravityAndPerturbingAccelerations( const double alpha,
             const double initialTimeForSun = 0.0;
             std::vector< double > initialSunOrbitalElements = { 1.457945652635353 * oneAstronomicalUnit,
                                                                 0.2225680937603629,
-                                                                10.82771477612614,
+                                                                0.0,
                                                                 0.0,
                                                                 0.0,
                                                                 0.0 };
