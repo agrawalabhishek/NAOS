@@ -98,7 +98,8 @@ void executeRegolithTrajectoryCalculation( const double alpha,
                                            const double startTime,
                                            const double endTime,
                                            const double dataSaveIntervals,
-                                           SQLite::Statement &databaseQuery );
+                                           SQLite::Statement &databaseQuery,
+                                           std::ofstream &escapeSpeedFileHandle );
 } // namespace naos
 
 #endif // REGOLITH_TRAJECTORY_CALCULATOR
