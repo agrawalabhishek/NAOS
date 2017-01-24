@@ -108,12 +108,12 @@ print "max. radial distance of sun from the asteroid =  " + str( max( sunRadialD
 # plt.show( )
 
 ## find array index for farthest approach of sun to the asteroid
-farthestApproachIndex = np.where( sunRadialDistance == max( sunRadialDistance ) )
+# farthestApproachIndex = np.where( sunRadialDistance == max( sunRadialDistance ) )
 # farthestApproachIndex = np.where( sunRadialDistance == radiusApogee[ 0 ] )
-print "farthest approach index = " + str( farthestApproachIndex )
-timeOfFarthestApproach = t[ farthestApproachIndex ]
+# print "farthest approach index = " + str( farthestApproachIndex )
+# timeOfFarthestApproach = t[ farthestApproachIndex ]
 
-print "time of farthest approach = " + str( timeOfFarthestApproach )
+# print "time of farthest approach = " + str( timeOfFarthestApproach )
 
 ## error in solving the kepler problem
 apogeeError = np.abs( max( sunRadialDistance ) - radiusApogee[ 0 ] )

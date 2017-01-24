@@ -76,12 +76,12 @@ surf.set_linewidth( 0.1 )
 ax1.hold( True )
 
 ## data in body frame
-databasePath = "../../data/position_and_launch_angles_iterator/regolithMonteCarlo.db"
+databasePath = "../../data/guarantee_escape_speed/longest_edge/longestEdge.db"
 print "Fetching scan data from database ..."
 
 # Connect to SQLite database.
 try:
-        database = sqlite3.connect("../data/regolith_launched_from_leading_edge/leadingEdge.db")
+        database = sqlite3.connect("../data/guarantee_escape_speed/longest_edge/longestEdge.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -107,7 +107,8 @@ data = pd.read_sql( "SELECT     position_x,                             \
                                 velocity_z,                             \
                                 time                                    \
                      FROM       regolith_trajectory_results             \
-                     WHERE      ROUND( launch_azimuth ) = 349.0;",      \
+                     WHERE      ROUND( launch_azimuth ) = 270.0         \
+                     AND        ROUND( launch_declination ) = 16.0;",   \
                      database )
 
 data.columns = [ 'x',                                                   \
