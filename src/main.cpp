@@ -482,7 +482,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
         // compute surface gravity and perturbing accelerations
         std::ostringstream filePath;
-        filePath << "../../data/surface_gravity_and_perturbing_acceleration/allAccelerations.csv";
+        filePath << "../../data/surface_gravity_and_perturbing_acceleration/equatorial_and_circular_case/allAccelerations.csv";
         naos::computeGravityAndPerturbingAccelerations( alpha,
                                                         beta,
                                                         gamma,
@@ -491,17 +491,17 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                                                         filePath );
 
         // compute accelerations for certain coordinates
-        std::ostringstream newFilePath;
-        newFilePath << "../../data/regolith_launched_from_leading_edge/";
-        newFilePath << "multiple_launch_velocity_with_perturbations/";
-        newFilePath << "perturbations_capture_case_vel_14_azi_125.csv";
-        naos::computeGravitationalAndPerturbingAccelerationsForSpecificCoordinates(
-            alpha,
-            beta,
-            gamma,
-            gravitationalParameter,
-            W,
-            newFilePath );
+        // std::ostringstream newFilePath;
+        // newFilePath << "../../data/regolith_launched_from_leading_edge/";
+        // newFilePath << "multiple_launch_velocity_with_perturbations/";
+        // newFilePath << "perturbations_capture_case_vel_14_azi_125.csv";
+        // naos::computeGravitationalAndPerturbingAccelerationsForSpecificCoordinates(
+        //     alpha,
+        //     beta,
+        //     gamma,
+        //     gravitationalParameter,
+        //     W,
+        //     newFilePath );
 
         double wallTimeEnd = naos::getWallTime< double >( );
         double cpuTimeEnd = naos::getCPUTime< double >( );

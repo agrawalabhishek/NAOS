@@ -74,10 +74,12 @@ void computeGravityAndPerturbingAccelerations( const double alpha,
     outputData << "zSRPAcceleration_sunApoapsis" << ",";
     outputData << "srpAcceleration_sunApoapsis" << std::endl;
 
+    outputData.precision( 20 );
+
     // start double loop to compute surface points based on latitude and longitude
-    for( int latitude = -90; latitude <= 90; latitude++ )
+    for( int latitude = -90; latitude <= 90; latitude = latitude + 2 )
     {
-        for( int longitude = 0; longitude <= 359; longitude++ )
+        for( int longitude = 0; longitude <= 359; longitude = longitude + 2 )
         {
             // convert angles to radians
             double latitudeRad = latitude * naos::PI / 180.0;
@@ -126,8 +128,8 @@ void computeGravityAndPerturbingAccelerations( const double alpha,
             const double oneAstronomicalUnit = 149597870700.0;
             const double initialTimeForSun = 0.0;
             std::vector< double > initialSunOrbitalElements = { 1.457945652635353 * oneAstronomicalUnit,
-                                                                0.2225680937603629,
-                                                                10.82771477612614,
+                                                                0.0,
+                                                                0.0,
                                                                 0.0,
                                                                 0.0,
                                                                 0.0 };

@@ -55,7 +55,7 @@ def fmt(x, pos):
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-data = pd.read_csv( '../data/surface_gravity_and_perturbing_acceleration/allAccelerations.csv' )
+data = pd.read_csv( '../data/surface_gravity_and_perturbing_acceleration/equatorial_and_circular_case/allAccelerations.csv' )
 Ux = data['xGravAcceleration'].values
 Uy = data['yGravAcceleration'].values
 Uz = data['zGravAcceleration'].values
@@ -117,7 +117,8 @@ ax1.get_yaxis().set_tick_params( direction='out' )
 ax1.get_xaxis().set_tick_params( direction='out' )
 ax1.set_ylabel( 'Latitude [deg]' )
 ax1.set_xlabel( 'Longitude [deg]' )
-ax1.set_title( 'Third body effect at Eros surface (Sun Periapsis)' )
+# ax1.set_title( 'Third body effect at Eros surface (Sun Periapsis)' )
+ax1.set_title( 'Third body effect at Eros surface' )
 
 ## Plot magnitude of acceleration due to srp effect on surface of an ellipsoid using contourf
 fig = plt.figure()
@@ -138,7 +139,8 @@ ax1.get_yaxis().set_tick_params( direction='out' )
 ax1.get_xaxis().set_tick_params( direction='out' )
 ax1.set_ylabel( 'Latitude [deg]' )
 ax1.set_xlabel( 'Longitude [deg]' )
-ax1.set_title( 'SRP acceleration at Eros surface (Sun Periapsis)' )
+# ax1.set_title( 'SRP acceleration at Eros surface (Sun Periapsis)' )
+ax1.set_title( 'SRP acceleration at Eros surface' )
 
 ## Plot magnitude of acceleration due to sun's third body effect on surface of an ellipsoid using contourf
 fig = plt.figure()
