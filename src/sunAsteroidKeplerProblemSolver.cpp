@@ -245,14 +245,14 @@ double convertMeanAnomalyToEccentricAnomaly( const double eccentricity,
     //NOTE- input mean anomaly to be in radian
     // initialize for newton-rhapson method
     double initialGuess = meanAnomaly;
-    double minEccentricAnomaly = -naos::PI;
+    double minEccentricAnomaly = -1.0 * naos::PI;
     double maxEccentricAnomaly = naos::PI;
 
     // set the desired accuracy
     const int digits = std::numeric_limits< double >::digits;
     // Accuracy doubles with each step, so stop when we have
     // just over half the digits correct. (BOOST lib)
-    // int binaryAccuracy = static_cast< int >( digits );
+    // int binaryAccuracy = static_cast< int >( 0.6 * digits );
     int binaryAccuracy = digits;
 
     // set max iterations
@@ -261,16 +261,17 @@ double convertMeanAnomalyToEccentricAnomaly( const double eccentricity,
     boost::uintmax_t iterationCounter = maxIterationsAllowed;
 
     // form an object of the struct keplerProblem
-    keplerProblemSecondOrder keplerProblemObject( eccentricity, meanAnomaly );
+    keplerProblem keplerProblemObject( eccentricity, meanAnomaly );
+    // keplerProblemSecondOrder keplerProblemObject( eccentricity, meanAnomaly );
 
     // perform the newton-rhapson iteration
-    // double eccentricAnomaly = boost::math::tools::newton_raphson_iterate(
-    //                                 keplerProblemObject,
-    //                                 initialGuess,
-    //                                 minEccentricAnomaly,
-    //                                 maxEccentricAnomaly,
-    //                                 binaryAccuracy,
-    //                                 iterationCounter );
+    double eccentricAnomaly = boost::math::tools::newton_raphson_iterate(
+                                    keplerProblemObject,
+                                    initialGuess,
+                                    minEccentricAnomaly,
+                                    maxEccentricAnomaly,
+                                    binaryAccuracy,
+                                    iterationCounter );
 
     // perform the halley's iteration
     // double eccentricAnomaly = boost::math::tools::halley_iterate(
@@ -282,13 +283,13 @@ double convertMeanAnomalyToEccentricAnomaly( const double eccentricity,
     //                                 iterationCounter );
 
     // perform the schroder's iteration method
-    double eccentricAnomaly = boost::math::tools::schroder_iterate(
-                                    keplerProblemObject,
-                                    initialGuess,
-                                    minEccentricAnomaly,
-                                    maxEccentricAnomaly,
-                                    binaryAccuracy,
-                                    iterationCounter );
+    // double eccentricAnomaly = boost::math::tools::schroder_iterate(
+    //                                 keplerProblemObject,
+    //                                 initialGuess,
+    //                                 minEccentricAnomaly,
+    //                                 maxEccentricAnomaly,
+    //                                 binaryAccuracy,
+    //                                 iterationCounter );
 
     return eccentricAnomaly;
 }
@@ -329,9 +330,13 @@ void executeSunAsteroidKeplerSolver( const double gravParameter,
     outputFile << "raan" << ",";
     outputFile << "aop" << ",";
     outputFile << "ta" << ",";
+    outputFile << "eccentric_anomaly" << ",";
+    outputFile << "mean_anomaly" << ",";
 
     outputFile << "jacobi" << ",";
     outputFile << "energy" << std::endl;
+
+    outputFile.precision( 20 );
 
     //! convert the initial orbital elements to cartesian state
     std::vector< double > initialState( 6, 0.0 );
@@ -374,16 +379,6 @@ void executeSunAsteroidKeplerSolver( const double gravParameter,
     outputFile << initialOrbitalElements[ 4 ] << ",";
     outputFile << initialOrbitalElements[ 5 ] << ",";
 
-    double jacobi = computeSunAsteroidJacobiConstant( bodyFrameStateVector,
-                                                      asteroidRotationVector,
-                                                      gravParameter );
-
-    double energy = computeSunAsteroidEnergy( currentStateVector,
-                                              gravParameter );
-
-    outputFile << jacobi << ",";
-    outputFile << energy << std::endl;
-
     // get the initial eccentric anomaly
     double trueAnomalyRadian = naos::convertDegreeToRadians( initialOrbitalElements[ 5 ] );
     double eccentricity = initialOrbitalElements[ 1 ];
@@ -405,10 +400,24 @@ void executeSunAsteroidKeplerSolver( const double gravParameter,
     double initialMeanAnomalyRadian
         = initialEccentricAnomalyRadian - eccentricity * std::sin( initialEccentricAnomalyRadian );
 
+    outputFile << naos::convertRadiansToDegree( initialEccentricAnomalyRadian ) << ",";
+    outputFile << naos::convertRadiansToDegree( initialMeanAnomalyRadian ) << ",";
+
     // get the mean motion
     double semiMajorAxis = initialOrbitalElements[ 0 ];
     double semiMajorAxisCube = semiMajorAxis * semiMajorAxis * semiMajorAxis;
     double meanMotion = std::sqrt( gravParameter / semiMajorAxisCube );
+
+    // get the jacobi and the energy
+    double jacobi = computeSunAsteroidJacobiConstant( bodyFrameStateVector,
+                                                      asteroidRotationVector,
+                                                      gravParameter );
+
+    double energy = computeSunAsteroidEnergy( currentStateVector,
+                                              gravParameter );
+
+    outputFile << jacobi << ",";
+    outputFile << energy << std::endl;
 
     // start the propagator outer loop
     while( intermediateEndTime <= endTime )
@@ -435,6 +444,11 @@ void executeSunAsteroidKeplerSolver( const double gravParameter,
             = std::atan2( sineOfTrueAnomaly, cosineOfTrueAnomaly );
 
         double trueAnomaly = naos::convertRadiansToDegree( trueAnomalyRadian );
+
+        if( trueAnomaly < 0.0 )
+        {
+            trueAnomaly = trueAnomaly + 360.0;
+        }
 
         // form the orbital elements vector
         // basically update the orbital elements true anomaly,
@@ -484,6 +498,9 @@ void executeSunAsteroidKeplerSolver( const double gravParameter,
         outputFile << orbitalElements[ 3 ] << ",";
         outputFile << orbitalElements[ 4 ] << ",";
         outputFile << orbitalElements[ 5 ] << ",";
+
+        outputFile << naos::convertRadiansToDegree( eccentricAnomalyRadian ) << ",";
+        outputFile << naos::convertRadiansToDegree( meanAnomalyRadian ) << ",";
 
         jacobi = computeSunAsteroidJacobiConstant( bodyFrameStateVector,
                                                    asteroidRotationVector,

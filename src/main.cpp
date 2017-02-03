@@ -305,7 +305,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         double cpuTimeStart = naos::getCPUTime< double >( );
 
         std::ostringstream sunAsteroidFilePath;
-        sunAsteroidFilePath << "../../data/sun_asteroid_2BP/sunAsteroid2BP.csv";
+        sunAsteroidFilePath << "../../data/sun_asteroid_2BP/equatorial_and_circular_case/sunAsteroid2BP.csv";
 
         std::ostringstream integratedSunAsteroidFilePath;
         integratedSunAsteroidFilePath << "../../data/sun_asteroid_2BP/integratedSunAsteroid2BP.csv";
@@ -323,8 +323,8 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         //                                                  0.0 };
 
         std::vector< double > initialOrbitalElements = { 1.457945652635353 * oneAstronomicalUnit,
-                                                         0.2225680937603629,
-                                                         10.82771477612614,
+                                                         0.0,
+                                                         0.0,
                                                          0.0,
                                                          0.0,
                                                          0.0 };

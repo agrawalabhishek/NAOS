@@ -52,7 +52,7 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-data = pd.read_csv( '../data/sun_asteroid_2BP/sunAsteroid2BP.csv' )
+data = pd.read_csv( '../data/sun_asteroid_2BP/equatorial_and_circular_case/sunAsteroid2BP.csv' )
 
 xBody           = data["x_body_frame"].values
 yBody           = data["y_body_frame"].values

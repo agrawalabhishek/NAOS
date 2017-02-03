@@ -52,7 +52,7 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-data = pd.read_csv( '../data/sun_asteroid_2BP/sunAsteroid2BP.csv' )
+data = pd.read_csv( '../data/sun_asteroid_2BP/equatorial_and_circular_case/sunAsteroid2BP.csv' )
 
 xBody           = data["x_body_frame"].values
 yBody           = data["y_body_frame"].values
@@ -73,6 +73,8 @@ inclination     = data["inclination"].values
 raan            = data["raan"].values
 aop             = data["aop"].values
 ta              = data["ta"].values
+eccentricAnomaly= data["eccentric_anomaly"].values
+meanAnomaly     = data["mean_anomaly"].values
 jacobian        = data["jacobi"].values
 energy          = data["energy"].values
 
@@ -95,25 +97,46 @@ sunRadialDistance = np.sqrt( xInertial**2 + yInertial**2 + zInertial**2 )
 print "min. radial distance of sun from the asteroid =  " + str( min( sunRadialDistance ) )
 print "max. radial distance of sun from the asteroid =  " + str( max( sunRadialDistance ) )
 
-# oneAstronomicalUnit = 149597870700.0
-# fig = plt.figure( )
-# ax1 = fig.add_subplot( 111 )
-# ax1.plot( t/(24.0*60.0*60.0), sunRadialDistance/oneAstronomicalUnit )
+oneAstronomicalUnit = 149597870700.0
+fig = plt.figure( )
+ax1 = fig.add_subplot( 111 )
+ax1.plot( t/(24.0*60.0*60.0), ( sunRadialDistance/oneAstronomicalUnit ) )
 # ax1.plot( t/(24.0*60.0*60.0), radiusPerigee/oneAstronomicalUnit, color=colors.cnames['purple'], label='Periapsis distance' )
-# ax1.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
-# ax1.set_xlabel( "time [Earth days]" )
-# ax1.set_ylabel( "Radial distance to Sun [AU]" )
+ax1.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
+ax1.set_xlabel( "time [Earth days]" )
+ax1.set_ylabel( "Radial distance to Sun [AU]" )
 # plt.legend( )
-# plt.grid( )
-# plt.show( )
+plt.grid( )
+plt.show( )
+
+fig = plt.figure( )
+ax1 = fig.add_subplot( 311 )
+ax1.plot( t/(24.0*60.0*60.0), ta )
+ax1.set_xlabel( "time [Earth days]" )
+ax1.set_ylabel( "True anomaly [deg]" )
+ax1.grid( )
+
+ax2 = fig.add_subplot( 312 )
+ax2.plot( t/(24.0*60.0*60.0), eccentricAnomaly%360.0 )
+ax2.set_xlabel( "time [Earth days]" )
+ax2.set_ylabel( "Eccentric anomaly [deg]" )
+ax2.grid( )
+
+ax3 = fig.add_subplot( 313 )
+ax3.plot( t/(24.0*60.0*60.0), meanAnomaly%360.0 )
+ax3.set_xlabel( "time [Earth days]" )
+ax3.set_ylabel( "Mean anomaly [deg]" )
+ax3.grid( )
+
+plt.show( )
 
 ## find array index for farthest approach of sun to the asteroid
-farthestApproachIndex = np.where( sunRadialDistance == max( sunRadialDistance ) )
-# farthestApproachIndex = np.where( sunRadialDistance == radiusApogee[ 0 ] )
-print "farthest approach index = " + str( farthestApproachIndex )
-timeOfFarthestApproach = t[ farthestApproachIndex ]
+# farthestApproachIndex = np.where( sunRadialDistance == max( sunRadialDistance ) )
+# # farthestApproachIndex = np.where( sunRadialDistance == radiusApogee[ 0 ] )
+# print "farthest approach index = " + str( farthestApproachIndex )
+# timeOfFarthestApproach = t[ farthestApproachIndex ]
 
-print "time of farthest approach = " + str( timeOfFarthestApproach )
+# print "time of farthest approach = " + str( timeOfFarthestApproach )
 
 ## error in solving the kepler problem
 apogeeError = np.abs( max( sunRadialDistance ) - radiusApogee[ 0 ] )

@@ -52,7 +52,7 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-data = pd.read_csv( '../data/sun_asteroid_2BP/sunAsteroid2BP.csv' )
+data = pd.read_csv( '../data/sun_asteroid_2BP/equatorial_and_circular_case/sunAsteroid2BP.csv' )
 
 xBody           = data["x_body_frame"].values
 yBody           = data["y_body_frame"].values
@@ -116,7 +116,7 @@ ax1.plot( t, jacobian, color=colors.cnames['purple'] )
 ax1.set_xlabel('time [Earth days]')
 ax1.set_ylabel('Jacobi integral')
 ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useOffset=False)
-ax1.set_xlim( [ -10, 700 ] )
+ax1.set_xlim( [ -10, 800 ] )
 ax1.grid( )
 
 ## plot relative change in jacobian
