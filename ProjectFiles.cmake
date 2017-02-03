@@ -18,6 +18,7 @@ set(SRC
   "${SRC_PATH}/sunAsteroidKeplerProblemSolver.cpp"
   "${SRC_PATH}/perturbingAccelerations.cpp"
   "${SRC_PATH}/asteroidSurfaceGravitationalAndPerturbingAccelerations.cpp"
+  "${SRC_PATH}/computePerturbationsForSpecificCoordinates.cpp"
 )
 
 # Set project main file.

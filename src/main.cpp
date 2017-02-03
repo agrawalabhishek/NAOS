@@ -28,6 +28,7 @@
 #include "NAOS/sunAsteroidKeplerProblemSolver.hpp"
 #include "NAOS/perturbingAccelerations.hpp"
 #include "NAOS/asteroidSurfaceGravitationalAndPerturbingAccelerations.hpp"
+#include "NAOS/computePerturbationsForSpecificCoordinates.hpp"
 // #include "NAOS/sunAsteroidTwoBodyProblem.hpp"
 // #include "NAOS/particleAroundSpheroidAndElllipsoidGravitationalPotential.hpp"
 // #include "NAOS/boostIntegratorRestrictedTwoBodyProblem.hpp"
@@ -489,6 +490,19 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                                                         W,
                                                         filePath );
 
+        // compute accelerations for certain coordinates
+        std::ostringstream newFilePath;
+        newFilePath << "../../data/regolith_launched_from_leading_edge/";
+        newFilePath << "multiple_launch_velocity_with_perturbations/";
+        newFilePath << "perturbations_capture_case_vel_14_azi_125.csv";
+        naos::computeGravitationalAndPerturbingAccelerationsForSpecificCoordinates(
+            alpha,
+            beta,
+            gamma,
+            gravitationalParameter,
+            W,
+            newFilePath );
+
         double wallTimeEnd = naos::getWallTime< double >( );
         double cpuTimeEnd = naos::getCPUTime< double >( );
 
@@ -500,7 +514,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     {
         const double integrationStepSize = 0.01;
         const double startTime = 0.0;
-        const double endTime = 1.0 * 30.0 * 24.0 * 60.0 * 60.0;
+        const double endTime = 6.0 * 30.0 * 24.0 * 60.0 * 60.0;
         const double dataSaveIntervals = 10.0;
 
         double wallTimeStart = naos::getWallTime< double >( );
@@ -508,7 +522,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
         std::ostringstream databaseFilePath;
         databaseFilePath << "../../data/regolith_launched_from_leading_edge";
-        databaseFilePath<< "/single_launch_velocity_with_perturbations/leadingEdge.db";
+        databaseFilePath<< "/multiple_launch_velocity/leadingEdge.db";
 
         naos::executeRegolithMonteCarlo( alpha,
                                          beta,

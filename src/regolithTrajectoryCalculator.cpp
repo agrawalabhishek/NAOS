@@ -486,11 +486,11 @@ void executeRegolithTrajectoryCalculation( const double alpha,
     double semiMajorAxisCube = semiMajorAxis * semiMajorAxis * semiMajorAxis;
     double sunMeanMotion = std::sqrt( sunGravParameter / semiMajorAxisCube );
 
-    // for( int velocityIterator = 1; velocityIterator <= 20; velocityIterator = velocityIterator + 1 )
-    // {
-    //     // all particles, irrespective of surface location will have the same velocity as computed
-    //     // below.
-    //     velocityMagnitude = 1.0 * velocityIterator;
+    for( int velocityIterator = 1; velocityIterator <= 20; velocityIterator = velocityIterator + 1 )
+    {
+        // all particles, irrespective of surface location will have the same velocity as computed
+        // below.
+        velocityMagnitude = 1.0 * velocityIterator;
 
         std::vector< double > regolithVelocityVector( 3 );
 
@@ -577,7 +577,7 @@ void executeRegolithTrajectoryCalculation( const double alpha,
                                                     sunMeanMotion,
                                                     databaseQuery,
                                                     dataSaveIntervals );
-    // } // end of for loop iterating over different magnitudes for the regolith velocity
+    } // end of for loop iterating over different magnitudes for the regolith velocity
 }
 
 } // namespace naos

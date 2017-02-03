@@ -65,7 +65,7 @@ start_time = time.time( )
 
 # Connect to SQLite database.
 try:
-        database = sqlite3.connect("../data/regolith_launched_from_leading_edge/leadingEdge.db")
+        database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/leadingEdge.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -83,15 +83,16 @@ except sqlite3.Error, e:
 #                      AND        ROUND( launch_azimuth ) < 210.0;",      \
 #                      database )
 
-data = pd.read_sql( "SELECT     position_x,                             \
-                                position_y,                             \
-                                position_z,                             \
-                                velocity_x,                             \
-                                velocity_y,                             \
-                                velocity_z,                             \
-                                time                                    \
-                     FROM       regolith_trajectory_results             \
-                     WHERE      ROUND( launch_azimuth ) = 100.0;",      \
+data = pd.read_sql( "SELECT     position_x,                                         \
+                                position_y,                                         \
+                                position_z,                                         \
+                                velocity_x,                                         \
+                                velocity_y,                                         \
+                                velocity_z,                                         \
+                                time                                                \
+                     FROM       regolith_trajectory_results                         \
+                     WHERE      ROUND( launch_azimuth ) = 125.0                     \
+                     AND        ROUND( initial_velocity_magnitude ) = 14;",         \
                      database )
 
 data.columns = [ 'x',                                                   \
@@ -183,6 +184,8 @@ ax1.set_ylabel('y [m]')
 ax1.set_zlabel('z [m]')
 ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
 ax1.set_title( 'Particle trajectory around asteroid Eros (Body frame)' )
+
+ax1.axis('equal')
 
 ## Plot the metadata (initial state vector)
 ax2.axis( 'off' )

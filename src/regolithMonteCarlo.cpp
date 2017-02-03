@@ -357,7 +357,7 @@ void executeRegolithMonteCarlo( const double alpha,
         << ":ta,"
         << ":kinetic_energy,"
         << ":potential_energy,"
-        << ":energy,"
+        << ":total_energy,"
         << ":jacobi_integral,"
         << ":start_flag,"
         << ":end_flag,"

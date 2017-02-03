@@ -955,24 +955,24 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
     // initialize the ode system
     const double zRotation = asteroidRotationVector[ zPositionIndex ];
-    // equationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
-    //                                                                          alpha,
-    //                                                                          beta,
-    //                                                                          gamma,
-    //                                                                          zRotation );
+    equationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
+                                                                             alpha,
+                                                                             beta,
+                                                                             gamma,
+                                                                             zRotation );
 
     // initialize the (perturbed) ode system
     // Note - initial time for sun's position (corresponding true anomaly for sun) is independant of
     // start time for regolith trajectory simulation
-    perturbedEquationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
-                                                                                      alpha,
-                                                                                      beta,
-                                                                                      gamma,
-                                                                                      asteroidRotationVector,
-                                                                                      initialTimeForSun,
-                                                                                      initialSunMeanAnomalyRadian,
-                                                                                      initialSunOrbitalElements,
-                                                                                      sunMeanMotion );
+    // perturbedEquationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
+    //                                                                                   alpha,
+    //                                                                                   beta,
+    //                                                                                   gamma,
+    //                                                                                   asteroidRotationVector,
+    //                                                                                   initialTimeForSun,
+    //                                                                                   initialSunMeanAnomalyRadian,
+    //                                                                                   initialSunOrbitalElements,
+    //                                                                                   sunMeanMotion );
 
     // initialize current state vector and time
     std::vector< double > currentStateVector = initialState;
@@ -1032,7 +1032,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
     databaseQuery.bind( ":kinetic_energy", kineticEnergy );
     databaseQuery.bind( ":potential_energy", potentialEnergy );
-    databaseQuery.bind( ":energy", initialParticleEnergy );
+    databaseQuery.bind( ":total_energy", initialParticleEnergy );
 
     databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
@@ -1210,7 +1210,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
                 databaseQuery.bind( ":kinetic_energy", kineticEnergy );
                 databaseQuery.bind( ":potential_energy", potentialEnergy );
-                databaseQuery.bind( ":energy", particleEnergy );
+                databaseQuery.bind( ":total_energy", particleEnergy );
 
                 databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
@@ -1343,7 +1343,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
             databaseQuery.bind( ":kinetic_energy", kineticEnergy );
             databaseQuery.bind( ":potential_energy", potentialEnergy );
-            databaseQuery.bind( ":energy", particleEnergy );
+            databaseQuery.bind( ":total_energy", particleEnergy );
 
             databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
@@ -1510,7 +1510,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
             databaseQuery.bind( ":kinetic_energy", kineticEnergy );
             databaseQuery.bind( ":potential_energy", potentialEnergy );
-            databaseQuery.bind( ":energy", particleEnergy );
+            databaseQuery.bind( ":total_energy", particleEnergy );
 
             databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
@@ -1630,7 +1630,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
         databaseQuery.bind( ":kinetic_energy", kineticEnergy );
         databaseQuery.bind( ":potential_energy", potentialEnergy );
-        databaseQuery.bind( ":energy", particleEnergy );
+        databaseQuery.bind( ":total_energy", particleEnergy );
 
         databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
