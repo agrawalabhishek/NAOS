@@ -482,7 +482,8 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
         // compute surface gravity and perturbing accelerations
         std::ostringstream filePath;
-        filePath << "../../data/surface_gravity_and_perturbing_acceleration/equatorial_and_circular_case/allAccelerations.csv";
+        filePath << "../../data/surface_gravity_and_perturbing_acceleration/";
+        filePath << "equatorial_and_circular_case/100km_above_surface/allAccelerations.csv";
         naos::computeGravityAndPerturbingAccelerations( alpha,
                                                         beta,
                                                         gamma,

@@ -55,7 +55,7 @@ def fmt(x, pos):
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-data = pd.read_csv( '../data/surface_gravity_and_perturbing_acceleration/equatorial_and_circular_case/allAccelerations.csv' )
+data = pd.read_csv( '../data/surface_gravity_and_perturbing_acceleration/equatorial_and_circular_case/100km_above_surface/allAccelerations.csv' )
 Ux = data['xGravAcceleration'].values
 Uy = data['yGravAcceleration'].values
 Uz = data['zGravAcceleration'].values
@@ -82,7 +82,7 @@ y = latitude.reshape( numberOfLatitudes, numberOfLongitudes )
 x = longitude.reshape( numberOfLatitudes, numberOfLongitudes )
 z = U.reshape( numberOfLatitudes, numberOfLongitudes )
 contourHeatPlot = plt.contourf( x, y, z, cmap=cm.jet )
-cbar = plt.colorbar( contourHeatPlot, cmap=cm.jet )
+cbar = plt.colorbar( contourHeatPlot, cmap=cm.jet, format=matplotlib.ticker.FuncFormatter(fmt) )
 cbar.ax.set_ylabel( 'Gravitational Acceleration [m/s^2]' )
 ax1.set_ylim( latitude.min(), latitude.max() )
 ax1.set_xlim( longitude.min(), longitude.max() )
@@ -93,7 +93,7 @@ ax1.get_yaxis().set_tick_params( direction='out' )
 ax1.get_xaxis().set_tick_params( direction='out' )
 ax1.set_ylabel( 'Latitude [deg]' )
 ax1.set_xlabel( 'Longitude [deg]' )
-ax1.set_title( 'Gravitational acceleration at ellipsoid surface (Eros)' )
+ax1.set_title( 'Gravitational acceleration 100km above surface of Eros' )
 
 plt.grid()
 plt.show()
@@ -106,11 +106,11 @@ y = latitude.reshape( numberOfLatitudes, numberOfLongitudes )
 x = longitude.reshape( numberOfLatitudes, numberOfLongitudes )
 z = sunPeriapsisTBP.reshape( numberOfLatitudes, numberOfLongitudes )
 contourHeatPlot = plt.contourf( x, y, z, cmap=cm.jet )
-cbar = plt.colorbar( contourHeatPlot, cmap=cm.jet )
+cbar = plt.colorbar( contourHeatPlot, cmap=cm.jet, format=matplotlib.ticker.FuncFormatter(fmt) )
 cbar.ax.set_ylabel( 'Sun Third Body Perturbing Acceleration [m/s^2]' )
 ax1.set_ylim( latitude.min(), latitude.max() )
 ax1.set_xlim( longitude.min(), longitude.max() )
-formatter = matplotlib.ticker.ScalarFormatter( useOffset=False )
+# formatter = matplotlib.ticker.ScalarFormatter( useOffset=False )
 ax1.xaxis.set_major_formatter( formatter )
 ax1.yaxis.set_major_formatter( formatter )
 ax1.get_yaxis().set_tick_params( direction='out' )
@@ -118,7 +118,7 @@ ax1.get_xaxis().set_tick_params( direction='out' )
 ax1.set_ylabel( 'Latitude [deg]' )
 ax1.set_xlabel( 'Longitude [deg]' )
 # ax1.set_title( 'Third body effect at Eros surface (Sun Periapsis)' )
-ax1.set_title( 'Third body effect at Eros surface' )
+ax1.set_title( 'Third body effect 100km above surface of Eros' )
 
 ## Plot magnitude of acceleration due to srp effect on surface of an ellipsoid using contourf
 fig = plt.figure()
@@ -140,7 +140,7 @@ ax1.get_xaxis().set_tick_params( direction='out' )
 ax1.set_ylabel( 'Latitude [deg]' )
 ax1.set_xlabel( 'Longitude [deg]' )
 # ax1.set_title( 'SRP acceleration at Eros surface (Sun Periapsis)' )
-ax1.set_title( 'SRP acceleration at Eros surface' )
+ax1.set_title( 'SRP acceleration 100km above surface of Eros' )
 
 ## Plot magnitude of acceleration due to sun's third body effect on surface of an ellipsoid using contourf
 fig = plt.figure()

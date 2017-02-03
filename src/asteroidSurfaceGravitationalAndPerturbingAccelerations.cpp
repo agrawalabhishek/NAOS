@@ -86,9 +86,9 @@ void computeGravityAndPerturbingAccelerations( const double alpha,
             double longitudeRad = longitude * naos::PI / 180.0;
 
             // compute the surface coordinate
-            double xCoordinate = alpha * std::cos( latitudeRad ) * std::cos( longitudeRad );
-            double yCoordinate = beta * std::cos( latitudeRad ) * std::sin( longitudeRad );
-            double zCoordinate = gamma * std::sin( latitudeRad );
+            double xCoordinate = ( alpha + 100000.0 ) * std::cos( latitudeRad ) * std::cos( longitudeRad );
+            double yCoordinate = ( beta + 100000.0 ) * std::cos( latitudeRad ) * std::sin( longitudeRad );
+            double zCoordinate = ( gamma + 100000.0 ) * std::sin( latitudeRad );
 
             // form a vector for the position
             const std::vector< double > regolithPositionVector = { xCoordinate,
