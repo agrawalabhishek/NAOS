@@ -52,7 +52,6 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-
 ## data in body frame
 # data = pd.read_csv( '../data/trajectory_for_different_launch_azimuth/regolithTrajectoryAtAzimuth210.csv' )
 # x = data[ 'x' ].values
@@ -65,69 +64,53 @@ start_time = time.time( )
 
 # Connect to SQLite database.
 try:
-        database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/leadingEdge.db")
+        database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/phase_0/leadingEdge.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
         sys.exit(1)
 
-# data = pd.read_sql( "SELECT     position_x,                             \
-#                                 position_y,                             \
-#                                 position_z,                             \
-#                                 velocity_x,                             \
-#                                 velocity_y,                             \
-#                                 velocity_z,                             \
-#                                 time                                    \
-#                      FROM       regolith_trajectory_results             \
-#                      WHERE      ROUND( launch_azimuth ) > 208.0         \
-#                      AND        ROUND( launch_azimuth ) < 210.0;",      \
-#                      database )
-
 data = pd.read_sql( "SELECT     position_x,                                         \
                                 position_y,                                         \
                                 position_z,                                         \
-                                velocity_x,                                         \
-                                velocity_y,                                         \
-                                velocity_z,                                         \
+                                ROUND( initial_velocity_magnitude ),                \
+                                inertial_position_x,                                \
+                                inertial_position_y,                                \
+                                inertial_position_z,                                \
+                                ROUND( launch_azimuth ),                            \
                                 time                                                \
                      FROM       regolith_trajectory_results                         \
-                     WHERE      ROUND( launch_azimuth ) = 125.0                     \
+                     WHERE      ROUND( launch_azimuth ) = 71.0                      \
                      AND        ROUND( initial_velocity_magnitude ) = 14;",         \
                      database )
 
 data.columns = [ 'x',                                                   \
                  'y',                                                   \
                  'z',                                                   \
-                 'vx',                                                  \
-                 'vy',                                                  \
-                 'vz',                                                  \
+                 'velocity_magnitude',                                  \
+                 'inertial_x',                                          \
+                 'inertial_y',                                          \
+                 'inertial_z',                                          \
+                 'launch_azimuth',                                      \
                  'time' ]
 
-x = data[ 'x' ]
-y = data[ 'y' ]
-z = data[ 'z' ]
-vx = data[ 'vx' ]
-vy = data[ 'vy' ]
-vz = data[ 'vz' ]
-t = data[ 'time' ]
-
-## data in inertial frame
-# data = pd.read_csv( '../data/solutionParticleAroundUniformlyRotatingEllipsoid_orbitalElements.csv' )
-# x = data[ 'xInertial' ].values
-# y = data[ 'yInertial' ].values
-# z = data[ 'zInertial' ].values
-# vx = data[ 'vxInertial' ].values
-# vy = data[ 'vyInertial' ].values
-# vz = data[ 'vzInertial' ].values
-# t = data[ 'time' ].values
+x                   = data[ 'x' ]
+y                   = data[ 'y' ]
+z                   = data[ 'z' ]
+velocityMagnitude   = data[ 'velocity_magnitude' ]
+inertial_x          = data[ 'inertial_x' ]
+inertial_y          = data[ 'inertial_y' ]
+inertial_z          = data[ 'inertial_z' ]
+launchAzimuth       = data[ 'launch_azimuth' ]
+t                   = data[ 'time' ]
 
 ## Set up the figure
 fig = plt.figure( )
 # ax1 = fig.add_subplot( 211, projection = '3d' )
 # ax2 = fig.add_subplot( 212, frameon = False )
-gs = gridspec.GridSpec( 2, 1, height_ratios = [ 2.5, 1 ] )
+gs = gridspec.GridSpec( 2, 1, height_ratios = [ 1, 1 ] )
 ax1 = plt.subplot( gs[ 0 ], projection = '3d' )
-ax2 = plt.subplot( gs[ 1 ] )
+ax2 = plt.subplot( gs[ 1 ], projection = '3d' )
 
 ## Plot the ellipsoidal shape of the asteroid
 alpha = 20000.0
@@ -182,31 +165,52 @@ ax1.text( x[endIndex-1], y[endIndex-1], z[endIndex-1],
 ax1.set_xlabel('x [m]')
 ax1.set_ylabel('y [m]')
 ax1.set_zlabel('z [m]')
-ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
-ax1.set_title( 'Particle trajectory around asteroid Eros (Body frame)' )
-
+ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useoffset=False)
+ax1.set_title( 'Particle trajectory around asteroid Eros (Body frame) \n'
+               '$V_{initial}$=' + str( velocityMagnitude[ 0 ] ) + '[m/s], '                 \
+               'Launch azimuth=' + str( launchAzimuth[ 0 ] ) + '[deg], '                    \
+               'time=' + str( t[ endIndex-1 ] / (24.0*60.0*60.0) ) + '[day(s)]' )
+ax1.grid( )
 ax1.axis('equal')
 
+## plot the 3d trajectory in inertial frame
+ax2.plot( inertial_x, inertial_y, inertial_z, zdir = 'z', color=colors.cnames["purple"] )
+
+ax2.text( inertial_x[0], inertial_y[0], inertial_z[0], 'start', size=10, zorder=1, color=colors.cnames["black"] )
+ax2.text( inertial_x[endIndex-1], inertial_y[endIndex-1], inertial_z[endIndex-1],
+          'end', size=10, zorder=1, color=colors.cnames["black"] )
+
+ax2.set_xlabel('x [m]')
+ax2.set_ylabel('y [m]')
+ax2.set_zlabel('z [m]')
+ax2.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useoffset=False)
+ax2.set_title( 'Particle trajectory around asteroid Eros (Inertial frame) \n'
+               '$V_{initial}$=' + str( velocityMagnitude[ 0 ] ) + '[m/s], '                 \
+               'Launch azimuth=' + str( launchAzimuth[ 0 ] ) + '[deg], '                    \
+               'time=' + str( t[ endIndex-1 ] / (24.0*60.0*60.0) ) + '[day(s)]' )
+ax2.grid( )
+ax2.axis('equal')
+
 ## Plot the metadata (initial state vector)
-ax2.axis( 'off' )
-metadata_table = []
-metadata_table.append( [ "Initial X coordinate", x[0], "[m]" ] )
-metadata_table.append( [ "Initial Y coordinate", y[0], "[m]" ] )
-metadata_table.append( [ "Initial Z coordinate", z[0], "[m]" ] )
-metadata_table.append( [ "Initial X velocity", vx[0], "[m/s]" ] )
-metadata_table.append( [ "Initial Y velocity", vy[0], "[m/s]" ] )
-metadata_table.append( [ "Initial Z velocity", vz[0], "[m/s]" ] )
-metadata_table.append( [ "Simulation time", t[endIndex-1], "[s]" ] )
-table = ax2.table( cellText = metadata_table, colLabels = None, cellLoc = 'center', loc = 'center' )
-table_properties = table.properties( )
-table_cells = table_properties[ 'child_artists' ]
-for cell in table_cells: cell.set_height( 0.15 )
-cell_dict = table.get_celld( )
-for row in xrange( 0, 7 ): cell_dict[ ( row, 2 ) ].set_width( 0.1 )
+# ax2.axis( 'off' )
+# metadata_table = []
+# metadata_table.append( [ "Initial X coordinate", x[0], "[m]" ] )
+# metadata_table.append( [ "Initial Y coordinate", y[0], "[m]" ] )
+# metadata_table.append( [ "Initial Z coordinate", z[0], "[m]" ] )
+# metadata_table.append( [ "Initial X velocity", vx[0], "[m/s]" ] )
+# metadata_table.append( [ "Initial Y velocity", vy[0], "[m/s]" ] )
+# metadata_table.append( [ "Initial Z velocity", vz[0], "[m/s]" ] )
+# metadata_table.append( [ "Simulation time", t[endIndex-1], "[s]" ] )
+# table = ax2.table( cellText = metadata_table, colLabels = None, cellLoc = 'center', loc = 'center' )
+# table_properties = table.properties( )
+# table_cells = table_properties[ 'child_artists' ]
+# for cell in table_cells: cell.set_height( 0.15 )
+# cell_dict = table.get_celld( )
+# for row in xrange( 0, 7 ): cell_dict[ ( row, 2 ) ].set_width( 0.1 )
 
 ## Show the plot
-plt.tight_layout( )
-plt.grid( )
+# plt.tight_layout( )
+# plt.grid( )
 plt.show( )
 
 # Stop timer
