@@ -86,7 +86,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                  const std::vector< double > initialSunOrbitalElements,
                                                  const double sunMeanMotion,
                                                  SQLite::Statement &databaseQuery,
-                                                 const int dataSaveIntervals );
+                                                 const double dataSaveIntervals );
 
 //! convert body frame state vector to inertial frame for a uniformly rotating case
 /*!

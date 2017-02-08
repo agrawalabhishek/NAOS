@@ -881,7 +881,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                  const std::vector< double > initialSunOrbitalElements,
                                                  const double sunMeanMotion,
                                                  SQLite::Statement &databaseQuery,
-                                                 const int dataSaveIntervals )
+                                                 const double dataSaveIntervals )
 {
     //! get the initial cartesian state vector in a seperate container
     std::vector< double > initialState = initialCartesianStateVector;
@@ -975,9 +975,10 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     //                                                                                   sunMeanMotion );
 
     // initialize current state vector and time
+    double variableDataSaveInterval = dataSaveIntervals;
     std::vector< double > currentStateVector = initialState;
     double currentTime = startTime;
-    double intermediateEndTime = currentTime + dataSaveIntervals;
+    double intermediateEndTime = currentTime + variableDataSaveInterval;
 
     // initialize and set flags for crash, escape
     int escapeFlag = 0;
@@ -1067,13 +1068,25 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                             intermediateEndTime,
                             stepSizeGuess );
 
-        //! check if the particle is on an escape trajectory or not
-        // check for energy if the particle is far away from the asteroid
         double radialDistance
             = std::sqrt( currentStateVector[ xPositionIndex ] * currentStateVector[ xPositionIndex ]
                     + currentStateVector[ yPositionIndex ] * currentStateVector[ yPositionIndex ]
                     + currentStateVector[ zPositionIndex ] * currentStateVector[ zPositionIndex ] );
 
+        //! reduce the data save interval variable if the particle is near the asteroid
+        if( radialDistance <= ( 2.0 * alpha ) )
+        {
+            // reduce the data save step size
+            variableDataSaveInterval = 0.01;
+        }
+        else
+        {
+            // use the original high value for data save intervals
+            variableDataSaveInterval = dataSaveIntervals;
+        }
+
+        //! check if the particle is on an escape trajectory or not
+        // check for energy if the particle is far away from the asteroid
         if( radialDistance >= 10.0 * alpha )
         {
             // convert body frame state vector to inertial frame
@@ -1530,7 +1543,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
         // update the time variables
         currentTime = intermediateEndTime;
-        intermediateEndTime = currentTime + dataSaveIntervals;
+        intermediateEndTime = currentTime + variableDataSaveInterval;
 
         // set the flags
         escapeFlag = 0;
