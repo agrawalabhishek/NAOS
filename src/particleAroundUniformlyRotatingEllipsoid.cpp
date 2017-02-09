@@ -945,6 +945,11 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     double initialPositionMagnitude = std::sqrt( xPositionSquare + yPositionSquare + zPositionSquare );
     double initialVelocityMagnitude = std::sqrt( xVelocitySquare + yVelocitySquare + zVelocitySquare );
 
+    std::cout << std::endl << std::endl;
+    std::cout << "Current launch azimuth = " << naos::convertRadiansToDegree( launchAzimuth );
+    std::cout << std::endl;
+    std::cout << "Current launch velocity = " << initialVelocityMagnitude;
+
     // set up boost odeint
     const double absoluteTolerance = 1.0e-15;
     const double relativeTolerance = 1.0e-15;
@@ -1073,11 +1078,29 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                     + currentStateVector[ yPositionIndex ] * currentStateVector[ yPositionIndex ]
                     + currentStateVector[ zPositionIndex ] * currentStateVector[ zPositionIndex ] );
 
+        // check if the particle is in an outer ellipse so as to reduce the data save interval
+        double xCoordinate  = currentStateVector[ xPositionIndex ];
+        double yCoordinate  = currentStateVector[ yPositionIndex ];
+        double zCoordinate  = currentStateVector[ zPositionIndex ];
+        double outerAlpha   = alpha + 1000.0;
+        double outerBeta    = beta + 1000.0;
+        double outerGamma   = gamma + 1000.0;
+
+        double boundaryCheck
+            = ( xCoordinate * xCoordinate ) / ( outerAlpha * outerAlpha )
+            + ( yCoordinate * yCoordinate ) / ( outerBeta * outerBeta )
+            + ( zCoordinate * zCoordinate ) / ( outerGamma * outerGamma );
+
         //! reduce the data save interval variable if the particle is near the asteroid
-        if( radialDistance <= ( 2.0 * alpha ) )
+        if( boundaryCheck <= 1.0 )
         {
             // reduce the data save step size
-            variableDataSaveInterval = 0.01;
+            variableDataSaveInterval = 0.1;
+        }
+        else if( radialDistance >= 5.0 * alpha )
+        {
+            // increase the data save step size
+            variableDataSaveInterval = 500.0;
         }
         else
         {
@@ -1651,7 +1674,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
         databaseQuery.bind( ":escape_flag", escapeFlag );
         databaseQuery.bind( ":crash_flag", crashFlag );
 
-        if( currentTime == endTime )
+        if( currentTime == endTime || intermediateEndTime >= endTime )
         {
             endFlag = 1;
             databaseQuery.bind( ":end_flag", endFlag );
