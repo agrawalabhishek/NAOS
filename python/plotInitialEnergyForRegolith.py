@@ -123,7 +123,77 @@ except sqlite3.Error, e:
 
 phaseAngle = 'N.A.'
 
-## get data
+fig = plt.figure( )
+gs = gridspec.GridSpec( 2, 2 )
+ax1 = plt.subplot( gs[ 0, : ] )
+ax2 = plt.subplot( gs[ -1, 0 ] )
+ax3 = plt.subplot( gs[ -1, -1 ] )
+
+## get data for the reimpact case
+data1 = pd.read_sql( "SELECT    trajectory_id,                                              \
+                                ROUND( initial_velocity_magnitude ),                        \
+                                ROUND( launch_azimuth )                                     \
+                     FROM       regolith_trajectory_results                                 \
+                     WHERE      ( crash_flag = 1 );",                                       \
+                     database )
+
+data1.columns = [ 'traj_id',                                                                \
+                  'vel_mag',                                                                \
+                  'launch_azimuth' ]
+
+trajectory_id                   = data1[ 'traj_id' ]
+velocity_magnitude              = data1[ 'vel_mag' ]
+azimuth                         = data1[ 'launch_azimuth' ]
+
+trajectory_id_list = trajectory_id.tolist( )
+trajectory_id_tuple = tuple( trajectory_id_list )
+
+data2 = pd.read_sql( "SELECT    ROUND( initial_velocity_magnitude ),                            \
+                                ROUND( launch_azimuth ),                                        \
+                                total_energy                                                    \
+                     FROM       regolith_trajectory_results                                     \
+                     WHERE      trajectory_id IN " + str( trajectory_id_tuple ) + "             \
+                     AND        start_flag = 1;",                                               \
+                     database )
+
+data2.columns = [ 'vel_mag',                                                            \
+                  'launch_azimuth',                                                     \
+                  'total_energy' ]
+
+data2_initial_velocity_magnitude  = data2[ 'vel_mag' ]
+data2_initial_azimuth             = data2[ 'launch_azimuth' ]
+data2_initial_energy              = data2[ 'total_energy' ]
+
+## plot data for the reimpact case
+hexBinPlot = ax1.hexbin( data2_initial_azimuth, data2_initial_velocity_magnitude,                 \
+                         C=data2_initial_energy,                                                  \
+                         reduce_C_function=np.median,                                             \
+                         cmap='viridis', gridsize=15, marginals=False )
+cbar = plt.colorbar( hexBinPlot, cmap='viridis', ax=ax1 )
+
+# ax1.set_yticks( np.arange( 0.0, 14.0, 1.0 ) )
+# ax1.set_xticks( np.arange( 0.0, 360.0, 20.0 ) )
+ax1.set_xlim( 0.0, 360.0 )
+ax1.grid( True )
+ax1.set_xlabel( 'Launch azimuth [deg]' )
+ax1.set_ylabel( 'Launch velocity [m/s]' )
+ax1.set_title( 'Reimpact case' )
+cbar.ax.set_ylabel( 'Initial energy' )
+
+## scatter plot for the reimpact case
+scatterPlot = ax2.scatter( data2_initial_azimuth, data2_initial_velocity_magnitude,                \
+                         s=5, c=data2_initial_energy,                                              \
+                         cmap='viridis', edgecolors='face' )
+cbar = plt.colorbar( scatterPlot, cmap='viridis', ax=ax2 )
+
+ax2.set_xlim( 0.0, 360.0 )
+ax2.grid( True )
+ax2.set_xlabel( 'Launch azimuth [deg]' )
+ax2.set_ylabel( 'Launch velocity [m/s]' )
+ax2.set_title( 'Reimpact case' )
+cbar.ax.set_ylabel( 'Initial energy' )
+
+## get data for the escape case
 data1 = pd.read_sql( "SELECT    trajectory_id,                                              \
                                 ROUND( initial_velocity_magnitude ),                        \
                                 ROUND( launch_azimuth )                                     \
@@ -142,73 +212,52 @@ azimuth                         = data1[ 'launch_azimuth' ]
 trajectory_id_list = trajectory_id.tolist( )
 trajectory_id_tuple = tuple( trajectory_id_list )
 
-data2 = pd.read_sql( "SELECT    sma,                                                            \
-                                eccentricity,                                                   \
-                                inclination,                                                    \
-                                raan,                                                           \
-                                aop,                                                            \
-                                ta,                                                             \
-                                total_energy,                                                   \
-                                initial_position_x,                                             \
-                                initial_position_y,                                             \
-                                initial_position_z,                                             \
-                                initial_position_magnitude,                                     \
-                                ROUND( initial_velocity_magnitude ),                            \
-                                ROUND( launch_azimuth )                                         \
+data2 = pd.read_sql( "SELECT    ROUND( initial_velocity_magnitude ),                            \
+                                ROUND( launch_azimuth ),                                        \
+                                total_energy                                                    \
                      FROM       regolith_trajectory_results                                     \
                      WHERE      trajectory_id IN " + str( trajectory_id_tuple ) + "             \
                      AND        start_flag = 1;",                                               \
                      database )
 
-data2.columns = [ 'sma',                                                                \
-                  'eccentricity',                                                       \
-                  'inclination',                                                        \
-                  'raan',                                                               \
-                  'aop',                                                                \
-                  'ta',                                                                 \
-                  'total_energy',                                                       \
-                  'init_pos_x',                                                         \
-                  'init_pos_y',                                                         \
-                  'init_pos_z',                                                         \
-                  'pos_mag',                                                            \
-                  'vel_mag',                                                            \
-                  'launch_azimuth' ]
+data2.columns = [ 'vel_mag',                                                            \
+                  'launch_azimuth',                                                     \
+                  'total_energy' ]
 
-## initial sma and eccentricity for all points that have reimpacted on the surface of the asteroid
-initial_sma                       =  data2[ 'sma' ]
-initial_eccentricity              =  data2[ 'eccentricity' ]
-initial_inclination               =  data2[ 'inclination' ]
-initial_raan                      =  data2[ 'raan' ]
-initial_aop                       =  data2[ 'aop' ]
-initial_ta                        =  data2[ 'ta' ]
-initial_energy                    =  data2[ 'total_energy' ]
-launch_initial_position_x         =  data2[ 'init_pos_x' ]
-launch_initial_position_y         =  data2[ 'init_pos_y' ]
-launch_initial_position_z         =  data2[ 'init_pos_z' ]
-data2_initial_position_magnitude  =  data2[ 'pos_mag' ]
-data2_initial_velocity_magnitude  =  data2[ 'vel_mag' ]
-data2_initial_azimuth             =  data2[ 'launch_azimuth' ]
+data2_initial_velocity_magnitude  = data2[ 'vel_mag' ]
+data2_initial_azimuth             = data2[ 'launch_azimuth' ]
+data2_initial_energy              = data2[ 'total_energy' ]
 
-## convert the angles from degrees to radians
-initial_inclination   = initial_inclination * np.pi / 180.0
-initial_raan          = initial_raan * np.pi / 180.0
-initial_aop           = initial_aop * np.pi / 180.0
+## get unique velocity values in the escape case
+unique_escape_velocities = np.unique( data2_initial_velocity_magnitude )
+colors = plt.cm.jet( np.linspace( 0, 1, len( unique_escape_velocities ) ) )
 
-## plot the initial pericentre values for the reimpacted particles
-fig = plt.figure( )
-gs = gridspec.GridSpec( 1, 1, height_ratios = [ 1 ] )
-ax1 = plt.subplot( gs[ 0 ] )
+for index in range( 0, len( unique_escape_velocities ) ):
+    current_velocity = unique_escape_velocities[ index ]
+    current_velocity_indices = np.where( data2_initial_velocity_magnitude == current_velocity )
+    current_velocity_indices = current_velocity_indices[ 0 ]
+    plotEnergy = data2_initial_energy[ current_velocity_indices ]
+    plotAzimuth = data2_initial_azimuth[ current_velocity_indices ]
+    ax3.scatter( plotAzimuth, plotEnergy, s=5, c=colors[ index ],                       \
+                 edgecolors='face',                                                     \
+                 label='$V_{launch}$ = ' + str( current_velocity ) + ' [m/s]' )
 
-hexBinPlot = ax1.hexbin( data2_initial_azimuth, initial_energy,                       \
-                         C=data2_initial_velocity_magnitude,                          \
-                         cmap='jet', gridsize=100 )
-cbar = plt.colorbar( hexBinPlot, cmap='jet', ax=ax1 )
+ax3.set_xlim( 0.0, 360.0 )
+# ax3.set_yticks( np.arange( 12.0, 16.0, 1.0 ) )
+ax3.grid( True )
+ax3.legend( )
+ax3.set_xlabel( 'Launch azimuth [deg]' )
+# ax3.set_ylabel( 'Launch velocity [m/s]' )
+ax3.set_ylabel( 'Initial energy' )
+ax3.set_title( 'Escape case' )
+# cbar.ax.set_ylabel( 'Initial energy' )
 
-ax1.grid( True )
-ax1.set_xlabel( 'Launch azimuth [deg]' )
-ax1.set_ylabel( 'Initial energy' + '$[m^2/s^2]$' )
-ax1.set_title( 'Initial energy variation with launch direction and velocity \n Phase angle = ' + str( phaseAngle ) + ', Escape case' )
-cbar.ax.set_ylabel( 'Regolith launch velocity [m/s]' )
+##close the database
+if database:
+    database.close( )
+
+## set global plot title
+plt.suptitle( 'Initial energy variation with launch direction and velocity \n Phase angle = ' + str( phaseAngle ) )
 
 ## show the plot
 plt.show( )
