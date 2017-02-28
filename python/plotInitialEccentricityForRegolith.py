@@ -115,7 +115,8 @@ mu = 876514
 ## Operations
 # Connect to SQLite database.
 try:
-    database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/phase_0/simulation_time_9_months/leadingEdge.db")
+    # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db" )
+    database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -125,9 +126,10 @@ phaseAngle = 'N.A.'
 
 fig = plt.figure( )
 gs = gridspec.GridSpec( 2, 2 )
-ax1 = plt.subplot( gs[ 0, : ] )
-ax2 = plt.subplot( gs[ -1, 0 ] )
-ax3 = plt.subplot( gs[ -1, -1 ] )
+ax1 = plt.subplot( gs[ 0 ] )
+ax2 = plt.subplot( gs[ 1 ] )
+ax3 = plt.subplot( gs[ 2 ] )
+ax4 = plt.subplot( gs[ 3 ] )
 
 ## get data for the reimpact case
 data1 = pd.read_sql( "SELECT    trajectory_id,                                              \
@@ -148,16 +150,7 @@ azimuth                         = data1[ 'launch_azimuth' ]
 trajectory_id_list = trajectory_id.tolist( )
 trajectory_id_tuple = tuple( trajectory_id_list )
 
-data2 = pd.read_sql( "SELECT    sma,                                                            \
-                                eccentricity,                                                   \
-                                inclination,                                                    \
-                                raan,                                                           \
-                                aop,                                                            \
-                                ta,                                                             \
-                                initial_position_x,                                             \
-                                initial_position_y,                                             \
-                                initial_position_z,                                             \
-                                initial_position_magnitude,                                     \
+data2 = pd.read_sql( "SELECT    eccentricity,                                                   \
                                 ROUND( initial_velocity_magnitude ),                            \
                                 ROUND( launch_azimuth )                                         \
                      FROM       regolith_trajectory_results                                     \
@@ -165,75 +158,56 @@ data2 = pd.read_sql( "SELECT    sma,                                            
                      AND        start_flag = 1;",                                               \
                      database )
 
-data2.columns = [ 'sma',                                                                \
-                  'eccentricity',                                                       \
-                  'inclination',                                                        \
-                  'raan',                                                               \
-                  'aop',                                                                \
-                  'ta',                                                                 \
-                  'init_pos_x',                                                         \
-                  'init_pos_y',                                                         \
-                  'init_pos_z',                                                         \
-                  'pos_mag',                                                            \
+data2.columns = [ 'eccentricity',                                                       \
                   'vel_mag',                                                            \
                   'launch_azimuth' ]
 
-initial_sma                       =  data2[ 'sma' ]
 initial_eccentricity              =  data2[ 'eccentricity' ]
-initial_inclination               =  data2[ 'inclination' ]
-initial_raan                      =  data2[ 'raan' ]
-initial_aop                       =  data2[ 'aop' ]
-initial_ta                        =  data2[ 'ta' ]
-launch_initial_position_x         =  data2[ 'init_pos_x' ]
-launch_initial_position_y         =  data2[ 'init_pos_y' ]
-launch_initial_position_z         =  data2[ 'init_pos_z' ]
-data2_initial_position_magnitude  =  data2[ 'pos_mag' ]
 data2_initial_velocity_magnitude  =  data2[ 'vel_mag' ]
 data2_initial_azimuth             =  data2[ 'launch_azimuth' ]
 
-## convert the angles from degrees to radians
-initial_inclination   = initial_inclination * np.pi / 180.0
-initial_raan          = initial_raan * np.pi / 180.0
-initial_aop           = initial_aop * np.pi / 180.0
-
-# hexBinPlot = ax1.hexbin( data2_initial_azimuth, initial_eccentricity,                 \
-#                          C=data2_initial_velocity_magnitude,                          \
-#                          cmap='jet', gridsize=100 )
-# cbar = plt.colorbar( hexBinPlot, cmap='jet', ax=ax1 )
-# ax1.grid( True )
-# ax1.set_xlabel( 'Launch azimuth [deg]' )
-# ax1.set_ylabel( 'Initial eccentricity' )
-# ax1.set_title( 'Initial eccentricity variation with launch direction and velocity \n Phase angle = ' + str( phaseAngle ) + ', Reimpact case' )
-# cbar.ax.set_ylabel( 'Regolith launch velocity [m/s]' )
-
 ## plot data for the reimpact case
-hexBinPlot = ax1.hexbin( data2_initial_azimuth, data2_initial_velocity_magnitude,                 \
-                         C=initial_eccentricity,                                                  \
-                         reduce_C_function=np.median,                                             \
-                         cmap='winter', gridsize=15, marginals=False )
-cbar = plt.colorbar( hexBinPlot, cmap='winter', ax=ax1 )
+unique_reimpact_velocities = np.unique( data2_initial_velocity_magnitude )
+gridsize = len( unique_reimpact_velocities )
 
-# ax1.set_yticks( np.arange( 0.0, 14.0, 1.0 ) )
-# ax1.set_xticks( np.arange( 0.0, 360.0, 20.0 ) )
-ax1.set_xlim( 0.0, 360.0 )
-ax1.grid( True )
-ax1.set_xlabel( 'Launch azimuth [deg]' )
-ax1.set_ylabel( 'Launch velocity [m/s]' )
-ax1.set_title( 'Reimpact case' )
-cbar.ax.set_ylabel( 'Initial eccentricity' )
+if gridsize:
+    hexBinPlot = ax1.hexbin( data2_initial_azimuth, data2_initial_velocity_magnitude,                 \
+                             C=initial_eccentricity,                                                  \
+                             reduce_C_function=np.median,                                             \
+                             cmap='autumn', gridsize=gridsize, marginals=False )
+    cbar = plt.colorbar( hexBinPlot, cmap='autumn', ax=ax1 )
 
-## scatter plot for the reimpact case
-scatterPlot = ax2.scatter( data2_initial_azimuth, data2_initial_velocity_magnitude,                \
-                         s=5, c=initial_eccentricity,                                              \
-                         cmap='winter', edgecolors='face' )
-cbar = plt.colorbar( scatterPlot, cmap='winter', ax=ax2 )
+    # ax1.set_yticks( np.arange( 0.0, 14.0, 1.0 ) )
+    ax1.set_xticks( np.arange( 0.0, 360.0, 30.0 ) )
+    ax1.set_xlim( 0.0, 360.0 )
+    ax1.grid( True )
+    ax1.set_xlabel( 'Launch azimuth [deg]' )
+    ax1.set_ylabel( 'Launch velocity [m/s]' )
+    ax1.set_title( 'Reimpact case' )
+    cbar.ax.set_ylabel( 'Initial eccentricity' )
 
-ax2.set_xlim( 0.0, 360.0 )
-ax2.grid( True )
-ax2.set_xlabel( 'Launch azimuth [deg]' )
-ax2.set_ylabel( 'Launch velocity [m/s]' )
-ax2.set_title( 'Reimpact case' )
-cbar.ax.set_ylabel( 'Initial eccentricity' )
+    ## scatter plot for the reimpact case
+    # get unique velocity values in the escape case
+    unique_reimpact_velocities = np.unique( data2_initial_velocity_magnitude )
+    colors = plt.cm.Vega20( np.linspace( 0, 1, len( unique_reimpact_velocities ) ) )
+
+    for index in range( 0, len( unique_reimpact_velocities ) ):
+        current_velocity = unique_reimpact_velocities[ index ]
+        current_velocity_indices = np.where( data2_initial_velocity_magnitude == current_velocity )
+        current_velocity_indices = current_velocity_indices[ 0 ]
+        plotEccentricity = initial_eccentricity[ current_velocity_indices ]
+        plotAzimuth = data2_initial_azimuth[ current_velocity_indices ]
+        ax2.scatter( plotAzimuth, plotEccentricity, s=5, c=colors[ index ],                 \
+                     edgecolors='face',                                                     \
+                     label='$V_{launch}$ = ' + str( current_velocity ) + ' [m/s]' )
+
+    ax2.set_xticks( np.arange( 0.0, 360.0, 30.0 ) )
+    ax2.set_xlim( 0.0, 360.0 )
+    ax2.grid( True )
+    ax2.legend( ).draggable( )
+    ax2.set_xlabel( 'Launch azimuth [deg]' )
+    ax2.set_ylabel( 'Initial eccentricity' )
+    ax2.set_title( 'Reimpact case' )
 
 ## get data for the escape case
 data1 = pd.read_sql( "SELECT    trajectory_id,                                              \
@@ -254,16 +228,7 @@ azimuth                         = data1[ 'launch_azimuth' ]
 trajectory_id_list = trajectory_id.tolist( )
 trajectory_id_tuple = tuple( trajectory_id_list )
 
-data2 = pd.read_sql( "SELECT    sma,                                                            \
-                                eccentricity,                                                   \
-                                inclination,                                                    \
-                                raan,                                                           \
-                                aop,                                                            \
-                                ta,                                                             \
-                                initial_position_x,                                             \
-                                initial_position_y,                                             \
-                                initial_position_z,                                             \
-                                initial_position_magnitude,                                     \
+data2 = pd.read_sql( "SELECT    eccentricity,                                                   \
                                 ROUND( initial_velocity_magnitude ),                            \
                                 ROUND( launch_azimuth )                                         \
                      FROM       regolith_trajectory_results                                     \
@@ -271,82 +236,75 @@ data2 = pd.read_sql( "SELECT    sma,                                            
                      AND        start_flag = 1;",                                               \
                      database )
 
-data2.columns = [ 'sma',                                                                \
-                  'eccentricity',                                                       \
-                  'inclination',                                                        \
-                  'raan',                                                               \
-                  'aop',                                                                \
-                  'ta',                                                                 \
-                  'init_pos_x',                                                         \
-                  'init_pos_y',                                                         \
-                  'init_pos_z',                                                         \
-                  'pos_mag',                                                            \
+data2.columns = [ 'eccentricity',                                                       \
                   'vel_mag',                                                            \
                   'launch_azimuth' ]
 
-initial_sma                       =  data2[ 'sma' ]
 initial_eccentricity              =  data2[ 'eccentricity' ]
-initial_inclination               =  data2[ 'inclination' ]
-initial_raan                      =  data2[ 'raan' ]
-initial_aop                       =  data2[ 'aop' ]
-initial_ta                        =  data2[ 'ta' ]
-launch_initial_position_x         =  data2[ 'init_pos_x' ]
-launch_initial_position_y         =  data2[ 'init_pos_y' ]
-launch_initial_position_z         =  data2[ 'init_pos_z' ]
-data2_initial_position_magnitude  =  data2[ 'pos_mag' ]
 data2_initial_velocity_magnitude  =  data2[ 'vel_mag' ]
 data2_initial_azimuth             =  data2[ 'launch_azimuth' ]
 
-## convert the angles from degrees to radians
-initial_inclination   = initial_inclination * np.pi / 180.0
-initial_raan          = initial_raan * np.pi / 180.0
-initial_aop           = initial_aop * np.pi / 180.0
-
-## plot data for the escape case
-# scatterPlot = ax3.scatter( data2_initial_azimuth, data2_initial_velocity_magnitude,                \
-#                          s=5, c=initial_eccentricity,                                              \
-#                          cmap='hsv', edgecolors='face' )
-# cbar = plt.colorbar( scatterPlot, cmap='hsv', ax=ax3 )
-
-## get unique velocity values in the escape case
+## plot hexbin for escape case
 unique_escape_velocities = np.unique( data2_initial_velocity_magnitude )
-colors = plt.cm.jet( np.linspace( 0, 1, len( unique_escape_velocities ) ) )
+gridsize = len( unique_escape_velocities )
 
-for index in range( 0, len( unique_escape_velocities ) ):
-    current_velocity = unique_escape_velocities[ index ]
-    current_velocity_indices = np.where( data2_initial_velocity_magnitude == current_velocity )
-    current_velocity_indices = current_velocity_indices[ 0 ]
-    plotEccentricity = initial_eccentricity[ current_velocity_indices ]
-    plotAzimuth = data2_initial_azimuth[ current_velocity_indices ]
-    ax3.scatter( plotAzimuth, plotEccentricity, s=5, c=colors[ index ],                 \
-                 edgecolors='face',                                                     \
-                 label='$V_{launch}$ = ' + str( current_velocity ) + ' [m/s]' )
+if gridsize:
+    hexBinPlot = ax3.hexbin( data2_initial_azimuth, data2_initial_velocity_magnitude,                 \
+                             C=initial_eccentricity,                                                  \
+                             reduce_C_function=np.median,                                             \
+                             cmap='autumn', gridsize=gridsize, marginals=False )
+    cbar = plt.colorbar( hexBinPlot, cmap='autumn', ax=ax3 )
 
-ax3.set_xlim( 0.0, 360.0 )
-# ax3.set_yticks( np.arange( 12.0, 16.0, 1.0 ) )
-ax3.grid( True )
-ax3.legend( )
-ax3.set_xlabel( 'Launch azimuth [deg]' )
-# ax3.set_ylabel( 'Launch velocity [m/s]' )
-ax3.set_ylabel( 'Initial eccentricity' )
-ax3.set_title( 'Escape case' )
-# cbar.ax.set_ylabel( 'Initial eccentricity' )
+    # ax3.set_yticks( np.arange( 0.0, 14.0, 1.0 ) )
+    ax3.set_xticks( np.arange( 0.0, 360.0, 30.0 ) )
+    ax3.set_xlim( 0.0, 360.0 )
+    ax3.grid( True )
+    ax3.set_xlabel( 'Launch azimuth [deg]' )
+    ax3.set_ylabel( 'Launch velocity [m/s]' )
+    ax3.set_title( 'Escape case' )
+    cbar.ax.set_ylabel( 'Initial eccentricity' )
+
+    ## get unique velocity values in the escape case
+    unique_escape_velocities = np.unique( data2_initial_velocity_magnitude )
+    colors = plt.cm.Vega20( np.linspace( 0, 1, len( unique_escape_velocities ) ) )
+
+    for index in range( 0, len( unique_escape_velocities ) ):
+        current_velocity = unique_escape_velocities[ index ]
+        current_velocity_indices = np.where( data2_initial_velocity_magnitude == current_velocity )
+        current_velocity_indices = current_velocity_indices[ 0 ]
+        plotEccentricity = initial_eccentricity[ current_velocity_indices ]
+        plotAzimuth = data2_initial_azimuth[ current_velocity_indices ]
+        ax4.scatter( plotAzimuth, plotEccentricity, s=5, c=colors[ index ],                 \
+                     edgecolors='face',                                                     \
+                     label='$V_{launch}$ = ' + str( current_velocity ) + ' [m/s]' )
+
+    ax4.set_xticks( np.arange( 0.0, 360.0, 30.0 ) )
+    ax4.set_xlim( 0.0, 360.0 )
+    # ax4.set_yticks( np.arange( 12.0, 16.0, 1.0 ) )
+    ax4.grid( True )
+    ax4.legend( ).draggable( )
+    ax4.set_xlabel( 'Launch azimuth [deg]' )
+    # ax4.set_ylabel( 'Launch velocity [m/s]' )
+    ax4.set_ylabel( 'Initial eccentricity' )
+    ax4.set_title( 'Escape case' )
+    # cbar.ax.set_ylabel( 'Initial eccentricity' )
 
 ##close the database
 if database:
     database.close( )
 
 ## set global plot title
-plt.suptitle( 'Initial eccentricity variation with launch direction and velocity \n Phase angle = ' + str( phaseAngle ) )
-
-## show the plot
-plt.show( )
+plt.suptitle( 'Initial eccentricity variation with launch direction and velocity \n Longest edge, \
+              Phase angle = ' + str( phaseAngle ) )
 
 # Stop timer
 end_time = time.time( )
 
 # Print elapsed time
 print "Script time: " + str("{:,g}".format(end_time - start_time)) + "s"
+
+## show the plot
+plt.show( )
 
 print ""
 print "------------------------------------------------------------------"
