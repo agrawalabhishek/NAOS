@@ -50,6 +50,61 @@ print ""
 # Start timer.
 start_time = time.time( )
 
+## function to convert keplerian elements into inertial coordinates
+# All angles in the arguments have to be provided in radians (VERY IMPORTANT)
+def convertKeplerElementsToCartesianCoordinates( sma,
+                                                 eccentricity,
+                                                 inclination,
+                                                 raan,
+                                                 aop,
+                                                 ta,
+                                                 mu,
+                                                 tolerance ):
+    # function defination begins here
+    if np.abs( eccentricity - 1.0 ) > tolerance:
+        semiLatus = sma * ( 1.0 - eccentricity**2 )
+    # for parabolic orbits
+    else:
+        semiLatus = sma
+
+    # compute position and velocity in the perifocal coordinate system
+    radius = semiLatus / ( 1.0 + eccentricity * np.cos( ta ) )
+
+    xPositionPerifocal = radius * np.cos( ta )
+    yPositionPerifocal = radius * np.sin( ta )
+
+    xVelocityPerifocal = -1.0 * np.sqrt( mu / semiLatus ) * np.sin( ta )
+    yVelocityPerifocal = np.sqrt( mu / semiLatus ) * ( eccentricity + np.cos( ta ) )
+
+    # Calculate components of the rotation matrix
+    rotation11 = np.cos( raan ) * np.cos( aop ) - np.sin( raan ) * np.sin( aop ) * np.cos( inclination )
+
+    rotation12 = -1.0 * np.cos( raan ) * np.sin( aop ) - np.sin( raan ) * np.cos( aop ) * np.cos( inclination )
+
+    rotation21 = np.sin( raan ) * np.cos( aop ) + np.cos( raan ) * np.sin( aop ) * np.cos( inclination )
+
+    rotation22 = -1.0 * np.sin( raan ) * np.sin( aop ) + np.cos( raan ) * np.cos( aop ) * np.cos( inclination )
+
+    rotation31 = np.sin( aop ) * np.sin( inclination )
+
+    rotation32 = np.cos( aop ) * np.sin( inclination )
+
+    # Compute the cartesian position and velocity in the inertial frame
+    xPosition = rotation11 * xPositionPerifocal + rotation12 * yPositionPerifocal
+
+    yPosition = rotation21 * xPositionPerifocal + rotation22 * yPositionPerifocal
+
+    zPosition = rotation31 * xPositionPerifocal + rotation32 * yPositionPerifocal
+
+    xVelocity = rotation11 * xVelocityPerifocal + rotation12 * yVelocityPerifocal
+
+    yVelocity = rotation21 * xVelocityPerifocal + rotation22 * yVelocityPerifocal
+
+    zVelocity = rotation31 * xVelocityPerifocal + rotation32 * yVelocityPerifocal
+
+    # return the values as a tuple
+    return ( xPosition, yPosition, zPosition )
+
 ## Operations
 alpha = 20000.0
 beta = 7000.0
@@ -57,13 +112,11 @@ gamma = 7000.0
 Wz = 0.00033118202125129593
 mu = 876514
 
-asteroidRotationPeriod = 2.0 * np.pi / Wz
-asteroidRotationPeriodHours = asteroidRotationPeriod / ( 60.0 * 60.0 )
-
 ## Operations
 # Connect to SQLite database.
 try:
-    database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/phase_0/simulation_time_9_months/leadingEdge.db")
+    # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db" )
+    database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -71,7 +124,12 @@ except sqlite3.Error, e:
 
 phaseAngle = 'N.A.'
 
-## get data for reimpact cases
+fig = plt.figure( )
+gs = gridspec.GridSpec( 2, 1 )
+ax1 = plt.subplot( gs[ 0 ] )
+ax2 = plt.subplot( gs[ 1 ] )
+
+## get data for the reimpact case
 data1 = pd.read_sql( "SELECT    trajectory_id,                                              \
                                 ROUND( initial_velocity_magnitude ),                        \
                                 ROUND( launch_azimuth ),                                    \
@@ -90,130 +148,36 @@ velocity_magnitude              = data1[ 'vel_mag' ]
 azimuth                         = data1[ 'launch_azimuth' ]
 simulation_time                 = data1[ 'time' ]
 
-simulation_time = simulation_time / ( 24.0 * 60.0 * 60.0 )
+## plot data for the reimpact case
+unique_reimpact_velocities = np.unique( velocity_magnitude )
+gridsize = len( unique_reimpact_velocities )
 
-fig = plt.figure( )
-gs = gridspec.GridSpec( 2, 2 )
-ax1 = plt.subplot( gs[ 0 ] )
-ax2 = plt.subplot( gs[ 1 ] )
-ax3 = plt.subplot( gs[ 2 ] )
-ax4 = plt.subplot( gs[ 3 ] )
+if gridsize:
+    ## scatter plot for the reimpact case
+    # get unique velocity values in the escape case
+    unique_reimpact_velocities = np.unique( velocity_magnitude )
+    colors = plt.cm.Vega20( np.linspace( 0, 1, len( unique_reimpact_velocities ) ) )
 
-## seperate out data for initial launch velocities <= 4
-velocityMagnitude_plot = []
-azimuth_plot = []
-simulationTime_plot = []
+    for index in range( 0, len( unique_reimpact_velocities ) ):
+        current_velocity = unique_reimpact_velocities[ index ]
+        current_velocity_indices = np.where( velocity_magnitude == current_velocity )
+        current_velocity_indices = current_velocity_indices[ 0 ]
+        plotTime = simulation_time[ current_velocity_indices ]
+        plotAzimuth = azimuth[ current_velocity_indices ]
+        ax1.scatter( plotAzimuth, plotTime, s=5, c=colors[ index ],                 \
+                     edgecolors='face',                                                     \
+                     label='$V_{launch}$ = ' + str( current_velocity ) + ' [m/s]' )
 
-for index in range( 0, len( trajectory_id ) ):
-    if velocity_magnitude[index] <= 4.0:
-        velocityMagnitude_plot.append( velocity_magnitude[index] )
-        azimuth_plot.append( azimuth[index] )
-        simulationTime_plot.append( simulation_time[index] * 24.0 * 60.0 )
-
-## plot the time to reimpact for velocities <= 4
-hexBinPlot = ax1.hexbin( azimuth_plot, simulationTime_plot,                           \
-                         C=velocityMagnitude_plot,                                    \
-                         cmap='jet', gridsize=100 )
-cbar = plt.colorbar( hexBinPlot, cmap='jet', ax=ax1 )
-
-ax1.grid( True )
-ax1.set_xlabel( 'Launch azimuth [deg]' )
-ax1.set_ylabel( 'Time to reimpact [hrs]' )
-# start, end = ax1.get_ylim( )
-# ax1.set_yticks( np.arange( start, end, 10.0 ) )
-ax1.set_title( 'Reimpact time versus launch direction and velocity \n Phase angle = '
-                + str( phaseAngle ) + ', Asteroid rotation period = '
-                + str( asteroidRotationPeriodHours ) + ' [hrs]' )
-cbar.ax.set_ylabel( 'Regolith launch velocity [m/s]' )
-
-## seperate out data for initial launch velocities > 4 and <= 8
-velocityMagnitude_plot = []
-azimuth_plot = []
-simulationTime_plot = []
-
-for index in range( 0, len( trajectory_id ) ):
-    if velocity_magnitude[index] <= 8.0 and velocity_magnitude[index] > 4.0:
-        velocityMagnitude_plot.append( velocity_magnitude[index] )
-        azimuth_plot.append( azimuth[index] )
-        simulationTime_plot.append( simulation_time[index] * 24.0 * 60.0 )
-
-
-## plot the time to reimpact for velocities > 4 and <= 8
-hexBinPlot = ax2.hexbin( azimuth_plot, simulationTime_plot,                           \
-                         C=velocityMagnitude_plot,                                    \
-                         cmap='jet', gridsize=100 )
-cbar = plt.colorbar( hexBinPlot, cmap='jet', ax=ax2 )
-
-ax2.grid( True )
-ax2.set_xlabel( 'Launch azimuth [deg]' )
-ax2.set_ylabel( 'Time to reimpact [hrs]' )
-# start, end = ax2.get_ylim( )
-# ax2.set_yticks( np.arange( start, end, 10.0 ) )
-ax2.set_title( 'Reimpact time versus launch direction and velocity \n Phase angle = '
-                + str( phaseAngle ) )
-cbar.ax.set_ylabel( 'Regolith launch velocity [m/s]' )
-
-## seperate out data for initial launch velocities > 8 and <= 11
-velocityMagnitude_plot = []
-azimuth_plot = []
-simulationTime_plot = []
-
-for index in range( 0, len( trajectory_id ) ):
-    if velocity_magnitude[index] <= 11.0 and velocity_magnitude[index] > 8.0:
-        velocityMagnitude_plot.append( velocity_magnitude[index] )
-        azimuth_plot.append( azimuth[index] )
-        simulationTime_plot.append( simulation_time[index] )
-
-
-## plot the time to reimpact for velocities > 4 and <= 8
-hexBinPlot = ax3.hexbin( azimuth_plot, simulationTime_plot,                           \
-                         C=velocityMagnitude_plot,                                    \
-                         cmap='jet', gridsize=100 )
-cbar = plt.colorbar( hexBinPlot, cmap='jet', ax=ax3 )
-
-ax3.grid( True )
-ax3.set_xlabel( 'Launch azimuth [deg]' )
-ax3.set_ylabel( 'Time to reimpact [days]' )
-# start, end = ax3.get_ylim( )
-# ax3.set_yticks( np.arange( start, end, 15.0 ) )
-# ax3.set_yscale('log')
-ax3.set_title( 'Reimpact time versus launch direction and velocity \n Phase angle = '
-                + str( phaseAngle ) )
-cbar.ax.set_ylabel( 'Regolith launch velocity [m/s]' )
-
-## seperate out data for initial launch velocities > 11 and <= 16
-velocityMagnitude_plot = []
-azimuth_plot = []
-simulationTime_plot = []
-
-for index in range( 0, len( trajectory_id ) ):
-    if velocity_magnitude[index] <= 16.0 and velocity_magnitude[index] > 11.0:
-        velocityMagnitude_plot.append( velocity_magnitude[index] )
-        azimuth_plot.append( azimuth[index] )
-        simulationTime_plot.append( simulation_time[index] )
-
-
-## plot the time to reimpact for velocities > 4 and <= 8
-hexBinPlot = ax4.hexbin( azimuth_plot, simulationTime_plot,                           \
-                         C=velocityMagnitude_plot,                                    \
-                         cmap='jet', gridsize=100 )
-cbar = plt.colorbar( hexBinPlot, cmap='jet', ax=ax4 )
-
-ax4.grid( True )
-ax4.set_xlabel( 'Launch azimuth [deg]' )
-ax4.set_ylabel( 'Time to reimpact [days]' )
-start, end = ax4.get_ylim( )
-ax4.set_yticks( np.arange( start, end, 10.0 ) )
-# ax4.set_yscale('log')
-ax4.set_title( 'Reimpact time versus launch direction and velocity \n Phase angle = '
-                + str( phaseAngle ) )
-cbar.ax.set_ylabel( 'Regolith launch velocity [m/s]' )
+    ax1.set_yscale('log')
+    ax1.set_xticks( np.arange( 0.0, 360.0, 30.0 ) )
+    ax1.set_xlim( 0.0, 360.0 )
+    ax1.grid( True )
+    ax1.legend( ).draggable( )
+    ax1.set_xlabel( 'Launch azimuth [deg]' )
+    ax1.set_ylabel( 'Time to reimpact $log_{10}(T)$' )
+    ax1.set_title( 'Reimpact case' )
 
 ## get data for the escape case
-fig = plt.figure( )
-gs = gridspec.GridSpec( 1, 1, height_ratios = [ 1 ] )
-ax3 = plt.subplot( gs[ 0 ] )
-
 data1 = pd.read_sql( "SELECT    trajectory_id,                                              \
                                 ROUND( initial_velocity_magnitude ),                        \
                                 ROUND( launch_azimuth ),                                    \
@@ -232,31 +196,51 @@ velocity_magnitude              = data1[ 'vel_mag' ]
 azimuth                         = data1[ 'launch_azimuth' ]
 simulation_time                 = data1[ 'time' ]
 
-simulation_time = simulation_time / ( 24.0 * 60.0 * 60.0 )
+## plot hexbin for escape case
+unique_escape_velocities = np.unique( velocity_magnitude )
+gridsize = len( unique_escape_velocities )
 
-hexBinPlot = ax3.hexbin( azimuth, simulation_time,                      \
-                         C=velocity_magnitude,                          \
-                         cmap='jet', gridsize=100 )
-cbar = plt.colorbar( hexBinPlot, cmap='jet', ax=ax3 )
+if gridsize:
+    ## scatter plot for the reimpact case
+    # get unique velocity values in the escape case
+    unique_reimpact_velocities = np.unique( velocity_magnitude )
+    colors = plt.cm.Vega20( np.linspace( 0, 1, len( unique_reimpact_velocities ) ) )
 
-ax3.grid( True )
-ax3.set_xlabel( 'Launch azimuth [deg]' )
-ax3.set_ylabel( 'Time to escape [hrs]' )
-ax3.set_title( 'Escape time versus launch direction and velocity \n Phase angle = ' + str( phaseAngle ) )
-cbar.ax.set_ylabel( 'Regolith launch velocity [m/s]' )
+    for index in range( 0, len( unique_reimpact_velocities ) ):
+        current_velocity = unique_reimpact_velocities[ index ]
+        current_velocity_indices = np.where( velocity_magnitude == current_velocity )
+        current_velocity_indices = current_velocity_indices[ 0 ]
+        plotTime = simulation_time[ current_velocity_indices ]
+        plotAzimuth = azimuth[ current_velocity_indices ]
+        ax2.scatter( plotAzimuth, plotTime, s=5, c=colors[ index ],                 \
+                     edgecolors='face',                                                     \
+                     label='$V_{launch}$ = ' + str( current_velocity ) + ' [m/s]' )
 
-## show the plot
-plt.show( )
+    ax2.set_yscale('log')
+    ax2.set_xticks( np.arange( 0.0, 360.0, 30.0 ) )
+    ax2.set_xlim( 0.0, 360.0 )
+    ax2.grid( True )
+    ax2.legend( ).draggable( )
+    ax2.set_xlabel( 'Launch azimuth [deg]' )
+    ax2.set_ylabel( 'Time to escape $log_{10}(T)$' )
+    ax2.set_title( 'Escape case' )
 
-# Close SQLite database if it's still open.
+##close the database
 if database:
-    database.close()
+    database.close( )
+
+## set global plot title
+plt.suptitle( 'Time to final fate of regolith against launch velocity and direction \n          \
+               Spherical asteroid & equatorial case, Phase angle = ' + str( phaseAngle ) )
 
 # Stop timer
 end_time = time.time( )
 
 # Print elapsed time
 print "Script time: " + str("{:,g}".format(end_time - start_time)) + "s"
+
+## show the plot
+plt.show( )
 
 print ""
 print "------------------------------------------------------------------"
