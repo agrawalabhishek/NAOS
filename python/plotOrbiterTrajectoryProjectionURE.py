@@ -55,7 +55,6 @@ def plotEllipse( semiMajor, semiMinor, angleRange, plotHandle ):
         y = r * np.sin( angleRange )
         plotHandle.plot( x, y )
         plotHandle.grid( )
-        plotHandle.hold( True )
 
 # Start timer.
 start_time = time.time( )
@@ -71,10 +70,16 @@ start_time = time.time( )
 # vz = data[ 'vz' ].values
 # t = data[ 't' ].values
 
-# Connect to SQLite database.
+## ellipsoidal shape model parameters for the asteroid
+alpha = 10000.0
+beta = 10000.0
+gamma = 10000.0
+Wz = 0.00033118202125129593
+
 # Connect to SQLite database.
 try:
-        database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/phase_0/leadingEdge.db")
+        # database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/phase_0/simulation_time_9_months/leadingEdge.db")
+        database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -90,8 +95,8 @@ data = pd.read_sql( "SELECT     position_x,                                     
                                 ROUND( launch_azimuth ),                            \
                                 time                                                \
                      FROM       regolith_trajectory_results                         \
-                     WHERE      ROUND( launch_azimuth ) = 71.0                      \
-                     AND        ROUND( initial_velocity_magnitude ) = 14;",         \
+                     WHERE      ROUND( launch_azimuth ) = 210.0                     \
+                     AND        ROUND( initial_velocity_magnitude ) = 11;",         \
                      database )
 
 data.columns = [ 'x',                                                   \
@@ -114,6 +119,21 @@ inertial_z          = data[ 'inertial_z' ]
 launchAzimuth       = data[ 'launch_azimuth' ]
 t                   = data[ 'time' ]
 
+# get the end point for a data array
+endIndex = np.size( x )
+
+string1 = 'Particle trajectory projection around asteroid Eros (Body fixed frame) \n'
+string2 = '$V_{initial}$=' + str( velocityMagnitude[ 0 ] ) + '[m/s], '
+string3 = 'Launch azimuth=' + str( launchAzimuth[ 0 ] ) + '[deg], '
+string4 = 'time=' + str( t[ endIndex-1 ] / (60.0*60.0) ) + '[hrs]'
+topTitleBodyFrame = string1 + string2 + string3 + string4
+
+string1 = 'Particle trajectory projection around asteroid Eros (Inertial frame) \n'
+string2 = '$V_{initial}$=' + str( velocityMagnitude[ 0 ] ) + '[m/s], '
+string3 = 'Launch azimuth=' + str( launchAzimuth[ 0 ] ) + '[deg], '
+string4 = 'time=' + str( t[ endIndex-1 ] / (60.0*60.0) ) + '[hrs]'
+topTitleInertialFrame = string1 + string2 + string3 + string4
+
 # mismatchTime = []
 # mismatchFlag = False
 # for index in range( 1, len(jacobi) ):
@@ -125,12 +145,7 @@ t                   = data[ 'time' ]
 
 ## Set up the figure
 fig = plt.figure( )
-# get the end point for a data array
-endIndex = np.size( x )
-plt.suptitle( 'Particle trajectory projection around asteroid Eros (Body fixed frame) \n'
-              '$V_{initial}$=' + str( velocityMagnitude[ 0 ] ) + '[m/s], '                 \
-              'Launch azimuth=' + str( launchAzimuth[ 0 ] ) + '[deg], '                    \
-              'time=' + str( t[ endIndex-1 ] / (24.0*60.0*60.0) ) + '[day(s)]' )
+plt.suptitle( topTitleBodyFrame )
 # ax1 = fig.add_subplot( 221 )
 # ax2 = fig.add_subplot( 222 )
 # ax3 = fig.add_subplot( 223 )
@@ -140,12 +155,6 @@ gs = gridspec.GridSpec( 3, 1, height_ratios = [ 1, 1, 1 ] )
 ax1 = plt.subplot( gs[ 0 ] )
 ax2 = plt.subplot( gs[ 1 ] )
 ax3 = plt.subplot( gs[ 2 ] )
-
-## ellipsoidal shape model parameters for the asteroid
-alpha = 20000.0
-beta = 7000.0
-gamma = 7000.0
-Wz = 0.00033118202125129593
 
 theta = np.linspace(0, 2 * np.pi, 300)
 
@@ -167,7 +176,7 @@ ax1.plot( x, y, color=trajectoryColor )
 ax1.text( x[0], y[0], 'start', size=12, color=startColor )
 
 ## indicate ending point
-# ax1.text( x[endIndex-1], y[endIndex-1], 'end', size=12, color=endColor )
+ax1.text( x[endIndex-1], y[endIndex-1], 'end', size=12, color=endColor )
 
 # ## plot locations where jacobian switched from its constant value
 # ax1.scatter( x[mismatchTime], y[mismatchTime], color='red' )
@@ -179,6 +188,7 @@ ax1.set_xlabel('x [m]')
 ax1.set_ylabel('y [m]')
 ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
 ax1.grid( True )
+ax1.axis('equal')
 
 ###############################################################
 ######################## YZ Projection ########################
@@ -191,7 +201,7 @@ ax2.plot( y, z, color=trajectoryColor )
 ax2.text( y[0], z[0], 'start', size=12, color=startColor, rotation='vertical', va='top' )
 
 ## indicate ending point
-# ax2.text( y[endIndex-1], z[endIndex-1], 'end', size=12, color=endColor, rotation='vertical' )
+ax2.text( y[endIndex-1], z[endIndex-1], 'end', size=12, color=endColor, rotation='vertical' )
 
 # ## plot locations where jacobian switched from its constant value
 # ax2.scatter( y[mismatchTime], z[mismatchTime], color='red' )
@@ -203,6 +213,7 @@ ax2.set_xlabel('y [m]')
 ax2.set_ylabel('z [m]')
 ax2.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
 ax2.grid( True )
+ax2.axis('equal')
 
 ###############################################################
 ######################## XZ Projection ########################
@@ -215,7 +226,7 @@ ax3.plot( x, z, color=trajectoryColor )
 ax3.text( x[0], z[0], 'start', size=12, color=startColor, rotation='vertical', va='top' )
 
 ## indicate ending point
-# ax3.text( x[endIndex-1], z[endIndex-1], 'end', size=12, color=endColor, rotation='vertical' )
+ax3.text( x[endIndex-1], z[endIndex-1], 'end', size=12, color=endColor, rotation='vertical' )
 
 # ## plot locations where jacobian switched from its constant value
 # ax3.scatter( x[mismatchTime], z[mismatchTime], color='red' )
@@ -227,6 +238,7 @@ ax3.set_xlabel('x [m]')
 ax3.set_ylabel('z [m]')
 ax3.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
 ax3.grid( True )
+ax3.axis('equal')
 
 ###############################################################
 ######################## MetaData #############################
@@ -258,16 +270,12 @@ ax3.grid( True )
 #################################################################################################
 ## Set up the figure
 fig = plt.figure( )
-plt.suptitle( 'Particle trajectory projection around asteroid Eros (Inertial frame) \n'
-              '$V_{initial}$=' + str( velocityMagnitude[ 0 ] ) + '[m/s], '                 \
-              'Launch azimuth=' + str( launchAzimuth[ 0 ] ) + '[deg], '                    \
-              'time=' + str( t[ endIndex-1 ] / (24.0*60.0*60.0) ) + '[day(s)]' )
+plt.suptitle( topTitleInertialFrame )
 
 gs = gridspec.GridSpec( 3, 1, height_ratios = [ 1, 1, 1 ] )
 ax1 = plt.subplot( gs[ 0 ] )
 ax2 = plt.subplot( gs[ 1 ] )
 ax3 = plt.subplot( gs[ 2 ] )
-
 
 ###############################################################
 ######################## XY Projection ########################
@@ -280,7 +288,7 @@ ax1.plot( inertial_x, inertial_y, color=trajectoryColor )
 ax1.text( inertial_x[0], inertial_y[0], 'start', size=12, color=startColor )
 
 ## indicate ending point
-# ax1.text( inertial_x[endIndex-1], inertial_y[endIndex-1], 'end', size=12, color=endColor )
+ax1.text( inertial_x[endIndex-1], inertial_y[endIndex-1], 'end', size=12, color=endColor )
 
 # ## plot locations where jacobian switched from its constant value
 # ax1.scatter( x[mismatchTime], y[mismatchTime], color='red' )
@@ -292,6 +300,7 @@ ax1.set_xlabel('x [m]')
 ax1.set_ylabel('y [m]')
 ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
 ax1.grid( True )
+ax1.axis('equal')
 
 ###############################################################
 ######################## YZ Projection ########################
@@ -304,7 +313,7 @@ ax2.plot( inertial_y, inertial_z, color=trajectoryColor )
 ax2.text( inertial_y[0], inertial_z[0], 'start', size=12, color=startColor, rotation='vertical', va='top' )
 
 ## indicate ending point
-# ax2.text( inertial_y[endIndex-1], inertial_z[endIndex-1], 'end', size=12, color=endColor, rotation='vertical' )
+ax2.text( inertial_y[endIndex-1], inertial_z[endIndex-1], 'end', size=12, color=endColor, rotation='vertical' )
 
 # ## plot locations where jacobian switched from its constant value
 # ax2.scatter( y[mismatchTime], z[mismatchTime], color='red' )
@@ -316,6 +325,7 @@ ax2.set_xlabel('y [m]')
 ax2.set_ylabel('z [m]')
 ax2.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
 ax2.grid( True )
+ax2.axis('equal')
 
 ###############################################################
 ######################## XZ Projection ########################
@@ -328,7 +338,7 @@ ax3.plot( inertial_x, inertial_z, color=trajectoryColor )
 ax3.text( inertial_x[0], inertial_z[0], 'start', size=12, color=startColor, rotation='vertical', va='top' )
 
 ## indicate ending point
-# ax3.text( inertial_x[endIndex-1], inertial_z[endIndex-1], 'end', size=12, color=endColor, rotation='vertical' )
+ax3.text( inertial_x[endIndex-1], inertial_z[endIndex-1], 'end', size=12, color=endColor, rotation='vertical' )
 
 # ## plot locations where jacobian switched from its constant value
 # ax3.scatter( x[mismatchTime], z[mismatchTime], color='red' )
@@ -340,6 +350,7 @@ ax3.set_xlabel('x [m]')
 ax3.set_ylabel('z [m]')
 ax3.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
 ax3.grid( True )
+ax3.axis('equal')
 
 ###############################################################
 ######################## MetaData #############################
@@ -362,16 +373,18 @@ ax3.grid( True )
 # cell_dict = table.get_celld( )
 # for row in xrange( 0, 7 ): cell_dict[ ( row, 2 ) ].set_width( 0.1 )
 
-## Show the plot
-# plt.tight_layout( )
-# plt.grid( True )
-plt.show( )
+
+## close the database
+if database:
+    database.close( )
 
 # Stop timer
 end_time = time.time( )
-
 # Print elapsed time
 print "Script time: " + str("{:,g}".format(end_time - start_time)) + "s"
+
+## Show the plot
+plt.show( )
 
 print ""
 print "------------------------------------------------------------------"
