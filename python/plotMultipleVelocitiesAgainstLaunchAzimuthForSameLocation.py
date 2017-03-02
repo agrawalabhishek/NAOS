@@ -57,27 +57,28 @@ gamma = 7000.0
 Wz = 0.00033118202125129593
 mu = 876514
 
-maxTime = 1.0 * 30.0 * 24.0 * 60.0 * 60.0
+maxTime = 9.0 * 30.0 * 24.0 * 60.0 * 60.0
+
+phaseAngle = 'N.A.'
 
 ## Set up the figure
 fig = plt.figure( )
+plt.suptitle( 'Inertial launch velocities for Escape and Re-impact \n Ellipsoidal asteroid, Phase angle = ' + str(phaseAngle) + '[deg]' )
 gs = gridspec.GridSpec( 2, 1, height_ratios = [ 1, 1 ] )
 ax1 = plt.subplot( gs[ 0 ] )
 ax2 = plt.subplot( gs[ 1 ] )
-# ax1 = fig.add_subplot(111)
-# ax2 = fig.add_subplot(212)
 
 ## Operations
 # Connect to SQLite database.
 try:
         # database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity_with_perturbations/phase_0/leadingEdge.db")
-        database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/phase_0/leadingEdge.db")
+        # database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/phase_0/simulation_time_9_months/leadingEdge.db")
+        # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
+        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
         sys.exit(1)
-
-phaseAngle = 'N.A.'
 
 ## get the local directional escape speeds in rotating and inertial frame for each launch azimuth
 data4 = pd.read_sql( "SELECT    directional_escape_speed,                                   \
@@ -124,33 +125,30 @@ escape_inertial_vz                     = data1[ 'inertial_vz' ]
 escape_azimuth                         = data1[ 'launch_azimuth' ]
 
 ## plot launch azimuth versus rot frame initial velocity for escape cases
-escape_rotFrameInitialVelocity = np.sqrt( escape_rotFrame_vx**2 + escape_rotFrame_vy**2 + escape_rotFrame_vz**2 )
-ax1Handle1 = ax1.scatter( escape_azimuth, escape_rotFrameInitialVelocity, color=colors.cnames['purple'], label='actual speed' )
+# escape_rotFrameInitialVelocity = np.sqrt( escape_rotFrame_vx**2 + escape_rotFrame_vy**2 + escape_rotFrame_vz**2 )
+# ax1Handle1 = ax1.scatter( escape_azimuth, escape_rotFrameInitialVelocity, color=colors.cnames['purple'], label='actual speed' )
+# ax1Handle2, = ax1.plot( directionalEscapeAzimuth, directionalEscapeSpeed, color=colors.cnames['red'], label='directional escape speed', lw=2 )
+
+## format axis and title
+# ax1.set_xlabel('Launch azimuth [deg]')
+# ax1.set_ylabel('$V_{initial}$ [m/s]')
+# ax1.set_xlim( 0, 360 )
+# ax1.set_title( 'Regolith (escape) initial velocity versus launch azimuth (rotating frame) \n Phase angle = ' + str(phaseAngle) + '[deg]' )
+# ax1.legend( ).draggable( )
+# ax1.grid( )
 
 ## Plot launch azimuth versus inertial initial velocity for escape cases
 escape_inertialInitialVelocity = np.sqrt( escape_inertial_vx**2 + escape_inertial_vy**2 + escape_inertial_vz**2 )
-ax2Handle1 = ax2.scatter( escape_azimuth, escape_inertialInitialVelocity, color=colors.cnames['purple'], label='actual speed' )
-
-ax1Handle2, = ax1.plot( directionalEscapeAzimuth, directionalEscapeSpeed, color=colors.cnames['red'], label='directional escape speed', lw=2 )
-ax2Handle2, = ax2.plot( directionalEscapeAzimuth, inertialDirectionalEscapeSpeed, color=colors.cnames['red'], label='directional escape speed', lw=2 )
+ax1Handle1 = ax1.scatter( escape_azimuth, escape_inertialInitialVelocity, s=5, color=colors.cnames['orange'], label='actual speed' )
+ax1Handle2, = ax1.plot( directionalEscapeAzimuth, inertialDirectionalEscapeSpeed, color=colors.cnames['red'], label='directional escape speed', lw=2 )
 
 ## format axis and title
 ax1.set_xlabel('Launch azimuth [deg]')
 ax1.set_ylabel('$V_{initial}$ [m/s]')
 ax1.set_xlim( 0, 360 )
-ax1.set_title( 'Regolith (escape) initial velocity versus launch azimuth (rotating frame) \n Phase angle = ' + str(phaseAngle) + '[deg]' )
-ax1.legend( )
-# ax1.legend( loc='center left', bbox_to_anchor=( 0.995,0.5 ) )
+ax1.set_title( 'Escape' )
+ax1.legend( ).draggable( )
 ax1.grid( )
-
-## format axis and title
-ax2.set_xlabel('Launch azimuth [deg]')
-ax2.set_ylabel('$V_{initial}$ [m/s]')
-ax2.set_xlim( 0, 360 )
-ax2.set_title( 'Regolith (escape) initial velocity versus launch azimuth (inertial frame) \n Phase angle = ' + str(phaseAngle) + '[deg]' )
-ax2.legend( )
-# ax2.legend( loc='center left', bbox_to_anchor=( 0.995,0.5 ) )
-ax2.grid( )
 
 ## get data for re-impact cases
 data2 = pd.read_sql( "SELECT    initial_velocity_x,                                         \
@@ -180,39 +178,30 @@ crash_inertial_vy                     = data2[ 'inertial_vy' ]
 crash_inertial_vz                     = data2[ 'inertial_vz' ]
 crash_azimuth                         = data2[ 'launch_azimuth' ]
 
-## Set up the figure
-fig = plt.figure( )
-gs = gridspec.GridSpec( 2, 1, height_ratios = [ 1, 1 ] )
-ax1 = plt.subplot( gs[ 0 ] )
-ax2 = plt.subplot( gs[ 1 ] )
-
 ## plot launch azimuth versus rot frame initial velocity for crash cases
-crash_rotFrameInitialVelocity = np.sqrt( crash_rotFrame_vx**2 + crash_rotFrame_vy**2 + crash_rotFrame_vz**2 )
-ax1Handle1 = ax1.scatter( crash_azimuth, crash_rotFrameInitialVelocity, color=colors.cnames['purple'], label='actual speed' )
+# crash_rotFrameInitialVelocity = np.sqrt( crash_rotFrame_vx**2 + crash_rotFrame_vy**2 + crash_rotFrame_vz**2 )
+# ax1Handle1 = ax1.scatter( crash_azimuth, crash_rotFrameInitialVelocity, color=colors.cnames['purple'], label='actual speed' )
+# ax1Handle2, = ax1.plot( directionalEscapeAzimuth, directionalEscapeSpeed, color=colors.cnames['red'], label='directional escape speed', lw=2 )
+
+## format axis and title
+# ax1.set_xlabel('Launch azimuth [deg]')
+# ax1.set_ylabel('$V_{initial}$ [m/s]')
+# ax1.set_xlim( 0, 360 )
+# ax1.set_title( 'Regolith (re-impact) initial velocity versus launch azimuth (rotating frame) \n Phase angle = ' + str(phaseAngle) + '[deg]' )
+# ax1.legend( ).draggable( )
+# ax1.grid( )
 
 ## Plot launch azimuth versus inertial initial velocity for crash cases
 crash_inertialInitialVelocity = np.sqrt( crash_inertial_vx**2 + crash_inertial_vy**2 + crash_inertial_vz**2 )
-ax2Handle1 = ax2.scatter( crash_azimuth, crash_inertialInitialVelocity, color=colors.cnames['purple'], label='actual speed' )
-
-ax1Handle2, = ax1.plot( directionalEscapeAzimuth, directionalEscapeSpeed, color=colors.cnames['red'], label='directional escape speed', lw=2 )
+ax2Handle1 = ax2.scatter( crash_azimuth, crash_inertialInitialVelocity, s=5, color=colors.cnames['purple'], label='actual speed' )
 ax2Handle2, = ax2.plot( directionalEscapeAzimuth, inertialDirectionalEscapeSpeed, color=colors.cnames['red'], label='directional escape speed', lw=2 )
-
-## format axis and title
-ax1.set_xlabel('Launch azimuth [deg]')
-ax1.set_ylabel('$V_{initial}$ [m/s]')
-ax1.set_xlim( 0, 360 )
-ax1.set_title( 'Regolith (re-impact) initial velocity versus launch azimuth (rotating frame) \n Phase angle = ' + str(phaseAngle) + '[deg]' )
-ax1.legend( )
-# ax1.legend( loc='center left', bbox_to_anchor=( 0.995,0.5 ) )
-ax1.grid( )
 
 ## format axis and title
 ax2.set_xlabel('Launch azimuth [deg]')
 ax2.set_ylabel('$V_{initial}$ [m/s]')
 ax2.set_xlim( 0, 360 )
-ax2.set_title( 'Regolith (re-impact) initial velocity versus launch azimuth (inertial frame) \n Phase angle = ' + str(phaseAngle) + '[deg]' )
-ax2.legend( )
-# ax2.legend( loc='center left', bbox_to_anchor=( 0.995,0.5 ) )
+ax2.set_title( 'Reimpact' )
+ax2.legend( ).draggable( )
 ax2.grid( )
 
 ## get data for temporary capture cases
@@ -253,51 +242,56 @@ capture_eccentricity                    = data3[ 'eccentricity' ]
 for i in range( 0, (len(capture_eccentricity)) ):
     capture_eccentricity[ i ] = float( "{0:.5f}".format( capture_eccentricity[ i ] ) )
 
+capture_inertialInitialVelocity = np.sqrt( capture_inertial_vx**2 + capture_inertial_vy**2 + capture_inertial_vz**2 )
+capture_rotFrameInitialVelocity = np.sqrt( capture_rotFrame_vx**2 + capture_rotFrame_vy**2 + capture_rotFrame_vz**2 )
+
 if capture_azimuth.size != 0:
     ## Set up the figure
+    # fig = plt.figure( )
+    # gs = gridspec.GridSpec( 3, 1, height_ratios = [ 1, 1, 2.5 ] )
+    # ax1 = plt.subplot( gs[ 0 ] )
+    # ax2 = plt.subplot( gs[ 1 ] )
+    # ax3 = plt.subplot( gs[ 2 ], frameon=False )
+
+    # ## plot launch azimuth versus rot frame initial velocity for capture cases
+    # ax1Handle1 = ax1.scatter( capture_azimuth, capture_rotFrameInitialVelocity,
+    #                           color=colors.cnames['purple'],
+    #                           label='actual speed' )
+
+    # ## add text box indicating energy and eccentricity at the scatter points
+    # # for i, txt in enumerate( capture_eccentricity ):
+    # #     ax1.annotate( "e="+str(txt),                                                                    \
+    # #                   xy=( capture_azimuth[ i ], capture_rotFrameInitialVelocity[ i ] ),                \
+    # #                   xytext=( capture_azimuth[ i ] - 10, capture_rotFrameInitialVelocity[ i ] + 1 ),   \
+    # #                   arrowprops=dict( facecolor='black', shrink=0.05 ) )
+
+    # ## Plot launch azimuth versus inertial initial velocity for capture cases
+    # ax2Handle1 = ax2.scatter( capture_azimuth, capture_inertialInitialVelocity, color=colors.cnames['purple'], label='actual speed' )
+
+    # # ax1Handle2, = ax1.plot( directionalEscapeAzimuth, directionalEscapeSpeed, color=colors.cnames['red'], label='directional escape speed', lw=2 )
+    # # ax2Handle2, = ax2.plot( directionalEscapeAzimuth, inertialDirectionalEscapeSpeed, color=colors.cnames['red'], label='directional escape speed', lw=2 )
+
+    # ## format axis and title
+    # ax1.set_xlabel('Launch azimuth [deg]')
+    # ax1.set_ylabel('$V_{initial}$ [m/s]')
+    # ax1.set_xlim( 0, 360 )
+    # ax1.set_title( 'Regolith (capture) initial velocity versus launch azimuth (rotating frame) \n Ellipsoidal asteroid, Phase angle = ' + str(phaseAngle) + '[deg]' )
+    # ax1.legend( )
+    # # ax1.legend( loc='center left', bbox_to_anchor=( 0.995,0.5 ) )
+    # ax1.grid( )
+
+    # ## format axis and title
+    # ax2.set_xlabel('Launch azimuth [deg]')
+    # ax2.set_ylabel('$V_{initial}$ [m/s]')
+    # ax2.set_xlim( 0, 360 )
+    # ax2.set_title( 'Regolith (capture) initial velocity versus launch azimuth (inertial frame) \n Ellipsoidal asteroid, Phase angle = ' + str(phaseAngle) + '[deg]' )
+    # ax2.legend( )
+    # # ax2.legend( loc='center left', bbox_to_anchor=( 0.995,0.5 ) )
+    # ax2.grid( )
+
     fig = plt.figure( )
-    gs = gridspec.GridSpec( 3, 1, height_ratios = [ 1, 1, 2.5 ] )
-    ax1 = plt.subplot( gs[ 0 ] )
-    ax2 = plt.subplot( gs[ 1 ] )
-    ax3 = plt.subplot( gs[ 2 ], frameon=False )
-
-    ## plot launch azimuth versus rot frame initial velocity for capture cases
-    capture_rotFrameInitialVelocity = np.sqrt( capture_rotFrame_vx**2 + capture_rotFrame_vy**2 + capture_rotFrame_vz**2 )
-    ax1Handle1 = ax1.scatter( capture_azimuth, capture_rotFrameInitialVelocity,
-                              color=colors.cnames['purple'],
-                              label='actual speed' )
-
-    ## add text box indicating energy and eccentricity at the scatter points
-    # for i, txt in enumerate( capture_eccentricity ):
-    #     ax1.annotate( "e="+str(txt),                                                                    \
-    #                   xy=( capture_azimuth[ i ], capture_rotFrameInitialVelocity[ i ] ),                \
-    #                   xytext=( capture_azimuth[ i ] - 10, capture_rotFrameInitialVelocity[ i ] + 1 ),   \
-    #                   arrowprops=dict( facecolor='black', shrink=0.05 ) )
-
-    ## Plot launch azimuth versus inertial initial velocity for capture cases
-    capture_inertialInitialVelocity = np.sqrt( capture_inertial_vx**2 + capture_inertial_vy**2 + capture_inertial_vz**2 )
-    ax2Handle1 = ax2.scatter( capture_azimuth, capture_inertialInitialVelocity, color=colors.cnames['purple'], label='actual speed' )
-
-    # ax1Handle2, = ax1.plot( directionalEscapeAzimuth, directionalEscapeSpeed, color=colors.cnames['red'], label='directional escape speed', lw=2 )
-    # ax2Handle2, = ax2.plot( directionalEscapeAzimuth, inertialDirectionalEscapeSpeed, color=colors.cnames['red'], label='directional escape speed', lw=2 )
-
-    ## format axis and title
-    ax1.set_xlabel('Launch azimuth [deg]')
-    ax1.set_ylabel('$V_{initial}$ [m/s]')
-    ax1.set_xlim( 0, 360 )
-    ax1.set_title( 'Regolith (capture) initial velocity versus launch azimuth (rotating frame) \n Phase angle = ' + str(phaseAngle) + '[deg]' )
-    ax1.legend( )
-    # ax1.legend( loc='center left', bbox_to_anchor=( 0.995,0.5 ) )
-    ax1.grid( )
-
-    ## format axis and title
-    ax2.set_xlabel('Launch azimuth [deg]')
-    ax2.set_ylabel('$V_{initial}$ [m/s]')
-    ax2.set_xlim( 0, 360 )
-    ax2.set_title( 'Regolith (capture) initial velocity versus launch azimuth (inertial frame) \n Phase angle = ' + str(phaseAngle) + '[deg]' )
-    ax2.legend( )
-    # ax2.legend( loc='center left', bbox_to_anchor=( 0.995,0.5 ) )
-    ax2.grid( )
+    gs = gridspec.GridSpec( 1, 1 )
+    ax3 = plt.subplot( gs[ 0 ], frameon=False )
 
     ## add the metatable
     ax3.axis( 'off' )
@@ -326,21 +320,17 @@ if capture_azimuth.size != 0:
     cell_dict = table.get_celld( )
     # for row in xrange( 0, len( capture_energy ) ): cell_dict[ ( row, 2 ) ].set_width( 0.1 )
 
-## Show the plot
-# plt.legend( handles = [ ax2Handle1, ax2Handle2, escapeBoundHandle, crashBoundHandle ],
-#             bbox_to_anchor = ( 0.95, 0.5 ),
-#             loc = 1 )
-# plt.legend( bbox_to_anchor=(1.0, 1), loc=1, borderaxespad=0. )
-plt.tight_layout( )
-# plt.grid( )
-plt.show( )
-# plt.savefig('../data/trajectory_for_different_launch_azimuth/trajectoryPlot_'+str(figureIndex+1)+'.png', dpi=300)
+if database:
+    database.close( )
 
 # Stop timer
 end_time = time.time( )
 
 # Print elapsed time
 print "Script time: " + str("{:,g}".format(end_time - start_time)) + "s"
+
+## Show the plot
+plt.show( )
 
 print ""
 print "------------------------------------------------------------------"

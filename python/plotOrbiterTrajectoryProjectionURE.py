@@ -71,15 +71,16 @@ start_time = time.time( )
 # t = data[ 't' ].values
 
 ## ellipsoidal shape model parameters for the asteroid
-alpha = 10000.0
-beta = 10000.0
-gamma = 10000.0
+alpha = 20000.0
+beta = 7000.0
+gamma = 7000.0
 Wz = 0.00033118202125129593
 
 # Connect to SQLite database.
 try:
         # database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/phase_0/simulation_time_9_months/leadingEdge.db")
-        database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
+        # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
+        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -95,8 +96,8 @@ data = pd.read_sql( "SELECT     position_x,                                     
                                 ROUND( launch_azimuth ),                            \
                                 time                                                \
                      FROM       regolith_trajectory_results                         \
-                     WHERE      ROUND( launch_azimuth ) = 210.0                     \
-                     AND        ROUND( initial_velocity_magnitude ) = 11;",         \
+                     WHERE      ROUND( launch_azimuth ) = 270.0                     \
+                     AND        ROUND( initial_velocity_magnitude ) = 5;",          \
                      database )
 
 data.columns = [ 'x',                                                   \

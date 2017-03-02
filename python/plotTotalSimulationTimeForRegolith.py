@@ -115,8 +115,8 @@ mu = 876514
 ## Operations
 # Connect to SQLite database.
 try:
-    # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db" )
-    database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
+    database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db" )
+    # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -230,8 +230,8 @@ if database:
     database.close( )
 
 ## set global plot title
-plt.suptitle( 'Time to final fate of regolith against launch velocity and direction \n          \
-               Spherical asteroid & equatorial case, Phase angle = ' + str( phaseAngle ) )
+plt.suptitle( 'Time to final fate of regolith against launch velocity and direction \n'
+               + 'Ellipsoid & equatorial case, Phase angle = ' + str( phaseAngle ) + ' [deg]' )
 
 # Stop timer
 end_time = time.time( )

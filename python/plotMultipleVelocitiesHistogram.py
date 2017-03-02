@@ -61,7 +61,8 @@ mu = 876514
 # Connect to SQLite database.
 try:
         # database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity_with_perturbations/phase_45/leadingEdge.db")
-        database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
+        # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
+        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -132,7 +133,7 @@ ax3.set_xlim( 0, all_distinct_velocities+1 )
 ax3.xaxis.set_ticks( np.arange(0, all_distinct_velocities+1, 1) )
 ax3.set_xlabel( '$V_{initial}$ [m/s]' )
 ax3.set_ylabel( 'Number of particles' )
-ax3.set_title( 'Final fate histogram against launch velocities \n Spherical asteroid, Phase angle = ' + str(phaseAngle) + '[deg]' )
+ax3.set_title( 'Final fate histogram against launch velocities \n Ellipsoidal asteroid, Phase angle = ' + str(phaseAngle) + '[deg]' )
 ax3.legend( ).draggable( )
 ax3.grid( )
 

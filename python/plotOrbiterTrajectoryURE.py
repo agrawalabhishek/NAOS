@@ -62,9 +62,17 @@ start_time = time.time( )
 # vz = data[ 'vz' ].values
 # t = data[ 't' ].values
 
+## Plot the ellipsoidal shape of the asteroid
+alpha = 20000.0
+beta = 7000.0
+gamma = 7000.0
+Wz = 0.00033118202125129593
+
 # Connect to SQLite database.
 try:
-        database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/phase_0/leadingEdge.db")
+        # database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/phase_0/simulation_time_9_months/leadingEdge.db")
+        # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
+        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -80,8 +88,8 @@ data = pd.read_sql( "SELECT     position_x,                                     
                                 ROUND( launch_azimuth ),                            \
                                 time                                                \
                      FROM       regolith_trajectory_results                         \
-                     WHERE      ROUND( launch_azimuth ) = 71.0                      \
-                     AND        ROUND( initial_velocity_magnitude ) = 14;",         \
+                     WHERE      ROUND( launch_azimuth ) = 270.0                     \
+                     AND        ROUND( initial_velocity_magnitude ) = 5.0;",        \
                      database )
 
 data.columns = [ 'x',                                                   \
@@ -112,12 +120,6 @@ gs = gridspec.GridSpec( 2, 1, height_ratios = [ 1, 1 ] )
 ax1 = plt.subplot( gs[ 0 ], projection = '3d' )
 ax2 = plt.subplot( gs[ 1 ], projection = '3d' )
 
-## Plot the ellipsoidal shape of the asteroid
-alpha = 20000.0
-beta = 7000.0
-gamma = 7000.0
-Wz = 0.00033118202125129593
-
 u = np.linspace(0, 2 * np.pi, 100)
 v = np.linspace(0, np.pi, 100)
 
@@ -127,11 +129,13 @@ ellipsoid_z = gamma * np.outer(np.ones(np.size(u)), np.cos(v))
 
 newColor = colors.cnames["slategray"]
 surf = ax1.plot_surface( ellipsoid_x, ellipsoid_y, ellipsoid_z,
-                         rstride=5, cstride=5 )
+                         rstride=5, cstride=5, alpha=0.5 )
 # surf.set_facecolor( ( 0, 0, 1, 0.5 ) )
 surf.set_facecolor( newColor )
 surf.set_linewidth( 0.1 )
-
+ax1.set_xlim( -20000, 20000 )
+ax1.set_ylim( -7000, 7000 )
+ax1.set_zlim( -7000, 7000 )
 ax1.hold( True )
 
 ## Plot 3D trajectory of the orbiting particle
@@ -207,6 +211,12 @@ ax2.axis('equal')
 # for cell in table_cells: cell.set_height( 0.15 )
 # cell_dict = table.get_celld( )
 # for row in xrange( 0, 7 ): cell_dict[ ( row, 2 ) ].set_width( 0.1 )
+
+## sanity check for the initial position coordinate
+ellipsoidSolution = ( np.square(x[0]) / alpha**2 ) + ( np.square(y[0]) / beta**2 ) + ( np.square(z[0]) / gamma**2 )
+ellipsoidSolution = ellipsoidSolution - 1.0
+if ellipsoidSolution > 1.0e-12:
+    print "launch point not on ellipsoid"
 
 ## Show the plot
 # plt.tight_layout( )

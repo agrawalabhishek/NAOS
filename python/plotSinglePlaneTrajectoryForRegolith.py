@@ -71,16 +71,18 @@ start_time = time.time( )
 # t = data[ 't' ].values
 
 ## ellipsoidal shape model parameters for the asteroid
-alpha = 20000.0
-beta = 7000.0
-gamma = 7000.0
+alpha = 10000.0
+beta = 10000.0
+gamma = 10000.0
 Wz = 0.00033118202125129593
+
+phaseAngle = 'N.A.'
 
 # Connect to SQLite database.
 try:
         # database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/phase_0/simulation_time_9_months/leadingEdge.db")
-        # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
-        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db")
+        database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
+        # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -96,8 +98,8 @@ data = pd.read_sql( "SELECT     position_x,                                     
                                 ROUND( launch_azimuth ),                            \
                                 time                                                \
                      FROM       regolith_trajectory_results                         \
-                     WHERE      ROUND( launch_azimuth ) = 270.0                     \
-                     AND        ROUND( initial_velocity_magnitude ) = 5;",          \
+                     WHERE      ROUND( launch_azimuth ) = 90.0                      \
+                     AND        ROUND( initial_velocity_magnitude ) = 15;",         \
                      database )
 
 data.columns = [ 'x',                                                   \
@@ -126,14 +128,16 @@ endIndex = np.size( x )
 string1 = 'Particle trajectory projection around asteroid Eros (Body fixed frame) \n'
 string2 = '$V_{initial}$=' + str( velocityMagnitude[ 0 ] ) + '[m/s], '
 string3 = 'Launch azimuth=' + str( launchAzimuth[ 0 ] ) + '[deg], '
-string4 = 'time=' + str( t[ endIndex-1 ] / (60.0*60.0) ) + '[hrs]'
-topTitleBodyFrame = string1 + string2 + string3 + string4
+string4 = 'time=' + str( t[ endIndex-1 ] / (60.0*60.0) ) + '[hrs] \n'
+string5 = 'Phase angle = ' + str( phaseAngle ) + ' [deg]'
+topTitleBodyFrame = string1 + string2 + string3 + string4 + string5
 
 string1 = 'Particle trajectory projection around asteroid Eros (Inertial frame) \n'
 string2 = '$V_{initial}$=' + str( velocityMagnitude[ 0 ] ) + '[m/s], '
 string3 = 'Launch azimuth=' + str( launchAzimuth[ 0 ] ) + '[deg], '
-string4 = 'time=' + str( t[ endIndex-1 ] / (60.0*60.0) ) + '[hrs]'
-topTitleInertialFrame = string1 + string2 + string3 + string4
+string4 = 'time=' + str( t[ endIndex-1 ] / (60.0*60.0) ) + '[hrs] \n'
+string5 = 'Phase angle = ' + str( phaseAngle ) + ' [deg]'
+topTitleInertialFrame = string1 + string2 + string3 + string4 + string5
 
 ## Set up the figure
 fig = plt.figure( )
