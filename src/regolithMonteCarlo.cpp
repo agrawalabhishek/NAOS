@@ -210,7 +210,9 @@ void createDatabaseTable( SQLite::Database &database )
     std::ostringstream regolithTableCreate;
     regolithTableCreate
         << "CREATE TABLE regolith_trajectory_results ("
-        << "\"trajectory_id\"                                   INTEGER PRIMARY KEY AUTOINCREMENT,"
+        << "\"sql_id\"                                          INTEGER PRIMARY KEY AUTOINCREMENT,"
+
+        << "\"trajectory_id\"                                   INTEGER,"
 
         << "\"initial_position_x\"                              REAL,"
         << "\"initial_position_y\"                              REAL,"
@@ -296,8 +298,8 @@ void executeRegolithMonteCarlo( const double alpha,
                                 std::ostringstream &databaseFilePath )
 {
     double aXValue = 1.0;
-    double aYValue = 1.0;
-    double aZValue = 1.0;
+    double aYValue = 0.0;
+    double aZValue = 0.0;
     const double velocityMagnitudeFactor = 0.9;
     const double coneAngleDeclination = naos::convertDegreeToRadians( 45.0 );
     const double coneAngleAzimuthFactor = 1.0;
@@ -318,6 +320,7 @@ void executeRegolithMonteCarlo( const double alpha,
     regolithTrajectoryTableInsert
         << "INSERT INTO regolith_trajectory_results VALUES ("
         << "NULL,"
+        << ":trajectory_id,"
         << ":initial_position_x,"
         << ":initial_position_y,"
         << ":initial_position_z,"
@@ -385,6 +388,7 @@ void executeRegolithMonteCarlo( const double alpha,
         // calculate the azimuth angle
         const double coneAngleAzimuth
                 = naos::convertDegreeToRadians( coneAngleAzimuthFactor * azimuthIterator );
+        // const double coneAngleAzimuth = naos::convertDegreeToRadians( 16.0 );
 
         executeRegolithTrajectoryCalculation( alpha,
                                               beta,

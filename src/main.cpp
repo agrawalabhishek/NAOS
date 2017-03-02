@@ -44,9 +44,9 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     std::cout << userMode << std::endl << std::endl;
 
     // Physical parameters for Asteroid Eros, all in SI units, modelled as an ellipsoid.
-    const double alpha = 20.0 * 1.0e3;
-    const double beta = 7.0 * 1.0e3;
-    const double gamma = 7.0 * 1.0e3;
+    const double alpha = 10.0 * 1.0e3;
+    const double beta = 10.0 * 1.0e3;
+    const double gamma = 10.0 * 1.0e3;
     const double density = 3.2 * ( 1.0e-3 ) / ( 1.0e-6 );
     const double mass = ( 4.0 * naos::PI / 3.0 ) * density * alpha * beta * gamma;
     const double gravitationalParameter = naos::GRAVITATIONAL_CONSTANT * mass;
@@ -514,16 +514,22 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     else if( userMode.compare( "executeRegolithMonteCarlo" ) == 0 )
     {
         const double integrationStepSize = 0.01;
-        const double startTime = 0.0;
-        const double endTime = 6.0 * 30.0 * 24.0 * 60.0 * 60.0;
+        double sunPhaseAngle = naos::convertDegreeToRadians( 0.0 );
+        double Wz = W[ 2 ];
+        double timeCorrespondingToPhaseAngle = sunPhaseAngle / Wz;
+        const double startTime = timeCorrespondingToPhaseAngle;
+        const double endTime = 9.0 * 30.0 * 24.0 * 60.0 * 60.0;
         const double dataSaveIntervals = 10.0;
 
         double wallTimeStart = naos::getWallTime< double >( );
         double cpuTimeStart = naos::getCPUTime< double >( );
 
         std::ostringstream databaseFilePath;
-        databaseFilePath << "../../data/regolith_launched_from_leading_edge";
-        databaseFilePath<< "/multiple_launch_velocity/leadingEdge.db";
+        databaseFilePath << "../../data/regolith_launched_from_longest_edge";
+        // databaseFilePath << "/multiple_launch_velocity";
+        // databaseFilePath << "/simulation_time_9_months";
+        databaseFilePath << "/spherical_asteroid";
+        databaseFilePath << "/longestEdge.db";
 
         naos::executeRegolithMonteCarlo( alpha,
                                          beta,

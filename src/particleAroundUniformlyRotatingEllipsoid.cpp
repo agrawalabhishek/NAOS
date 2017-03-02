@@ -900,6 +900,31 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                     gravParameter,
                                                     initialOrbitalElements );
 
+    // sanity check for initial orbital elements
+    // std::vector< double > sanityCheckInitialState( 6, 0.0 );
+    // sanityCheckInitialState
+    //     = convertKeplerianElementsToCartesianCoordinates( initialOrbitalElements,
+    //                                                       gravParameter );
+    // double sanityCheckPositionSquareX
+    //     = sanityCheckInitialState[ xPositionIndex ] * sanityCheckInitialState[ xPositionIndex ];
+    // double sanityCheckPositionSquareY
+    //     = sanityCheckInitialState[ yPositionIndex ] * sanityCheckInitialState[ yPositionIndex ];
+    // double sanityCheckPositionSquareZ
+    //     = sanityCheckInitialState[ zPositionIndex ] * sanityCheckInitialState[ zPositionIndex ];
+
+    // double ellipsoidSolution
+    //     = sanityCheckPositionSquareX / ( alpha * alpha )
+    //     + sanityCheckPositionSquareY / ( beta * beta )
+    //     + sanityCheckPositionSquareZ / ( gamma * gamma )
+    //     - 1.0;
+
+    // if( ellipsoidSolution > 1.0e-12 )
+    // {
+    //     std::cout << std::endl << std::endl;
+    //     std::cout << "Error in conversion from inital orbital elements to initial cartesian state";
+    //     std::cout << std::endl;
+    // }
+
     //! get the initial energy of the particle
     double kineticEnergy = 0.0;
     double potentialEnergy = 0.0;
@@ -948,6 +973,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     std::cout << std::endl << std::endl;
     std::cout << "Current launch azimuth = " << naos::convertRadiansToDegree( launchAzimuth );
     std::cout << std::endl;
+    std::cout << "Current launch declination = " << naos::convertRadiansToDegree( launchDeclination );
+    std::cout << std::endl;
     std::cout << "Current launch velocity = " << initialVelocityMagnitude;
 
     // set up boost odeint
@@ -991,7 +1018,14 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     int startFlag = 1;
     int endFlag = 0;
 
+    // initialize the trajectory id for every unique regolith (in terms of its initial launch conditions)
+    static int trajectoryID = 1;
+    std::cout << std::endl;
+    std::cout << "Trajectory ID = " << trajectoryID << std::endl;
+
     // save the initial state vector(body frame) and orbital elements
+    databaseQuery.bind( ":trajectory_id", trajectoryID );
+
     databaseQuery.bind( ":initial_position_x", initialState[ xPositionIndex ] );
     databaseQuery.bind( ":initial_position_y", initialState[ yPositionIndex ] );
     databaseQuery.bind( ":initial_position_z", initialState[ zPositionIndex ] );
@@ -1201,6 +1235,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                 crashFlag = 0;
 
                 // save data
+                databaseQuery.bind( ":trajectory_id", trajectoryID );
+
                 databaseQuery.bind( ":initial_position_x", initialState[ xPositionIndex ] );
                 databaseQuery.bind( ":initial_position_y", initialState[ yPositionIndex ] );
                 databaseQuery.bind( ":initial_position_z", initialState[ zPositionIndex ] );
@@ -1334,6 +1370,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                 - bodyFrameGravPotential;
 
             // save data
+            databaseQuery.bind( ":trajectory_id", trajectoryID );
+
             databaseQuery.bind( ":initial_position_x", initialState[ xPositionIndex ] );
             databaseQuery.bind( ":initial_position_y", initialState[ yPositionIndex ] );
             databaseQuery.bind( ":initial_position_z", initialState[ zPositionIndex ] );
@@ -1501,6 +1539,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                 - bodyFrameGravPotential;
 
             // save data
+            databaseQuery.bind( ":trajectory_id", trajectoryID );
+
             databaseQuery.bind( ":initial_position_x", initialState[ xPositionIndex ] );
             databaseQuery.bind( ":initial_position_y", initialState[ yPositionIndex ] );
             databaseQuery.bind( ":initial_position_z", initialState[ zPositionIndex ] );
@@ -1621,6 +1661,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             - bodyFrameGravPotential;
 
         // save data
+        databaseQuery.bind( ":trajectory_id", trajectoryID );
+
         databaseQuery.bind( ":initial_position_x", initialState[ xPositionIndex ] );
         databaseQuery.bind( ":initial_position_y", initialState[ yPositionIndex ] );
         databaseQuery.bind( ":initial_position_z", initialState[ zPositionIndex ] );
@@ -1691,6 +1733,11 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
         // Reset SQL insert query.
         databaseQuery.reset( );
     } // end of outer while loop for integration
+
+    // sanity check for trajectory id increment
+    // std::cout << std::endl;
+    // std::cout << "Trajectory ID = " << trajectoryID << std::endl;
+    trajectoryID++;
 }
 
 } // namespace naos

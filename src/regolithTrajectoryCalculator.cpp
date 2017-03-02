@@ -491,6 +491,7 @@ void executeRegolithTrajectoryCalculation( const double alpha,
         // all particles, irrespective of surface location will have the same velocity as computed
         // below.
         velocityMagnitude = 1.0 * velocityIterator;
+        // velocityMagnitude = 13.0;
 
         std::vector< double > regolithVelocityVector( 3 );
 
