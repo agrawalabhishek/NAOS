@@ -168,8 +168,8 @@ data2_initial_energy              = data2[ 'total_energy' ]
 hexBinPlot = ax1.hexbin( data2_initial_azimuth, data2_initial_velocity_magnitude,                 \
                          C=data2_initial_energy,                                                  \
                          reduce_C_function=np.median,                                             \
-                         cmap='viridis', gridsize=15, marginals=False )
-cbar = plt.colorbar( hexBinPlot, cmap='viridis', ax=ax1 )
+                         cmap='winter', gridsize=15, marginals=False )
+cbar = plt.colorbar( hexBinPlot, cmap='winter', ax=ax1 )
 
 # ax1.set_yticks( np.arange( 0.0, 14.0, 1.0 ) )
 # ax1.set_xticks( np.arange( 0.0, 360.0, 20.0 ) )
@@ -183,8 +183,8 @@ cbar.ax.set_ylabel( 'Initial energy' )
 ## scatter plot for the reimpact case
 scatterPlot = ax2.scatter( data2_initial_azimuth, data2_initial_velocity_magnitude,                \
                          s=5, c=data2_initial_energy,                                              \
-                         cmap='viridis', edgecolors='face' )
-cbar = plt.colorbar( scatterPlot, cmap='viridis', ax=ax2 )
+                         cmap='winter', edgecolors='face' )
+cbar = plt.colorbar( scatterPlot, cmap='winter', ax=ax2 )
 
 ax2.set_xlim( 0.0, 360.0 )
 ax2.grid( True )
