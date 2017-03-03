@@ -221,6 +221,18 @@ void convertCartesianCoordinatesToKeplerianElements(
         double AOP = 0.0;
         orbitalElements[ 4 ] = AOP;
     }
+    else if( inclination < tolerance )
+    {
+        // elliptical equatorial special case orbit
+        double AOP = 0.0;
+        AOP = std::acos( eccentricityVector[ 0 ] / eccentricity );
+        AOP = convertRadiansToDegree( AOP );
+        if( eccentricityVector[ 1 ] < 0 )
+        {
+            AOP = 360.0 - AOP;
+        }
+        orbitalElements[ 4 ] = AOP;
+    }
     else
     {
         double AOP = std::acos( dotProduct( node, eccentricityVector )
