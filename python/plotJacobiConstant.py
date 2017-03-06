@@ -52,7 +52,8 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-data = pd.read_csv( '../data/sun_asteroid_2BP/equatorial_and_circular_case/sunAsteroid2BP.csv' )
+# data = pd.read_csv( '../data/sun_asteroid_2BP/equatorial_and_circular_case/sunAsteroid2BP.csv' )
+data = pd.read_csv( '../data/sun_asteroid_2BP/equatorial_elliptical_TA0deg/sunAsteroid2BP.csv' )
 
 xBody           = data["x_body_frame"].values
 yBody           = data["y_body_frame"].values
@@ -105,6 +106,7 @@ t = t / ( 24.0 * 60.0 * 60.0 )
 
 ## Set up the figure
 fig = plt.figure( )
+plt.suptitle('Jacobi integral for Sun-Asteroid two body problem')
 # ax1 = fig.add_subplot( 211, projection = '3d' )
 # ax2 = fig.add_subplot( 212, frameon = False )
 gs = gridspec.GridSpec( 2, 1, height_ratios = [ 2.5, 1 ] )

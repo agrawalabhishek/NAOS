@@ -52,7 +52,7 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-data = pd.read_csv( '../data/sun_asteroid_2BP/equatorial_and_circular_case/sunAsteroid2BP.csv' )
+data = pd.read_csv( '../data/sun_asteroid_2BP/equatorial_elliptical_TA0deg/sunAsteroid2BP.csv' )
 
 xBody           = data["x_body_frame"].values
 yBody           = data["y_body_frame"].values
@@ -83,10 +83,10 @@ t = t / ( 24.0 * 60.0 * 60.0 )
 fig = plt.figure( )
 ax1 = fig.add_subplot( 111, projection = '3d' )
 
-## plot the jacobian
+## plot the Trajectory
 ax1.plot( xInertial, yInertial, zInertial, color=colors.cnames['purple'] )
 
-ax1.scatter( xInertial[10000], yInertial[10000], zInertial[10000], s=200,                       \
+ax1.scatter( xInertial[0], yInertial[0], zInertial[0], s=200,                                  \
              c=colors.cnames['orange'], marker=(5,1), label='Sun' )
 
 ax1.scatter( 0.0, 0.0, 0.0, s=100, c=colors.cnames['black'], marker=(5,0), label='Eros' )
@@ -96,11 +96,52 @@ ax1.set_ylabel('y [m]')
 ax1.set_zlabel('z [m]')
 ax1.set_title('Asteroid-centric orbit trajectory of Sun')
 ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useOffset=False)
+ax1.legend( ).draggable( )
+ax1.grid(True)
+
+## Plot trajectory in xy plane (inertial frame)
+fig = plt.figure( )
+ax1 = fig.add_subplot( 111 )
+
+ax1.plot( xInertial, yInertial, color=colors.cnames['purple'] )
+
+ax1.scatter( xInertial[ 0 ], yInertial[ 0 ], s=200,                                            \
+             c=colors.cnames['orange'], marker=(5,1), label='Sun' )
+
+ax1.scatter( 0.0, 0.0, s=100, c=colors.cnames['black'], marker=(5,0), label='Eros' )
+ax1.set_xlabel('x [m]')
+ax1.set_ylabel('y [m]')
+ax1.set_title('Sun trajectory around the asteroid (Inertial frame)')
+ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useOffset=False)
+ax1.legend( ).draggable( )
+ax1.grid(True)
+ax1.axis('equal')
+
+## Plot trajectory in xy plane (body frame)
+# fig = plt.figure( )
+# ax1 = fig.add_subplot( 111 )
+
+# numberOfDaysToPlot = 0.5
+# secondsToPlot = numberOfDaysToPlot * 24.0 * 60.0 * 60.0
+# dataSaveInterval = 50.0
+# finalIndex = secondsToPlot / dataSaveInterval
+# indexRange = range( 0, int( finalIndex ) )
+
+# ax1.plot( xBody[ indexRange ], yBody[ indexRange ], color=colors.cnames['purple'] )
+
+# ax1.scatter( xBody[ 0 ], yBody[ 0 ], s=200,                                            \
+#              c=colors.cnames['orange'], marker=(5,1), label='Sun' )
+
+# ax1.scatter( 0.0, 0.0, s=100, c=colors.cnames['black'], marker=(5,0), label='Eros' )
+# ax1.set_xlabel('x [m]')
+# ax1.set_ylabel('y [m]')
+# ax1.set_title('Sun trajectory around the asteroid (Body frame)')
+# ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useOffset=False)
+# ax1.legend( ).draggable( )
+# ax1.grid(True)
+# ax1.axis('equal')
 
 ## show plot
-plt.legend( )
-plt.tight_layout( )
-plt.grid( )
 plt.show( )
 
 # Stop timer

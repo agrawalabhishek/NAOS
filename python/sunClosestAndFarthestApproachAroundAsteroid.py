@@ -52,7 +52,8 @@ start_time = time.time( )
 
 ## Operations
 # Read data in csv file. data returned as a panda series.
-data = pd.read_csv( '../data/sun_asteroid_2BP/equatorial_and_circular_case/sunAsteroid2BP.csv' )
+# data = pd.read_csv( '../data/sun_asteroid_2BP/equatorial_and_circular_case/sunAsteroid2BP.csv' )
+data = pd.read_csv( '../data/sun_asteroid_2BP/equatorial_elliptical_TA0deg/sunAsteroid2BP.csv' )
 
 xBody           = data["x_body_frame"].values
 yBody           = data["y_body_frame"].values
@@ -99,6 +100,7 @@ print "max. radial distance of sun from the asteroid =  " + str( max( sunRadialD
 
 oneAstronomicalUnit = 149597870700.0
 fig = plt.figure( )
+plt.suptitle( 'Radial distance to Sun from Asteroid' )
 ax1 = fig.add_subplot( 111 )
 ax1.plot( t/(24.0*60.0*60.0), ( sunRadialDistance/oneAstronomicalUnit ) )
 # ax1.plot( t/(24.0*60.0*60.0), radiusPerigee/oneAstronomicalUnit, color=colors.cnames['purple'], label='Periapsis distance' )
@@ -110,6 +112,7 @@ plt.grid( )
 plt.show( )
 
 fig = plt.figure( )
+plt.suptitle( 'True, Mean, Eccentric Anomaly variation against Time' )
 ax1 = fig.add_subplot( 311 )
 ax1.plot( t/(24.0*60.0*60.0), ta )
 ax1.set_xlabel( "time [Earth days]" )
