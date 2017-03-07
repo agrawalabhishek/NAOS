@@ -114,7 +114,7 @@ std::vector< double > computeSunThirdBodyEffectAcceleration( const std::vector< 
 
     // accessed 3 jan 2016 from:
     // http://ssd.jpl.nasa.gov/?constants
-    const double sunGravParameter = 1.32712440018 * 10.0e+20;
+    const double sunGravParameter = 1.32712440018 * 1.0e+20;
 
     // solve the kepler problem to get the sun's position for the required time value
     // get the mean anomaly for the time value
@@ -241,7 +241,7 @@ std::vector< double > computeSolarRadiationPressureAcceleration( const std::vect
 {
     // accessed 3 jan 2016 from:
     // http://ssd.jpl.nasa.gov/?constants
-    const double sunGravParameter = 1.32712440018 * 10.0e+20;
+    const double sunGravParameter = 1.32712440018 * 1.0e+20;
 
     // solve the kepler problem to get the sun's position for the required time value
     // get the mean anomaly for the time value
