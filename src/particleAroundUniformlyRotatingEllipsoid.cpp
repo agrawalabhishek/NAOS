@@ -25,6 +25,7 @@
 #include "NAOS/ellipsoidGravitationalAcceleration.hpp"
 #include "NAOS/ellipsoidPotential.hpp"
 #include "NAOS/perturbingAccelerations.hpp"
+#include "NAOS/sunAsteroidKeplerProblemSolver.hpp"
 
 namespace naos
 {
@@ -857,6 +858,57 @@ void jacobiChecker( const double currentJacobi,
     }
 }
 
+//! Computes the solar phase angle at a given time instance
+double computeSolarPhaseAngle( const double regolithArgumentOfPeriapsis,
+                               const double currentTime,
+                               const double initialSunMeanAnomalyRadian,
+                               const double initialTimeForSun,
+                               const std::vector< double > initialSunOrbitalElements,
+                               const double sunMeanMotion )
+{
+    // radian conversion
+    // double regolithArgumentOfPeriapsisRadian = convertDegreeToRadians( regolithArgumentOfPeriapsis );
+
+    // calculate the sun's longitude for the current time instance
+    double timeDifference = std::fabs( currentTime - initialTimeForSun );
+    double meanAnomalyRadian = sunMeanMotion * timeDifference + initialSunMeanAnomalyRadian;
+
+    double eccentricity = initialSunOrbitalElements[ 1 ];
+    double eccentricitySquare = eccentricity * eccentricity;
+
+    // get the corresponding eccentric anomaly
+    double eccentricAnomalyRadian
+        = convertMeanAnomalyToEccentricAnomaly( eccentricity,
+                                                meanAnomalyRadian );
+
+    // get the corresponding true anomaly
+    double sineOfTrueAnomaly
+        = std::sqrt( 1.0 - eccentricitySquare ) * std::sin( eccentricAnomalyRadian )
+        / ( 1.0 - eccentricity * std::cos( eccentricAnomalyRadian ) );
+
+    double cosineOfTrueAnomaly
+        = ( std::cos( eccentricAnomalyRadian ) - eccentricity )
+        / ( 1.0 - eccentricity * std::cos( eccentricAnomalyRadian ) );
+
+    double trueAnomalyRadian
+        = std::atan2( sineOfTrueAnomaly, cosineOfTrueAnomaly );
+
+    double trueAnomaly = naos::convertRadiansToDegree( trueAnomalyRadian );
+
+    double longitudeOfSun = trueAnomalyRadian;
+
+    // double longitudeOfSun = naos::convertDegreeToRadians( initialSunOrbitalElements[ 5 ] );
+
+    // double solarPhaseAngle = naos::PI - ( longitudeOfSun - regolithArgumentOfPeriapsisRadian );
+
+    double solarPhaseAngle = longitudeOfSun;
+
+    solarPhaseAngle = naos::convertRadiansToDegree( solarPhaseAngle );
+    solarPhaseAngle = std::fmod( solarPhaseAngle, 360.0 );
+
+    return solarPhaseAngle;
+}
+
 //! Trajectory calculation for regolith around an asteroid (modelled as ellipsoid here)
 /*!
  * Same as the previous function, except that the initial conditions are now given as a cartesian
@@ -899,31 +951,6 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     convertCartesianCoordinatesToKeplerianElements( initialInertialState,
                                                     gravParameter,
                                                     initialOrbitalElements );
-
-    // sanity check for initial orbital elements
-    // std::vector< double > sanityCheckInitialState( 6, 0.0 );
-    // sanityCheckInitialState
-    //     = convertKeplerianElementsToCartesianCoordinates( initialOrbitalElements,
-    //                                                       gravParameter );
-    // double sanityCheckPositionSquareX
-    //     = sanityCheckInitialState[ xPositionIndex ] * sanityCheckInitialState[ xPositionIndex ];
-    // double sanityCheckPositionSquareY
-    //     = sanityCheckInitialState[ yPositionIndex ] * sanityCheckInitialState[ yPositionIndex ];
-    // double sanityCheckPositionSquareZ
-    //     = sanityCheckInitialState[ zPositionIndex ] * sanityCheckInitialState[ zPositionIndex ];
-
-    // double ellipsoidSolution
-    //     = sanityCheckPositionSquareX / ( alpha * alpha )
-    //     + sanityCheckPositionSquareY / ( beta * beta )
-    //     + sanityCheckPositionSquareZ / ( gamma * gamma )
-    //     - 1.0;
-
-    // if( ellipsoidSolution > 1.0e-12 )
-    // {
-    //     std::cout << std::endl << std::endl;
-    //     std::cout << "Error in conversion from inital orbital elements to initial cartesian state";
-    //     std::cout << std::endl;
-    // }
 
     //! get the initial energy of the particle
     double kineticEnergy = 0.0;
@@ -987,24 +1014,46 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
     // initialize the ode system
     const double zRotation = asteroidRotationVector[ zPositionIndex ];
-    equationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
-                                                                             alpha,
-                                                                             beta,
-                                                                             gamma,
-                                                                             zRotation );
+    // equationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
+    //                                                                          alpha,
+    //                                                                          beta,
+    //                                                                          gamma,
+    //                                                                          zRotation );
 
     // initialize the (perturbed) ode system
     // Note - initial time for sun's position (corresponding true anomaly for sun) is independant of
     // start time for regolith trajectory simulation
-    // perturbedEquationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
-    //                                                                                   alpha,
-    //                                                                                   beta,
-    //                                                                                   gamma,
-    //                                                                                   asteroidRotationVector,
-    //                                                                                   initialTimeForSun,
-    //                                                                                   initialSunMeanAnomalyRadian,
-    //                                                                                   initialSunOrbitalElements,
-    //                                                                                   sunMeanMotion );
+    perturbedEquationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
+                                                                                      alpha,
+                                                                                      beta,
+                                                                                      gamma,
+                                                                                      asteroidRotationVector,
+                                                                                      initialTimeForSun,
+                                                                                      initialSunMeanAnomalyRadian,
+                                                                                      initialSunOrbitalElements,
+                                                                                      sunMeanMotion );
+
+    // compute the (initial) solar phase angle
+    double initialArgumentOfPeriapsisForRegolith
+        = naos::convertDegreeToRadians( initialOrbitalElements[ 4 ] );
+
+    double initialLongitudeOfSun
+        = naos::convertDegreeToRadians( initialSunOrbitalElements[ 5 ] );
+
+    // double solarPhaseAngle
+    //     = naos::PI - ( initialLongitudeOfSun - initialArgumentOfPeriapsisForRegolith );
+    double solarPhaseAngle = initialLongitudeOfSun;
+
+    solarPhaseAngle = naos::convertRadiansToDegree( solarPhaseAngle );
+    solarPhaseAngle = std::fmod( solarPhaseAngle, 360.0 );
+
+    // std::cout << std::endl;
+    // std::cout << "solar longitude = " << initialSunOrbitalElements[ 5 ];
+    // std::cout << std::endl;
+    // std::cout << "regolith initial AOP = " << initialOrbitalElements[ 4 ];
+    // std::cout << std::endl;
+    // std::cout << "solar phase angle = " << solarPhaseAngle;
+    // printVector( initialOrbitalElements, 6 );
 
     // initialize current state vector and time
     double variableDataSaveInterval = dataSaveIntervals;
@@ -1075,6 +1124,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     databaseQuery.bind( ":total_energy", initialParticleEnergy );
 
     databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
+
+    databaseQuery.bind( ":solar_phase_angle", solarPhaseAngle );
 
     databaseQuery.bind( ":start_flag", startFlag );
     databaseQuery.bind( ":end_flag", endFlag );
@@ -1211,7 +1262,6 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
                 omegaSquare = asteroidRotationVector[ zPositionIndex ] * asteroidRotationVector[ zPositionIndex ];
 
-                bodyFrameGravPotential;
                 computeEllipsoidGravitationalPotential( alpha,
                                                         beta,
                                                         gamma,
@@ -1233,6 +1283,14 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                 // set the flags
                 escapeFlag = 1;
                 crashFlag = 0;
+
+                // compute the current solar phase angle
+                solarPhaseAngle = computeSolarPhaseAngle( orbitalElements[ 4 ],
+                                                          currentTime,
+                                                          initialSunMeanAnomalyRadian,
+                                                          initialTimeForSun,
+                                                          initialSunOrbitalElements,
+                                                          sunMeanMotion );
 
                 // save data
                 databaseQuery.bind( ":trajectory_id", trajectoryID );
@@ -1285,6 +1343,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                 databaseQuery.bind( ":total_energy", particleEnergy );
 
                 databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
+
+                databaseQuery.bind( ":solar_phase_angle", solarPhaseAngle );
 
                 databaseQuery.bind( ":start_flag", startFlag );
                 databaseQuery.bind( ":end_flag", endFlag );
@@ -1354,7 +1414,6 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
             omegaSquare = asteroidRotationVector[ zPositionIndex ] * asteroidRotationVector[ zPositionIndex ];
 
-            bodyFrameGravPotential;
             computeEllipsoidGravitationalPotential( alpha,
                                                     beta,
                                                     gamma,
@@ -1368,6 +1427,14 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                 = 0.5 * ( xVelocitySquare + yVelocitySquare + zVelocitySquare )
                 - 0.5 * omegaSquare * ( xPositionSquare + yPositionSquare )
                 - bodyFrameGravPotential;
+
+            // compute solar phase angle
+            solarPhaseAngle = computeSolarPhaseAngle( orbitalElements[ 4 ],
+                                                      currentTime,
+                                                      initialSunMeanAnomalyRadian,
+                                                      initialTimeForSun,
+                                                      initialSunOrbitalElements,
+                                                      sunMeanMotion );
 
             // save data
             databaseQuery.bind( ":trajectory_id", trajectoryID );
@@ -1420,6 +1487,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             databaseQuery.bind( ":total_energy", particleEnergy );
 
             databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
+
+            databaseQuery.bind( ":solar_phase_angle", solarPhaseAngle );
 
             databaseQuery.bind( ":start_flag", startFlag );
             databaseQuery.bind( ":end_flag", endFlag );
@@ -1523,7 +1592,6 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
             omegaSquare = asteroidRotationVector[ zPositionIndex ] * asteroidRotationVector[ zPositionIndex ];
 
-            bodyFrameGravPotential;
             computeEllipsoidGravitationalPotential( alpha,
                                                     beta,
                                                     gamma,
@@ -1537,6 +1605,14 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                 = 0.5 * ( xVelocitySquare + yVelocitySquare + zVelocitySquare )
                 - 0.5 * omegaSquare * ( xPositionSquare + yPositionSquare )
                 - bodyFrameGravPotential;
+
+            // compute solar phase angle
+            solarPhaseAngle = computeSolarPhaseAngle( orbitalElements[ 4 ],
+                                                      currentTime,
+                                                      initialSunMeanAnomalyRadian,
+                                                      initialTimeForSun,
+                                                      initialSunOrbitalElements,
+                                                      sunMeanMotion );
 
             // save data
             databaseQuery.bind( ":trajectory_id", trajectoryID );
@@ -1589,6 +1665,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             databaseQuery.bind( ":total_energy", particleEnergy );
 
             databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
+
+            databaseQuery.bind( ":solar_phase_angle", solarPhaseAngle );
 
             databaseQuery.bind( ":start_flag", startFlag );
             databaseQuery.bind( ":end_flag", endFlag );
@@ -1645,7 +1723,6 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
         omegaSquare = asteroidRotationVector[ zPositionIndex ] * asteroidRotationVector[ zPositionIndex ];
 
-        bodyFrameGravPotential;
         computeEllipsoidGravitationalPotential( alpha,
                                                 beta,
                                                 gamma,
@@ -1659,6 +1736,14 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             = 0.5 * ( xVelocitySquare + yVelocitySquare + zVelocitySquare )
             - 0.5 * omegaSquare * ( xPositionSquare + yPositionSquare )
             - bodyFrameGravPotential;
+
+        // compute solar phase angle
+        solarPhaseAngle = computeSolarPhaseAngle( orbitalElements[ 4 ],
+                                                  currentTime,
+                                                  initialSunMeanAnomalyRadian,
+                                                  initialTimeForSun,
+                                                  initialSunOrbitalElements,
+                                                  sunMeanMotion );
 
         // save data
         databaseQuery.bind( ":trajectory_id", trajectoryID );
@@ -1711,6 +1796,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
         databaseQuery.bind( ":total_energy", particleEnergy );
 
         databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
+
+        databaseQuery.bind( ":solar_phase_angle", solarPhaseAngle );
 
         databaseQuery.bind( ":start_flag", startFlag );
         databaseQuery.bind( ":escape_flag", escapeFlag );
