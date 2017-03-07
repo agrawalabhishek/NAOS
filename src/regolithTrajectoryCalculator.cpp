@@ -448,137 +448,150 @@ void executeRegolithTrajectoryCalculation( const double alpha,
     // NOTE: initial true anomaly for sun's position is independant of the starting time for regolith
     // simulation
     const double oneAstronomicalUnit = 149597870700.0;
-    const double initialTimeForSun = 0.0;
-    std::vector< double > initialSunOrbitalElements = { 1.457945652635353 * oneAstronomicalUnit,
-                                                        0.0,
-                                                        0.0,
-                                                        0.0,
-                                                        0.0,
-                                                        0.0 };
-
     // accessed 3 jan 2016 from:
     // http://ssd.jpl.nasa.gov/?constants
-    const double sunGravParameter = 1.32712440018 * 10.0e+20;
+    const double sunGravParameter = 1.32712440018 * 1.0e+20;
 
-    // get the initial eccentric anomaly
-    double trueAnomalyRadian = naos::convertDegreeToRadians( initialSunOrbitalElements[ 5 ] );
-    double eccentricity = initialSunOrbitalElements[ 1 ];
-    double eccentricitySquare = eccentricity * eccentricity;
+    // std::vector< double > initialSunOrbitalElements = { 1.457945652635353 * oneAstronomicalUnit,
+    //                                                     0.0,
+    //                                                     0.0,
+    //                                                     0.0,
+    //                                                     0.0,
+    //                                                     0.0 };
 
-    double sineOfEccentricAnomaly
-        = ( std::sqrt( 1.0 - eccentricitySquare ) * std::sin( trueAnomalyRadian ) )
-        / ( 1.0 + eccentricity * std::cos( trueAnomalyRadian ) );
-
-    double cosineOfEccentricAnomaly
-        = ( eccentricity + std::cos( trueAnomalyRadian ) )
-        / ( 1.0 + eccentricity * std::cos( trueAnomalyRadian ) );
-
-    // value returned in the range of -pi to +pi radians
-    double initialEccentricAnomalyRadian
-        = std::atan2( sineOfEccentricAnomaly, cosineOfEccentricAnomaly );
-
-    // get the initial mean anomaly
-    double initialSunMeanAnomalyRadian
-        = initialEccentricAnomalyRadian - eccentricity * std::sin( initialEccentricAnomalyRadian );
-
-    // get the mean motion
-    double semiMajorAxis = initialSunOrbitalElements[ 0 ];
-    double semiMajorAxisCube = semiMajorAxis * semiMajorAxis * semiMajorAxis;
-    double sunMeanMotion = std::sqrt( sunGravParameter / semiMajorAxisCube );
-
-    for( int velocityIterator = 1; velocityIterator <= 20; velocityIterator = velocityIterator + 1 )
+    for( int sunLongitudeIterator = 0; sunLongitudeIterator < 360; sunLongitudeIterator++ )
     {
-        // all particles, irrespective of surface location will have the same velocity as computed
-        // below.
-        velocityMagnitude = 1.0 * velocityIterator;
-        // velocityMagnitude = 13.0;
+        double sunLongitude = 1.0 * sunLongitudeIterator;
+        std::vector< double > initialSunOrbitalElements = { 1.0 * oneAstronomicalUnit,
+                                                            0.0,
+                                                            0.0,
+                                                            0.0,
+                                                            0.0,
+                                                            sunLongitude };
 
-        std::vector< double > regolithVelocityVector( 3 );
+        // get the initial eccentric anomaly
+        double trueAnomalyRadian = naos::convertDegreeToRadians( initialSunOrbitalElements[ 5 ] );
+        double eccentricity = initialSunOrbitalElements[ 1 ];
+        double eccentricitySquare = eccentricity * eccentricity;
 
-        // get the regolith launch direction unit vector
-        std::vector< double > regolithDirectionUnitVector( 3, 0.0 );
+        double sineOfEccentricAnomaly
+            = ( std::sqrt( 1.0 - eccentricitySquare ) * std::sin( trueAnomalyRadian ) )
+            / ( 1.0 + eccentricity * std::cos( trueAnomalyRadian ) );
 
-        computeRegolithVelocityVector2( regolithPositionVector,
-                                        velocityMagnitude,
-                                        coneAngleAzimuth,
-                                        coneAngleDeclination,
-                                        regolithNormalUnitVector,
-                                        regolithVelocityVector,
-                                        regolithDirectionUnitVector );
+        double cosineOfEccentricAnomaly
+            = ( eccentricity + std::cos( trueAnomalyRadian ) )
+            / ( 1.0 + eccentricity * std::cos( trueAnomalyRadian ) );
 
-        // compute local escape velocity magnitude in the direction of the launched regolith
-        // i.e. not in the normal direction!
-        double regolithDirectionDotOmegaCrossPosition = dotProduct( regolithDirectionUnitVector,
-                                                                    omegaCrossPosition );
-        double regolithDirectionDotOmegaCrossPositionSquare
-                    = regolithDirectionDotOmegaCrossPosition * regolithDirectionDotOmegaCrossPosition;
+        // value returned in the range of -pi to +pi radians
+        double initialEccentricAnomalyRadian
+            = std::atan2( sineOfEccentricAnomaly, cosineOfEccentricAnomaly );
 
-        // conservative inertial escape speed calculation
-        double conservativeInertialEscapeSpeedSquared = 2.0 * maxPotentialValue;
+        // get the initial mean anomaly
+        double initialSunMeanAnomalyRadian
+            = initialEccentricAnomalyRadian - eccentricity * std::sin( initialEccentricAnomalyRadian );
 
-        const double localRegolithDirectionEscapeSpeed
-                            = -1.0 * regolithDirectionDotOmegaCrossPosition
-                            + std::sqrt( regolithDirectionDotOmegaCrossPositionSquare
-                            + conservativeInertialEscapeSpeedSquared - omegaCrossPositionSquare );
+        // get the mean motion
+        double semiMajorAxis = initialSunOrbitalElements[ 0 ];
+        double semiMajorAxisCube = semiMajorAxis * semiMajorAxis * semiMajorAxis;
+        double sunMeanMotion = std::sqrt( sunGravParameter / semiMajorAxisCube );
 
-        // get the inertial directional escape velocity magnitude.
-        // Note - accounting for non-zero start time
-        std::vector< double > inertialDirectionalEscapeVelocityInBodyComponents( 3, 0.0 );
-        std::vector< double > inertialDirectionalEscapeVelocity( 3, 0.0 );
+        // set the initial time for sun now based on its true anomaly
+        const double initialTimeForSun = trueAnomalyRadian / sunMeanMotion;
 
-        inertialDirectionalEscapeVelocityInBodyComponents[ 0 ]
-            = localRegolithDirectionEscapeSpeed * regolithDirectionUnitVector[ 0 ] + omegaCrossPosition[ 0 ];
+        // for( int velocityIterator = 1; velocityIterator <= 20; velocityIterator = velocityIterator + 1 )
+        // {
+            // all particles, irrespective of surface location will have the same velocity as computed
+            // below.
+            // velocityMagnitude = 1.0 * velocityIterator;
+            velocityMagnitude = 10.0;
 
-        inertialDirectionalEscapeVelocityInBodyComponents[ 1 ]
-            = localRegolithDirectionEscapeSpeed * regolithDirectionUnitVector[ 1 ] + omegaCrossPosition[ 1 ];
+            std::vector< double > regolithVelocityVector( 3 );
 
-        inertialDirectionalEscapeVelocityInBodyComponents[ 2 ]
-            = localRegolithDirectionEscapeSpeed * regolithDirectionUnitVector[ 2 ] + omegaCrossPosition[ 2 ];
+            // get the regolith launch direction unit vector
+            std::vector< double > regolithDirectionUnitVector( 3, 0.0 );
 
-        // use the rotation matrix to get the escape velocity in the inertial frame
-        double rotationAngle = W[ 2 ] * startTime;
+            computeRegolithVelocityVector2( regolithPositionVector,
+                                            velocityMagnitude,
+                                            coneAngleAzimuth,
+                                            coneAngleDeclination,
+                                            regolithNormalUnitVector,
+                                            regolithVelocityVector,
+                                            regolithDirectionUnitVector );
 
-        inertialDirectionalEscapeVelocity[ 0 ]
-                    = inertialDirectionalEscapeVelocityInBodyComponents[ 0 ] * std::cos( rotationAngle )
-                    - inertialDirectionalEscapeVelocityInBodyComponents[ 1 ] * std::sin( rotationAngle );
+            // compute local escape velocity magnitude in the direction of the launched regolith
+            // i.e. not in the normal direction!
+            double regolithDirectionDotOmegaCrossPosition = dotProduct( regolithDirectionUnitVector,
+                                                                        omegaCrossPosition );
+            double regolithDirectionDotOmegaCrossPositionSquare
+                        = regolithDirectionDotOmegaCrossPosition * regolithDirectionDotOmegaCrossPosition;
 
-        inertialDirectionalEscapeVelocity[ 1 ]
-                    = inertialDirectionalEscapeVelocityInBodyComponents[ 0 ] * std::sin( rotationAngle )
-                    + inertialDirectionalEscapeVelocityInBodyComponents[ 1 ] * std::cos( rotationAngle );
+            // conservative inertial escape speed calculation
+            double conservativeInertialEscapeSpeedSquared = 2.0 * maxPotentialValue;
 
-        inertialDirectionalEscapeVelocity[ 2 ] = inertialDirectionalEscapeVelocityInBodyComponents[ 2 ];
+            const double localRegolithDirectionEscapeSpeed
+                                = -1.0 * regolithDirectionDotOmegaCrossPosition
+                                + std::sqrt( regolithDirectionDotOmegaCrossPositionSquare
+                                + conservativeInertialEscapeSpeedSquared - omegaCrossPositionSquare );
 
-        const double inertialDirectionalEscapeSpeed = vectorNorm( inertialDirectionalEscapeVelocity );
+            // get the inertial directional escape velocity magnitude.
+            // Note - accounting for non-zero start time
+            std::vector< double > inertialDirectionalEscapeVelocityInBodyComponents( 3, 0.0 );
+            std::vector< double > inertialDirectionalEscapeVelocity( 3, 0.0 );
 
-        // form the initial state vector defined in body frame
-        naos::Vector6 initialVector { regolithPositionVector[ xPositionIndex ],
-                                      regolithPositionVector[ yPositionIndex ],
-                                      regolithPositionVector[ zPositionIndex ],
-                                      regolithVelocityVector[ 0 ],
-                                      regolithVelocityVector[ 1 ],
-                                      regolithVelocityVector[ 2 ] };
+            inertialDirectionalEscapeVelocityInBodyComponents[ 0 ]
+                = localRegolithDirectionEscapeSpeed * regolithDirectionUnitVector[ 0 ] + omegaCrossPosition[ 0 ];
 
-        // calculate the trajectory of the regolith (uses SQL db to save data)
-        executeSingleRegolithTrajectoryCalculation( alpha,
-                                                    beta,
-                                                    gamma,
-                                                    gravitationalParameter,
-                                                    W,
-                                                    initialVector,
-                                                    coneAngleAzimuth,
-                                                    coneAngleDeclination,
-                                                    localRegolithDirectionEscapeSpeed,
-                                                    inertialDirectionalEscapeSpeed,
-                                                    integrationStepSize,
-                                                    startTime,
-                                                    endTime,
-                                                    initialSunMeanAnomalyRadian,
-                                                    initialTimeForSun,
-                                                    initialSunOrbitalElements,
-                                                    sunMeanMotion,
-                                                    databaseQuery,
-                                                    dataSaveIntervals );
-    } // end of for loop iterating over different magnitudes for the regolith velocity
+            inertialDirectionalEscapeVelocityInBodyComponents[ 1 ]
+                = localRegolithDirectionEscapeSpeed * regolithDirectionUnitVector[ 1 ] + omegaCrossPosition[ 1 ];
+
+            inertialDirectionalEscapeVelocityInBodyComponents[ 2 ]
+                = localRegolithDirectionEscapeSpeed * regolithDirectionUnitVector[ 2 ] + omegaCrossPosition[ 2 ];
+
+            // use the rotation matrix to get the escape velocity in the inertial frame
+            double rotationAngle = W[ 2 ] * startTime;
+
+            inertialDirectionalEscapeVelocity[ 0 ]
+                        = inertialDirectionalEscapeVelocityInBodyComponents[ 0 ] * std::cos( rotationAngle )
+                        - inertialDirectionalEscapeVelocityInBodyComponents[ 1 ] * std::sin( rotationAngle );
+
+            inertialDirectionalEscapeVelocity[ 1 ]
+                        = inertialDirectionalEscapeVelocityInBodyComponents[ 0 ] * std::sin( rotationAngle )
+                        + inertialDirectionalEscapeVelocityInBodyComponents[ 1 ] * std::cos( rotationAngle );
+
+            inertialDirectionalEscapeVelocity[ 2 ] = inertialDirectionalEscapeVelocityInBodyComponents[ 2 ];
+
+            const double inertialDirectionalEscapeSpeed = vectorNorm( inertialDirectionalEscapeVelocity );
+
+            // form the initial state vector defined in body frame
+            naos::Vector6 initialVector { regolithPositionVector[ xPositionIndex ],
+                                          regolithPositionVector[ yPositionIndex ],
+                                          regolithPositionVector[ zPositionIndex ],
+                                          regolithVelocityVector[ 0 ],
+                                          regolithVelocityVector[ 1 ],
+                                          regolithVelocityVector[ 2 ] };
+
+            // calculate the trajectory of the regolith (uses SQL db to save data)
+            executeSingleRegolithTrajectoryCalculation( alpha,
+                                                        beta,
+                                                        gamma,
+                                                        gravitationalParameter,
+                                                        W,
+                                                        initialVector,
+                                                        coneAngleAzimuth,
+                                                        coneAngleDeclination,
+                                                        localRegolithDirectionEscapeSpeed,
+                                                        inertialDirectionalEscapeSpeed,
+                                                        integrationStepSize,
+                                                        startTime,
+                                                        endTime,
+                                                        initialSunMeanAnomalyRadian,
+                                                        initialTimeForSun,
+                                                        initialSunOrbitalElements,
+                                                        sunMeanMotion,
+                                                        databaseQuery,
+                                                        dataSaveIntervals );
+        // } // end of for loop iterating over different magnitudes for the regolith velocity
+    } // end of solar phase angle iterator loop
 }
 
 } // namespace naos
