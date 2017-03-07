@@ -264,6 +264,8 @@ void createDatabaseTable( SQLite::Database &database )
 
         << "\"jacobi_integral\"                                 REAL,"
 
+        << "\"solar_phase_angle\"                               REAL,"
+
         << "\"start_flag\"                                      INTEGER,"
         << "\"end_flag\"                                        INTEGER,"
         << "\"escape_flag\"                                     INTEGER,"
@@ -301,7 +303,6 @@ void executeRegolithMonteCarlo( const double alpha,
     double aYValue = 0.0;
     double aZValue = 0.0;
     const double velocityMagnitudeFactor = 0.9;
-    const double coneAngleDeclination = naos::convertDegreeToRadians( 45.0 );
     const double coneAngleAzimuthFactor = 1.0;
 
     // Open database in read/write mode.
@@ -362,6 +363,7 @@ void executeRegolithMonteCarlo( const double alpha,
         << ":potential_energy,"
         << ":total_energy,"
         << ":jacobi_integral,"
+        << ":solar_phase_angle,"
         << ":start_flag,"
         << ":end_flag,"
         << ":escape_flag,"
@@ -370,7 +372,7 @@ void executeRegolithMonteCarlo( const double alpha,
 
     SQLite::Statement databaseQuery( database, regolithTrajectoryTableInsert.str( ) );
 
-    sanityCheckForEllipsoidAccelerationAndPotential( alpha, beta, gamma );
+    // sanityCheckForEllipsoidAccelerationAndPotential( alpha, beta, gamma );
 
     // testBedForRegolithTrajectoryCalculator( alpha,
     //                                         beta,
@@ -383,12 +385,13 @@ void executeRegolithMonteCarlo( const double alpha,
     //                                         databaseQuery );
 
     // azimuth angle iterator begins here
-    for( int azimuthIterator = 0; azimuthIterator < 360; azimuthIterator = azimuthIterator + 1 )
-    {
+    // for( int azimuthIterator = 0; azimuthIterator < 360; azimuthIterator = azimuthIterator + 1 )
+    // {
         // calculate the azimuth angle
-        const double coneAngleAzimuth
-                = naos::convertDegreeToRadians( coneAngleAzimuthFactor * azimuthIterator );
-        // const double coneAngleAzimuth = naos::convertDegreeToRadians( 16.0 );
+        // const double coneAngleAzimuth
+        //         = naos::convertDegreeToRadians( coneAngleAzimuthFactor * azimuthIterator );
+        const double coneAngleAzimuth = naos::convertDegreeToRadians( 0.0 );
+        const double coneAngleDeclination = naos::convertDegreeToRadians( 0.0 );
 
         executeRegolithTrajectoryCalculation( alpha,
                                               beta,
@@ -407,7 +410,7 @@ void executeRegolithMonteCarlo( const double alpha,
                                               endTime,
                                               dataSaveIntervals,
                                               databaseQuery );
-    } // end of azimuth angle iterator loop
+    // } // end of azimuth angle iterator loop
 
     transaction.commit( );
 }
