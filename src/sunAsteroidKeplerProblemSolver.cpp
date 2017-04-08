@@ -400,6 +400,13 @@ void executeSunAsteroidKeplerSolver( const double gravParameter,
     double initialMeanAnomalyRadian
         = initialEccentricAnomalyRadian - eccentricity * std::sin( initialEccentricAnomalyRadian );
 
+    if( initialMeanAnomalyRadian < 0.0 )
+    {
+        initialMeanAnomalyRadian = initialMeanAnomalyRadian + ( 2.0 * naos::PI );
+    }
+
+    std::cout << "Initial mean anomaly [rads] = " << initialMeanAnomalyRadian << std::endl;
+
     outputFile << naos::convertRadiansToDegree( initialEccentricAnomalyRadian ) << ",";
     outputFile << naos::convertRadiansToDegree( initialMeanAnomalyRadian ) << ",";
 
@@ -407,6 +414,8 @@ void executeSunAsteroidKeplerSolver( const double gravParameter,
     double semiMajorAxis = initialOrbitalElements[ 0 ];
     double semiMajorAxisCube = semiMajorAxis * semiMajorAxis * semiMajorAxis;
     double meanMotion = std::sqrt( gravParameter / semiMajorAxisCube );
+
+    std::cout << "Mean motion of sun around asteroid = " << meanMotion << std::endl;
 
     // get the jacobi and the energy
     double jacobi = computeSunAsteroidJacobiConstant( bodyFrameStateVector,
@@ -423,7 +432,7 @@ void executeSunAsteroidKeplerSolver( const double gravParameter,
     while( intermediateEndTime <= endTime )
     {
         // get the mean anomaly for the next time value
-        double timeDifference = intermediateEndTime - startTime;
+        double timeDifference = std::fabs( intermediateEndTime - startTime );
         double meanAnomalyRadian = meanMotion * timeDifference + initialMeanAnomalyRadian;
 
         // get the corresponding eccentric anomaly
