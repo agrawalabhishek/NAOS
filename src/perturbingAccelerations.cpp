@@ -118,7 +118,8 @@ std::vector< double > computeSunThirdBodyEffectAcceleration( const std::vector< 
 
     // solve the kepler problem to get the sun's position for the required time value
     // get the mean anomaly for the time value
-    double timeDifference = std::fabs( timeValue - initialTime );
+    // double timeDifference = std::fabs( timeValue - initialTime );
+    double timeDifference = std::fabs( timeValue );
     double meanAnomalyRadian = sunMeanMotion * timeDifference + initialSunMeanAnomalyRadian;
 
     double eccentricity = initialSunOrbitalElements[ 1 ];
@@ -142,6 +143,11 @@ std::vector< double > computeSunThirdBodyEffectAcceleration( const std::vector< 
         = std::atan2( sineOfTrueAnomaly, cosineOfTrueAnomaly );
 
     double trueAnomaly = naos::convertRadiansToDegree( trueAnomalyRadian );
+
+    if( trueAnomaly < 0.0 )
+    {
+        trueAnomaly = trueAnomaly + 360.0;
+    }
 
     // form the orbital elements vector
     // basically update the orbital elements true anomaly,
@@ -245,7 +251,8 @@ std::vector< double > computeSolarRadiationPressureAcceleration( const std::vect
 
     // solve the kepler problem to get the sun's position for the required time value
     // get the mean anomaly for the time value
-    double timeDifference = std::fabs( timeValue - initialTime );
+    // double timeDifference = std::fabs( timeValue - initialTime );
+    double timeDifference = std::fabs( timeValue );
     double meanAnomalyRadian = sunMeanMotion * timeDifference + initialSunMeanAnomalyRadian;
 
     double eccentricity = initialSunOrbitalElements[ 1 ];
@@ -269,6 +276,11 @@ std::vector< double > computeSolarRadiationPressureAcceleration( const std::vect
         = std::atan2( sineOfTrueAnomaly, cosineOfTrueAnomaly );
 
     double trueAnomaly = naos::convertRadiansToDegree( trueAnomalyRadian );
+
+    if( trueAnomaly < 0.0 )
+    {
+        trueAnomaly = trueAnomaly + 360.0;
+    }
 
     // form the orbital elements vector
     // basically update the orbital elements true anomaly,
@@ -323,7 +335,7 @@ std::vector< double > computeSolarRadiationPressureAcceleration( const std::vect
 
     // specify the area to mass ratio for the regolith
     const double regolithGrainDensity = 3.2 * 1.0e3;
-    const double regolithGrainRadius = 40.0 * 1.0e-6;
+    const double regolithGrainRadius = 1.0 * 1.0e-2;
     const double areaToMassRatio = 3.0 / ( 4.0 * regolithGrainRadius * regolithGrainDensity );
 
     // compute the acceleration

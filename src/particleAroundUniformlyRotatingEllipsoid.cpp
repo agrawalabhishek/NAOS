@@ -868,9 +868,11 @@ double computeSolarPhaseAngle( const double regolithArgumentOfPeriapsis,
 {
     // radian conversion
     // double regolithArgumentOfPeriapsisRadian = convertDegreeToRadians( regolithArgumentOfPeriapsis );
-
+// std::cout << "current Time = " << currentTime << std::endl;
+// std::cout << "initial time for sun = " << initialTimeForSun << std::endl;
     // calculate the sun's longitude for the current time instance
-    double timeDifference = std::fabs( currentTime - initialTimeForSun );
+    // double timeDifference = ( currentTime - initialTimeForSun );
+    double timeDifference = ( currentTime );
     double meanAnomalyRadian = sunMeanMotion * timeDifference + initialSunMeanAnomalyRadian;
 
     double eccentricity = initialSunOrbitalElements[ 1 ];
@@ -895,16 +897,21 @@ double computeSolarPhaseAngle( const double regolithArgumentOfPeriapsis,
 
     double trueAnomaly = naos::convertRadiansToDegree( trueAnomalyRadian );
 
-    double longitudeOfSun = trueAnomalyRadian;
+    if( trueAnomaly < 0.0 )
+    {
+        trueAnomaly = trueAnomaly + 360.0;
+    }
+
+    // double longitudeOfSun = trueAnomalyRadian;
 
     // double longitudeOfSun = naos::convertDegreeToRadians( initialSunOrbitalElements[ 5 ] );
 
     // double solarPhaseAngle = naos::PI - ( longitudeOfSun - regolithArgumentOfPeriapsisRadian );
 
-    double solarPhaseAngle = longitudeOfSun;
+    // double solarPhaseAngle = longitudeOfSun;
 
-    solarPhaseAngle = naos::convertRadiansToDegree( solarPhaseAngle );
-    solarPhaseAngle = std::fmod( solarPhaseAngle, 360.0 );
+    double solarPhaseAngle = trueAnomaly;
+    // solarPhaseAngle = std::fmod( solarPhaseAngle, 360.0 );
 
     return solarPhaseAngle;
 }
@@ -998,6 +1005,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     double initialVelocityMagnitude = std::sqrt( xVelocitySquare + yVelocitySquare + zVelocitySquare );
 
     std::cout << std::endl << std::endl;
+    std::cout << "Current Solar Phase angle = " << initialSunOrbitalElements[ 5 ];
+    std::cout << std::endl;
     std::cout << "Current launch azimuth = " << naos::convertRadiansToDegree( launchAzimuth );
     std::cout << std::endl;
     std::cout << "Current launch declination = " << naos::convertRadiansToDegree( launchDeclination );
@@ -1046,6 +1055,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
     solarPhaseAngle = naos::convertRadiansToDegree( solarPhaseAngle );
     solarPhaseAngle = std::fmod( solarPhaseAngle, 360.0 );
+    double initialSolarPhaseAngle = solarPhaseAngle;
 
     // std::cout << std::endl;
     // std::cout << "solar longitude = " << initialSunOrbitalElements[ 5 ];
@@ -1071,6 +1081,41 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     static int trajectoryID = 1;
     std::cout << std::endl;
     std::cout << "Trajectory ID = " << trajectoryID << std::endl;
+
+    // get SRP components for the current time
+    std::vector< double > currentSRPComponents( 3, 0.0 );
+    std::vector< double > positionVectorForRegolith = { currentStateVector[ xPositionIndex ],
+                                                        currentStateVector[ yPositionIndex ],
+                                                        currentStateVector[ zPositionIndex ] };
+    currentSRPComponents = computeSolarRadiationPressureAcceleration( positionVectorForRegolith,
+                                                                      asteroidRotationVector,
+                                                                      initialTimeForSun,
+                                                                      initialSunMeanAnomalyRadian,
+                                                                      initialSunOrbitalElements,
+                                                                      currentTime,
+                                                                      sunMeanMotion );
+
+    // get solar tidal effect perturbations for the current time
+    std::vector< double > currentSolarTidalEffectComponents( 3, 0.0 );
+    currentSolarTidalEffectComponents
+        = computeSunThirdBodyEffectAcceleration( positionVectorForRegolith,
+                                                 asteroidRotationVector,
+                                                 initialTimeForSun,
+                                                 initialSunMeanAnomalyRadian,
+                                                 initialSunOrbitalElements,
+                                                 currentTime,
+                                                 sunMeanMotion );
+
+    // get gravitational acceleration for the current time
+    std::vector< double > gravAcceleration( 3, 0.0 );
+    computeEllipsoidGravitationalAcceleration( alpha,
+                                               beta,
+                                               gamma,
+                                               gravParameter,
+                                               currentStateVector[ xPositionIndex ],
+                                               currentStateVector[ yPositionIndex ],
+                                               currentStateVector[ zPositionIndex ],
+                                               gravAcceleration );
 
     // save the initial state vector(body frame) and orbital elements
     databaseQuery.bind( ":trajectory_id", trajectoryID );
@@ -1125,7 +1170,18 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
     databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
+    databaseQuery.bind( ":initial_solar_phase_angle", initialSolarPhaseAngle );
     databaseQuery.bind( ":solar_phase_angle", solarPhaseAngle );
+    databaseQuery.bind( ":srp_x", currentSRPComponents[ 0 ] );
+    databaseQuery.bind( ":srp_y", currentSRPComponents[ 1 ] );
+    databaseQuery.bind( ":srp_z", currentSRPComponents[ 2 ] );
+    databaseQuery.bind( ":solarTide_x", currentSolarTidalEffectComponents[ 0 ] );
+    databaseQuery.bind( ":solarTide_y", currentSolarTidalEffectComponents[ 1 ] );
+    databaseQuery.bind( ":solarTide_z", currentSolarTidalEffectComponents[ 2 ] );
+
+    databaseQuery.bind( ":gravAcc_x", gravAcceleration[ 0 ] );
+    databaseQuery.bind( ":gravAcc_y", gravAcceleration[ 1 ] );
+    databaseQuery.bind( ":gravAcc_z", gravAcceleration[ 2 ] );
 
     databaseQuery.bind( ":start_flag", startFlag );
     databaseQuery.bind( ":end_flag", endFlag );
@@ -1292,6 +1348,39 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                           initialSunOrbitalElements,
                                                           sunMeanMotion );
 
+                // get SRP components for the current time
+                positionVectorForRegolith = { currentStateVector[ xPositionIndex ],
+                                              currentStateVector[ yPositionIndex ],
+                                              currentStateVector[ zPositionIndex ] };
+                currentSRPComponents
+                    = computeSolarRadiationPressureAcceleration( positionVectorForRegolith,
+                                                                 asteroidRotationVector,
+                                                                 initialTimeForSun,
+                                                                 initialSunMeanAnomalyRadian,
+                                                                 initialSunOrbitalElements,
+                                                                 currentTime,
+                                                                 sunMeanMotion );
+
+                // get solar tidal effect perturbations for the current time
+                currentSolarTidalEffectComponents
+                    = computeSunThirdBodyEffectAcceleration( positionVectorForRegolith,
+                                                             asteroidRotationVector,
+                                                             initialTimeForSun,
+                                                             initialSunMeanAnomalyRadian,
+                                                             initialSunOrbitalElements,
+                                                             currentTime,
+                                                             sunMeanMotion );
+
+                // get gravitational acceleration for the current time
+                computeEllipsoidGravitationalAcceleration( alpha,
+                                                           beta,
+                                                           gamma,
+                                                           gravParameter,
+                                                           currentStateVector[ xPositionIndex ],
+                                                           currentStateVector[ yPositionIndex ],
+                                                           currentStateVector[ zPositionIndex ],
+                                                           gravAcceleration );
+
                 // save data
                 databaseQuery.bind( ":trajectory_id", trajectoryID );
 
@@ -1344,7 +1433,18 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
                 databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
+                databaseQuery.bind( ":initial_solar_phase_angle", initialSolarPhaseAngle );
                 databaseQuery.bind( ":solar_phase_angle", solarPhaseAngle );
+                databaseQuery.bind( ":srp_x", currentSRPComponents[ 0 ] );
+                databaseQuery.bind( ":srp_y", currentSRPComponents[ 1 ] );
+                databaseQuery.bind( ":srp_z", currentSRPComponents[ 2 ] );
+                databaseQuery.bind( ":solarTide_x", currentSolarTidalEffectComponents[ 0 ] );
+                databaseQuery.bind( ":solarTide_y", currentSolarTidalEffectComponents[ 1 ] );
+                databaseQuery.bind( ":solarTide_z", currentSolarTidalEffectComponents[ 2 ] );
+
+                databaseQuery.bind( ":gravAcc_x", gravAcceleration[ 0 ] );
+                databaseQuery.bind( ":gravAcc_y", gravAcceleration[ 1 ] );
+                databaseQuery.bind( ":gravAcc_z", gravAcceleration[ 2 ] );
 
                 databaseQuery.bind( ":start_flag", startFlag );
                 databaseQuery.bind( ":end_flag", endFlag );
@@ -1436,6 +1536,39 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                       initialSunOrbitalElements,
                                                       sunMeanMotion );
 
+            // get SRP components for the current time
+            positionVectorForRegolith = { currentStateVector[ xPositionIndex ],
+                                          currentStateVector[ yPositionIndex ],
+                                          currentStateVector[ zPositionIndex ] };
+            currentSRPComponents
+                = computeSolarRadiationPressureAcceleration( positionVectorForRegolith,
+                                                             asteroidRotationVector,
+                                                             initialTimeForSun,
+                                                             initialSunMeanAnomalyRadian,
+                                                             initialSunOrbitalElements,
+                                                             currentTime,
+                                                             sunMeanMotion );
+
+            // get solar tidal effect perturbations for the current time
+            currentSolarTidalEffectComponents
+                = computeSunThirdBodyEffectAcceleration( positionVectorForRegolith,
+                                                         asteroidRotationVector,
+                                                         initialTimeForSun,
+                                                         initialSunMeanAnomalyRadian,
+                                                         initialSunOrbitalElements,
+                                                         currentTime,
+                                                         sunMeanMotion );
+
+            // get gravitational acceleration for the current time
+            computeEllipsoidGravitationalAcceleration( alpha,
+                                                       beta,
+                                                       gamma,
+                                                       gravParameter,
+                                                       currentStateVector[ xPositionIndex ],
+                                                       currentStateVector[ yPositionIndex ],
+                                                       currentStateVector[ zPositionIndex ],
+                                                       gravAcceleration );
+
             // save data
             databaseQuery.bind( ":trajectory_id", trajectoryID );
 
@@ -1488,7 +1621,18 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
             databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
+            databaseQuery.bind( ":initial_solar_phase_angle", initialSolarPhaseAngle );
             databaseQuery.bind( ":solar_phase_angle", solarPhaseAngle );
+            databaseQuery.bind( ":srp_x", currentSRPComponents[ 0 ] );
+            databaseQuery.bind( ":srp_y", currentSRPComponents[ 1 ] );
+            databaseQuery.bind( ":srp_z", currentSRPComponents[ 2 ] );
+            databaseQuery.bind( ":solarTide_x", currentSolarTidalEffectComponents[ 0 ] );
+            databaseQuery.bind( ":solarTide_y", currentSolarTidalEffectComponents[ 1 ] );
+            databaseQuery.bind( ":solarTide_z", currentSolarTidalEffectComponents[ 2 ] );
+
+            databaseQuery.bind( ":gravAcc_x", gravAcceleration[ 0 ] );
+            databaseQuery.bind( ":gravAcc_y", gravAcceleration[ 1 ] );
+            databaseQuery.bind( ":gravAcc_z", gravAcceleration[ 2 ] );
 
             databaseQuery.bind( ":start_flag", startFlag );
             databaseQuery.bind( ":end_flag", endFlag );
@@ -1614,6 +1758,39 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                       initialSunOrbitalElements,
                                                       sunMeanMotion );
 
+            // get SRP components for the current time
+            positionVectorForRegolith = { currentStateVector[ xPositionIndex ],
+                                          currentStateVector[ yPositionIndex ],
+                                          currentStateVector[ zPositionIndex ] };
+            currentSRPComponents
+                = computeSolarRadiationPressureAcceleration( positionVectorForRegolith,
+                                                             asteroidRotationVector,
+                                                             initialTimeForSun,
+                                                             initialSunMeanAnomalyRadian,
+                                                             initialSunOrbitalElements,
+                                                             currentTime,
+                                                             sunMeanMotion );
+
+            // get solar tidal effect perturbations for the current time
+            currentSolarTidalEffectComponents
+                = computeSunThirdBodyEffectAcceleration( positionVectorForRegolith,
+                                                         asteroidRotationVector,
+                                                         initialTimeForSun,
+                                                         initialSunMeanAnomalyRadian,
+                                                         initialSunOrbitalElements,
+                                                         currentTime,
+                                                         sunMeanMotion );
+
+            // get gravitational acceleration for the current time
+            computeEllipsoidGravitationalAcceleration( alpha,
+                                                       beta,
+                                                       gamma,
+                                                       gravParameter,
+                                                       currentStateVector[ xPositionIndex ],
+                                                       currentStateVector[ yPositionIndex ],
+                                                       currentStateVector[ zPositionIndex ],
+                                                       gravAcceleration );
+
             // save data
             databaseQuery.bind( ":trajectory_id", trajectoryID );
 
@@ -1666,7 +1843,18 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
             databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
+            databaseQuery.bind( ":initial_solar_phase_angle", initialSolarPhaseAngle );
             databaseQuery.bind( ":solar_phase_angle", solarPhaseAngle );
+            databaseQuery.bind( ":srp_x", currentSRPComponents[ 0 ] );
+            databaseQuery.bind( ":srp_y", currentSRPComponents[ 1 ] );
+            databaseQuery.bind( ":srp_z", currentSRPComponents[ 2 ] );
+            databaseQuery.bind( ":solarTide_x", currentSolarTidalEffectComponents[ 0 ] );
+            databaseQuery.bind( ":solarTide_y", currentSolarTidalEffectComponents[ 1 ] );
+            databaseQuery.bind( ":solarTide_z", currentSolarTidalEffectComponents[ 2 ] );
+
+            databaseQuery.bind( ":gravAcc_x", gravAcceleration[ 0 ] );
+            databaseQuery.bind( ":gravAcc_y", gravAcceleration[ 1 ] );
+            databaseQuery.bind( ":gravAcc_z", gravAcceleration[ 2 ] );
 
             databaseQuery.bind( ":start_flag", startFlag );
             databaseQuery.bind( ":end_flag", endFlag );
@@ -1745,6 +1933,39 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                   initialSunOrbitalElements,
                                                   sunMeanMotion );
 
+        // get SRP components for the current time
+        positionVectorForRegolith = { currentStateVector[ xPositionIndex ],
+                                      currentStateVector[ yPositionIndex ],
+                                      currentStateVector[ zPositionIndex ] };
+        currentSRPComponents
+            = computeSolarRadiationPressureAcceleration( positionVectorForRegolith,
+                                                         asteroidRotationVector,
+                                                         initialTimeForSun,
+                                                         initialSunMeanAnomalyRadian,
+                                                         initialSunOrbitalElements,
+                                                         currentTime,
+                                                         sunMeanMotion );
+
+        // get solar tidal effect perturbations for the current time
+        currentSolarTidalEffectComponents
+            = computeSunThirdBodyEffectAcceleration( positionVectorForRegolith,
+                                                     asteroidRotationVector,
+                                                     initialTimeForSun,
+                                                     initialSunMeanAnomalyRadian,
+                                                     initialSunOrbitalElements,
+                                                     currentTime,
+                                                     sunMeanMotion );
+
+        // get gravitational acceleration for the current time
+        computeEllipsoidGravitationalAcceleration( alpha,
+                                                   beta,
+                                                   gamma,
+                                                   gravParameter,
+                                                   currentStateVector[ xPositionIndex ],
+                                                   currentStateVector[ yPositionIndex ],
+                                                   currentStateVector[ zPositionIndex ],
+                                                   gravAcceleration );
+
         // save data
         databaseQuery.bind( ":trajectory_id", trajectoryID );
 
@@ -1797,7 +2018,18 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
         databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
+        databaseQuery.bind( ":initial_solar_phase_angle", initialSolarPhaseAngle );
         databaseQuery.bind( ":solar_phase_angle", solarPhaseAngle );
+        databaseQuery.bind( ":srp_x", currentSRPComponents[ 0 ] );
+        databaseQuery.bind( ":srp_y", currentSRPComponents[ 1 ] );
+        databaseQuery.bind( ":srp_z", currentSRPComponents[ 2 ] );
+        databaseQuery.bind( ":solarTide_x", currentSolarTidalEffectComponents[ 0 ] );
+        databaseQuery.bind( ":solarTide_y", currentSolarTidalEffectComponents[ 1 ] );
+        databaseQuery.bind( ":solarTide_z", currentSolarTidalEffectComponents[ 2 ] );
+
+        databaseQuery.bind( ":gravAcc_x", gravAcceleration[ 0 ] );
+        databaseQuery.bind( ":gravAcc_y", gravAcceleration[ 1 ] );
+        databaseQuery.bind( ":gravAcc_z", gravAcceleration[ 2 ] );
 
         databaseQuery.bind( ":start_flag", startFlag );
         databaseQuery.bind( ":escape_flag", escapeFlag );
