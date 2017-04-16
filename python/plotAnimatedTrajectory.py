@@ -13,8 +13,9 @@ import sqlite3
 # Numerical
 import numpy as np
 import pandas as pd
-from scipy.interpolate import griddata
 import math
+from scipy.interpolate import griddata
+from decimal import Decimal
 
 # System
 import sys
@@ -94,6 +95,18 @@ data = pd.read_sql( "SELECT     ROUND( initial_velocity_magnitude ),            
                                 inertial_position_x,                                            \
                                 inertial_position_y,                                            \
                                 inertial_position_z,                                            \
+                                inertial_velocity_x,                                            \
+                                inertial_velocity_y,                                            \
+                                inertial_velocity_z,                                            \
+                                srp_x,                                                          \
+                                srp_y,                                                          \
+                                srp_z,                                                          \
+                                solarTide_x,                                                    \
+                                solarTide_y,                                                    \
+                                solarTide_z,                                                    \
+                                gravAcc_x,                                                      \
+                                gravAcc_y,                                                      \
+                                gravAcc_z,                                                      \
                                 time                                                            \
                      FROM       regolith_trajectory_results                                     \
                      WHERE      ROUND( launch_azimuth ) = 185.0                                 \
@@ -116,19 +129,43 @@ data.columns = [ 'initial_velocity_magnitude',                                  
                  'inertial_position_x',                                                         \
                  'inertial_position_y',                                                         \
                  'inertial_position_z',                                                         \
+                 'inertial_velocity_x',                                                         \
+                 'inertial_velocity_y',                                                         \
+                 'inertial_velocity_z',                                                         \
+                 'srp_x',                                                                       \
+                 'srp_y',                                                                       \
+                 'srp_z',                                                                       \
+                 'solarTide_x',                                                                 \
+                 'solarTide_y',                                                                 \
+                 'solarTide_z',                                                                 \
+                 'gravAcc_x',                                                                   \
+                 'gravAcc_y',                                                                   \
+                 'gravAcc_z',                                                                   \
                  'time' ]
 
-velocityMagnitude   = data[ 'initial_velocity_magnitude' ]
-launchAzimuth       = data[ 'launch_azimuth' ]
-solarPhase          = data[ 'initial_solar_phase_angle' ]
-changingSolarPhase  = data[ 'solar_phase_angle' ]
-position_x          = data[ 'position_x' ]
-position_y          = data[ 'position_y' ]
-position_z          = data[ 'position_z' ]
-inertial_position_x = data[ 'inertial_position_x' ]
-inertial_position_y = data[ 'inertial_position_y' ]
-inertial_position_z = data[ 'inertial_position_z' ]
-t                   = data[ 'time' ]
+initialVelocityMagnitude    = data[ 'initial_velocity_magnitude' ]
+launchAzimuth               = data[ 'launch_azimuth' ]
+solarPhase                  = data[ 'initial_solar_phase_angle' ]
+changingSolarPhase          = data[ 'solar_phase_angle' ]
+position_x                  = data[ 'position_x' ]
+position_y                  = data[ 'position_y' ]
+position_z                  = data[ 'position_z' ]
+inertial_position_x         = data[ 'inertial_position_x' ]
+inertial_position_y         = data[ 'inertial_position_y' ]
+inertial_position_z         = data[ 'inertial_position_z' ]
+inertial_velocity_x         = data[ 'inertial_velocity_x' ]
+inertial_velocity_y         = data[ 'inertial_velocity_y' ]
+inertial_velocity_z         = data[ 'inertial_velocity_z' ]
+srp_x                       = data[ 'srp_x' ]
+srp_y                       = data[ 'srp_y' ]
+srp_z                       = data[ 'srp_z' ]
+solarTide_x                 = data[ 'solarTide_x' ]
+solarTide_y                 = data[ 'solarTide_y' ]
+solarTide_z                 = data[ 'solarTide_z' ]
+gravAcc_x                   = data[ 'gravAcc_x' ]
+gravAcc_y                   = data[ 'gravAcc_y' ]
+gravAcc_z                   = data[ 'gravAcc_z' ]
+t                           = data[ 'time' ]
 
 print "Processing data now...\n"
 
@@ -138,6 +175,9 @@ print "Solar phase at start of the segment = " + str( changingSolarPhase[ 0 ] ) 
 fig = plt.figure( )
 gs = gridspec.GridSpec( 1, 1 )
 ax1 = plt.subplot( gs[ 0 ] )
+plt.suptitle( '$V_{launch}$ = ' + str( initialVelocityMagnitude[ 0 ] ) + ' [m/s], '
+              + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '
+              + 'Solar phase = ' + str( solarPhase[ 0 ] ) + ' [deg]', fontsize=10 )
 
 # Draw ellipse through the patches package
 acwRotationAngle = 0.0
@@ -154,20 +194,77 @@ def init( ):
     return ellipse
 
 def animate( i ):
+    timeText.set_text( time_template % ( timeData[ i ] ) )
+    velocityText.set_text( velocity_template % ( velocityData[ i ] ) )
+    srpText.set_text( srp_template % ( srpData_SciNot[ i ] ) )
+    solarTideText.set_text( solarTide_template % ( solarTideData_SciNot[ i ] ) )
+    gravAccText.set_text( gravAcc_template % ( gravAcc_SciNot[ i ] ) )
     point.set_data( coordinate[ 0 ][ i ], coordinate[ 1 ][ i ] )
     ellipse.angle = RotationAngles[ i ]
-    return ellipse, point
+    return ellipse, point, timeText
 
-## main segment of the code
-# data indices
-steps = 10
+### main segment of the code
+## data indices
+steps = 50
 data_indices = range( 0, len( inertial_position_x ), steps )
 
-# define the rotation angles for the ellipse
+## define the rotation angles for the ellipse
 RotationAngles = ( Wz * t[ data_indices ] ) * 180.0 / np.pi
 RotationAngles = RotationAngles.tolist( )
 
-# define the scatter point and the coordinates for which it has to be animated
+## define the text showing change in time value
+time_template = 'Time = %.2f [days]'
+# define text placement coordinates
+xTop_text = max( inertial_position_x ) + 0.25e5
+yTop_text = max( inertial_position_y )
+timeText = ax1.text( xTop_text, yTop_text, '', fontsize=8 )
+timeData = t[ data_indices ] / ( 24.0 * 60.0 * 60.0 )
+timeData = timeData.tolist( )
+
+## define the text handle showing velocity magnitude of the regolith
+velocity_template = 'Velocity = %0.2f [m/s]'
+# define velocity placement coordinates
+xTop_velocity = xTop_text
+yTop_velocity = yTop_text - 0.25e5
+velocityText = ax1.text( xTop_velocity, yTop_velocity, '', fontsize=8 )
+velocityData = np.sqrt( inertial_velocity_x**2 + inertial_velocity_y**2 + inertial_velocity_z**2 )
+velocityData = velocityData.tolist( )
+
+## define the text handle showing various accelerations acting on the regolith
+# SRP
+srp_template = 'SRP = %s $[m^2/s^2]$'
+xTop_srp = xTop_velocity
+yTop_srp = yTop_velocity - 0.25e5
+srpText = ax1.text( xTop_srp, yTop_srp, '', fontsize=8 )
+srpData = np.sqrt( srp_x**2 + srp_y**2 + srp_z**2 )
+srpData = srpData.tolist( )
+srpData_SciNot = []
+for index in range( 0, len( srpData ) ):
+    srpData_SciNot.append( "{:.2e}".format( srpData[index] ) )
+
+# Solar tide
+solarTide_template = 'Solar tide = %s $[m^2/s^2]$'
+xTop_solarTide = xTop_srp
+yTop_solarTide = yTop_srp - 0.25e5
+solarTideText = ax1.text( xTop_solarTide, yTop_solarTide, '', fontsize=8 )
+solarTideData = np.sqrt( solarTide_x**2 + solarTide_y**2 + solarTide_z**2 )
+solarTideData = solarTideData.tolist( )
+solarTideData_SciNot = []
+for index in range( 0, len( solarTideData ) ):
+    solarTideData_SciNot.append( "{:.2e}".format( solarTideData[index] ) )
+
+# Gravity
+gravAcc_template = 'Grav. = %s $[m^2/s^2]$'
+xTop_gravAcc = xTop_solarTide
+yTop_gravAcc = yTop_solarTide - 0.25e5
+gravAccText = ax1.text( xTop_gravAcc, yTop_gravAcc, '', fontsize=8 )
+gravAccData = np.sqrt( gravAcc_x**2 + gravAcc_y**2 + gravAcc_z**2 )
+gravAccData = gravAccData.tolist( )
+gravAcc_SciNot = []
+for index in range( 0, len( gravAccData ) ):
+    gravAcc_SciNot.append( "{:.2e}".format( gravAccData[index] ) )
+
+## define the scatter point and the coordinates for which it has to be animated
 point, = ax1.plot( [], [], marker='o' )
 y = inertial_position_y[ data_indices ].tolist( )
 x = inertial_position_x[ data_indices ].tolist( )
@@ -191,7 +288,8 @@ end_time = time.time( )
 print "Script time: " + str("{:,g}".format(end_time - start_time)) + "s"
 
 ## show the plot
-anim.save(savePath)
+kwargDict = dict( kw_args = { 'bbox_inches' : 'tight' } )
+anim.save( savePath, savefig_kwargs=kwargDict )
 plt.show( )
 
 print ""
