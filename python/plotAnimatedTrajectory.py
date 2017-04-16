@@ -189,6 +189,18 @@ ax1.add_patch( ellipse )
 # Draw the entire trajectory path
 ax1.plot( inertial_position_x, inertial_position_y, linewidth=1, color=colors.cnames['purple'] )
 
+# mark starting sun position as a quiver arrow
+# startSunAngle = changingSolarPhase[ 0 ] * np.pi / 180.0
+# sunStartPos_x = 1.0e10 * np.cos( startSunAngle )
+# sunStartPos_y = 1.0e10 * np.sin( startSunAngle )
+# ax1.quiver( 0.0, 0.0, sunStartPos_x, sunStartPos_y, pivot='tail', color='magenta' )
+
+# mark end position of sun as a quiver arrow
+# endSunAngle = changingSolarPhase[ len( changingSolarPhase ) - 1 ] * np.pi / 180.0
+# sunEndPos_x = 1.0e10 * np.cos( endSunAngle )
+# sunEndPos_y = 1.0e10 * np.sin( endSunAngle )
+# ax1.quiver( 0.0, 0.0, sunEndPos_x, sunEndPos_y, pivot='tail', color='black' )
+
 def init( ):
     ax1.plot( inertial_position_x[ 0 ], inertial_position_y[ 0 ] )
     return ellipse
@@ -201,7 +213,7 @@ def animate( i ):
     gravAccText.set_text( gravAcc_template % ( gravAcc_SciNot[ i ] ) )
     point.set_data( coordinate[ 0 ][ i ], coordinate[ 1 ][ i ] )
     ellipse.angle = RotationAngles[ i ]
-    return ellipse, point, timeText
+    return ellipse, point, timeText, velocityText, srpText, solarTideText, gravAccText
 
 ### main segment of the code
 ## data indices
@@ -289,7 +301,7 @@ print "Script time: " + str("{:,g}".format(end_time - start_time)) + "s"
 
 ## show the plot
 kwargDict = dict( kw_args = { 'bbox_inches' : 'tight' } )
-anim.save( savePath, savefig_kwargs=kwargDict )
+anim.save( savePath, savefig_kwargs=kwargDict, bitrate=100 )
 plt.show( )
 
 print ""
