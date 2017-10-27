@@ -99,8 +99,8 @@ data = pd.read_sql( "SELECT     position_x,                                     
                                 ROUND( launch_azimuth ),                            \
                                 time                                                \
                      FROM       regolith_trajectory_results                         \
-                     WHERE      ROUND( launch_azimuth ) = 45.0                      \
-                     AND        ROUND( initial_velocity_magnitude ) = 10.0;",       \
+                     WHERE      ROUND( launch_azimuth ) = 165.0                     \
+                     AND        ROUND( initial_velocity_magnitude ) = 8.0;",        \
                      database )
 
 data.columns = [ 'x',                                                   \
@@ -196,9 +196,9 @@ data = pd.read_sql( "SELECT     ROUND( initial_velocity_magnitude ),            
                                 gravAcc_z,                                                      \
                                 time                                                            \
                      FROM       regolith_trajectory_results                                     \
-                     WHERE      ROUND( launch_azimuth ) = 45.0                                  \
-                     AND        ROUND( initial_velocity_magnitude ) = 10.0                      \
-                     AND        ROUND( initial_solar_phase_angle ) = 315.0                      \
+                     WHERE      ROUND( launch_azimuth ) = 165.0                                 \
+                     AND        ROUND( initial_velocity_magnitude ) = 8.0                       \
+                     AND        ROUND( initial_solar_phase_angle ) = 45.0                       \
                      AND        time >= " + str(lowerTime)
                                 + " AND time <= " + str(upperTime) + " ;",                      \
                      database )
@@ -337,8 +337,8 @@ time_template = 'Time = %.2f [hrs]'
 # xTop_text = max( inertial_position_x ) + 0.25e5
 # yTop_text = max( inertial_position_y )
 xTop_text = 0.5e5
-yTop_text = 5.0e5
-nextLineAt = 1.0e5
+yTop_text = 0.6e5
+nextLineAt = 0.1e5
 timeText_noSolarPerturbations = ax1.text( xTop_text, yTop_text, '', fontsize=12 )
 timeData = t[ nonPerturbingIndices ] / ( 60.0 * 60.0 )
 timeData_noSolarPerturbations = timeData.tolist( )
@@ -381,8 +381,8 @@ time_template = 'Time = %.2f [hrs]'
 # define text placement coordinates
 # xTop_text = max( inertial_position_x ) + 0.25e5
 # yTop_text = max( inertial_position_y )
-xTop_text = 0.2e5
-yTop_text = 6.0e5
+xTop_text = 0.4e5
+yTop_text = 6.0e4
 timeText = ax2.text( xTop_text, yTop_text, '', fontsize=12 )
 timeData = t_solarPerturbations[ data_indices ] / ( 60.0 * 60.0 )
 timeData = timeData.tolist( )
