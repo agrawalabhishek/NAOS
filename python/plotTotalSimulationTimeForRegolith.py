@@ -115,8 +115,8 @@ mu = 876514
 ## Operations
 # Connect to SQLite database.
 try:
-    database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db" )
-    # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
+    # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db" )
+    database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -174,7 +174,7 @@ if gridsize:
     ax1.grid( True )
     ax1.legend( ).draggable( )
     ax1.set_xlabel( 'Launch azimuth [deg]' )
-    ax1.set_ylabel( 'Time to reimpact $log_{10}(T)$' )
+    ax1.set_ylabel( 'Time to reimpact [s]' )
     ax1.set_title( 'Reimpact case' )
 
 ## get data for the escape case
@@ -222,7 +222,7 @@ if gridsize:
     ax2.grid( True )
     ax2.legend( ).draggable( )
     ax2.set_xlabel( 'Launch azimuth [deg]' )
-    ax2.set_ylabel( 'Time to escape $log_{10}(T)$' )
+    ax2.set_ylabel( 'Time to escape [s]' )
     ax2.set_title( 'Escape case' )
 
 ##close the database

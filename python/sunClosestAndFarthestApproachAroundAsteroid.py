@@ -53,7 +53,11 @@ start_time = time.time( )
 ## Operations
 # Read data in csv file. data returned as a panda series.
 # data = pd.read_csv( '../data/sun_asteroid_2BP/equatorial_and_circular_case/sunAsteroid2BP.csv' )
-data = pd.read_csv( '../data/sun_asteroid_2BP/equatorial_elliptical_TA225deg/sunAsteroid2BP.csv' )
+# data = pd.read_csv( '../data/sun_asteroid_2BP/equatorial_elliptical_TA225deg/sunAsteroid2BP.csv' )
+data = pd.read_csv( "../data/regolith_launched_from_longest_edge/"
+                   + "multiple_launch_velocity_with_perturbations/"
+                   + "simulation_time_9_months/"
+                   + "3.2Density_1cmSize/sunEphemeris_phase315.csv" )
 
 xBody           = data["x_body_frame"].values
 yBody           = data["y_body_frame"].values

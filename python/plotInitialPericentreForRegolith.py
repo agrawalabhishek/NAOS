@@ -106,16 +106,17 @@ def convertKeplerElementsToCartesianCoordinates( sma,
     return ( xPosition, yPosition, zPosition )
 
 ## Operations
-alpha = 20000.0
-beta = 7000.0
-gamma = 7000.0
+alpha = 10000.0
+beta = 10000.0
+gamma = 10000.0
 Wz = 0.00033118202125129593
 mu = 876514
 
 ## Operations
 # Connect to SQLite database.
 try:
-        database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/phase_0/simulation_time_9_months/leadingEdge.db")
+        # database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/phase_0/simulation_time_9_months/leadingEdge.db")
+        database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid_with_perturbations/longestEdge.db" )
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -128,7 +129,7 @@ data1 = pd.read_sql( "SELECT    trajectory_id,                                  
                                 ROUND( initial_velocity_magnitude ),                        \
                                 ROUND( launch_azimuth )                                     \
                      FROM       regolith_trajectory_results                                 \
-                     WHERE      ( escape_flag = 1 );",                                      \
+                     WHERE      ( crash_flag = 1 );",                                       \
                      database )
 
 data1.columns = [ 'traj_id',                                                                \
@@ -291,10 +292,6 @@ if checkerPlot:
     ax1.set_ylabel( 'Initial pericentre distance [m]' )
     ax1.set_title( 'Initial Pericentre variation with launch direction and velocity \n Phase angle = ' + str( phaseAngle ) + ', Escape case' )
     cbar.ax.set_ylabel( 'Regolith launch velocity [m/s]' )
-
-    alpha = 20000.0
-    beta = 7000.0
-    gamma = 7000.0
 
     hexBinPlot2 = ax2.hexbin( crashAzimuthPlot, crashPericentrePlot, crashInitialVelocityPlot, cmap='inferno' )
     cbar = plt.colorbar( hexBinPlot2, cmap='inferno', ax=ax2 )

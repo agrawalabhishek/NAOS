@@ -62,19 +62,35 @@ mu = 876514
 try:
         # database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity_with_perturbations/phase_45/leadingEdge.db")
         # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
-        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db")
+        # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db")
+        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
+                                   + "multiple_launch_velocity_with_perturbations/"
+                                   + "simulation_time_9_months/"
+                                   + "3.2Density_1cmSize/longestEdgePerturbations.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
         sys.exit(1)
 
-phaseAngle = 'N.A.'
+phaseAngle = 45.0
 
 ## get data for escape cases
+data = pd.read_sql( "SELECT     trajectory_id                                               \
+                     FROM       regolith_trajectory_results                                 \
+                     WHERE      start_flag = 1                                              \
+                     AND        ROUND( solar_phase_angle ) = "+ str(phaseAngle) + ";",      \
+                     database )
+
+data.columns = [ 'trajectory_id' ]
+
+trajectory_id = data[ 'trajectory_id' ]
+trajectory_id = tuple( trajectory_id.tolist( ) )
+
 data1 = pd.read_sql( "SELECT    ROUND( initial_velocity_magnitude ),                        \
                                 ROUND( launch_azimuth )                                     \
                      FROM       regolith_trajectory_results                                 \
-                     WHERE      ( escape_flag = 1 );",                                      \
+                     WHERE      ( escape_flag = 1 )                                         \
+                     AND        trajectory_id IN " + str(trajectory_id) + ";",              \
                      database )
 
 data1.columns = [ 'vel_mag',                                                                \
@@ -87,7 +103,8 @@ escape_azimuth                         = data1[ 'launch_azimuth' ]
 data2 = pd.read_sql( "SELECT    ROUND( initial_velocity_magnitude ),                        \
                                 ROUND( launch_azimuth )                                     \
                      FROM       regolith_trajectory_results                                 \
-                     WHERE      ( crash_flag = 1 );",                                       \
+                     WHERE      ( crash_flag = 1 )                                          \
+                     AND        trajectory_id IN " + str(trajectory_id) + ";",              \
                      database )
 
 data2.columns = [ 'vel_mag',                                                                \
@@ -100,7 +117,8 @@ crash_azimuth                         = data2[ 'launch_azimuth' ]
 data3 = pd.read_sql( "SELECT    ROUND( initial_velocity_magnitude ),                        \
                                 ROUND( launch_azimuth )                                     \
                      FROM       regolith_trajectory_results                                 \
-                     WHERE      ( end_flag = 1 );",                                         \
+                     WHERE      ( end_flag = 1 )                                            \
+                     AND        trajectory_id IN " + str(trajectory_id) + ";",              \
                      database )
 
 data3.columns = [ 'vel_mag',                                                                \
@@ -109,7 +127,14 @@ data3.columns = [ 'vel_mag',                                                    
 capture_velocity_magnitude              = data3[ 'vel_mag' ]
 capture_azimuth                         = data3[ 'launch_azimuth' ]
 
+if database:
+    database.close( )
+
 print "Capture cases = " + str( len( capture_velocity_magnitude ) )
+print "Escape cases = " + str( len( escape_velocity_magnitude ) )
+print "Reimpact cases = " + str( len( crash_velocity_magnitude ) )
+
+print "Processing data now...\n"
 
 ## plot the histogram for number of particles escaped and reimpacted versus
 ## initial launch velocity
@@ -118,22 +143,26 @@ ax3 = fig.add_subplot( 111 )
 
 distinct_escape_velocities          = len( np.unique( escape_velocity_magnitude ) )
 distinct_crash_velocities           = len( np.unique( crash_velocity_magnitude ) )
-common_escape_crash_velocities      = len( np.intersect1d( escape_velocity_magnitude, crash_velocity_magnitude ) )
+distinct_capture_velocities         = len( np.unique( capture_velocity_magnitude ) )
 
-all_distinct_velocities = distinct_escape_velocities + distinct_crash_velocities - common_escape_crash_velocities
+escape_crash_intersection           = np.intersect1d( escape_velocity_magnitude, crash_velocity_magnitude )
+capture_escape_crash_intersection   = np.intersect1d( escape_crash_intersection, crash_velocity_magnitude )
+common_velocities                   = len( capture_escape_crash_intersection )
 
-ax3.hist( [crash_velocity_magnitude, escape_velocity_magnitude],
+all_distinct_velocities = distinct_escape_velocities + distinct_crash_velocities + distinct_capture_velocities - common_velocities
+
+ax3.hist( [crash_velocity_magnitude, escape_velocity_magnitude, capture_velocity_magnitude],
           bins=range(1, all_distinct_velocities+2),
           histtype='bar',
-          color=['orange', 'crimson'],
-          label=['reimpact', 'escape'],
+          color=['orange', 'crimson', 'green'],
+          label=['reimpact', 'escape', 'capture'],
           align='left', alpha=0.7 )
 
 ax3.set_xlim( 0, all_distinct_velocities+1 )
 ax3.xaxis.set_ticks( np.arange(0, all_distinct_velocities+1, 1) )
 ax3.set_xlabel( '$V_{initial}$ [m/s]' )
 ax3.set_ylabel( 'Number of particles' )
-ax3.set_title( 'Final fate histogram against launch velocities \n Ellipsoidal asteroid, Phase angle = ' + str(phaseAngle) + '[deg]' )
+ax3.set_title( 'Final fate histogram against launch velocities \n Longest edge, Phase angle = ' + str(phaseAngle) + '[deg]' )
 ax3.legend( ).draggable( )
 ax3.grid( )
 

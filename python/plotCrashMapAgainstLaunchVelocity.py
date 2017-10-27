@@ -66,7 +66,11 @@ ax2 = plt.subplot( gs[ 1 ] )
 try:
         # database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/phase_0/simulation_time_9_months/leadingEdge.db")
         # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
-        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db")
+        # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db")
+        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
+                                   + "multiple_launch_velocity_with_perturbations/"
+                                   + "simulation_time_9_months/"
+                                   + "3.2Density_1cmSize/longestEdgePerturbations.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]

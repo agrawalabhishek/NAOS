@@ -98,8 +98,8 @@ data = pd.read_sql( "SELECT     position_x,                                     
                                 ROUND( launch_azimuth ),                            \
                                 time                                                \
                      FROM       regolith_trajectory_results                         \
-                     WHERE      ROUND( launch_azimuth ) = 90.0                      \
-                     AND        ROUND( initial_velocity_magnitude ) = 15;",         \
+                     WHERE      ROUND( launch_azimuth ) = 33.0                      \
+                     AND        ROUND( initial_velocity_magnitude ) = 20;",         \
                      database )
 
 data.columns = [ 'x',                                                   \
