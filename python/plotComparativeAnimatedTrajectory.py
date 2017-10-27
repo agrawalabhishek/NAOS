@@ -78,7 +78,7 @@ try:
        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
                                    + "multiple_launch_velocity/"
                                    + "simulation_time_9_months/"
-                                   + "longestEdge.db")
+                                   + "longestEdge_v2.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -99,8 +99,8 @@ data = pd.read_sql( "SELECT     position_x,                                     
                                 ROUND( launch_azimuth ),                            \
                                 time                                                \
                      FROM       regolith_trajectory_results                         \
-                     WHERE      ROUND( launch_azimuth ) = 185.0                     \
-                     AND        ROUND( initial_velocity_magnitude ) = 5.0;",        \
+                     WHERE      ROUND( launch_azimuth ) = 45.0                      \
+                     AND        ROUND( initial_velocity_magnitude ) = 10.0;",       \
                      database )
 
 data.columns = [ 'x',                                                   \
@@ -196,9 +196,9 @@ data = pd.read_sql( "SELECT     ROUND( initial_velocity_magnitude ),            
                                 gravAcc_z,                                                      \
                                 time                                                            \
                      FROM       regolith_trajectory_results                                     \
-                     WHERE      ROUND( launch_azimuth ) = 185.0                                 \
-                     AND        ROUND( initial_velocity_magnitude ) = 5.0                       \
-                     AND        ROUND( initial_solar_phase_angle ) = 135.0                      \
+                     WHERE      ROUND( launch_azimuth ) = 45.0                                  \
+                     AND        ROUND( initial_velocity_magnitude ) = 10.0                      \
+                     AND        ROUND( initial_solar_phase_angle ) = 315.0                      \
                      AND        time >= " + str(lowerTime)
                                 + " AND time <= " + str(upperTime) + " ;",                      \
                      database )
@@ -336,8 +336,9 @@ time_template = 'Time = %.2f [hrs]'
 # define text placement coordinates
 # xTop_text = max( inertial_position_x ) + 0.25e5
 # yTop_text = max( inertial_position_y )
-xTop_text = -1.0e5
-yTop_text = -0.75e5
+xTop_text = 0.5e5
+yTop_text = 5.0e5
+nextLineAt = 1.0e5
 timeText_noSolarPerturbations = ax1.text( xTop_text, yTop_text, '', fontsize=12 )
 timeData = t[ nonPerturbingIndices ] / ( 60.0 * 60.0 )
 timeData_noSolarPerturbations = timeData.tolist( )
@@ -346,7 +347,7 @@ timeData_noSolarPerturbations = timeData.tolist( )
 velocity_template = 'Velocity = %0.3f [m/s]'
 # define velocity placement coordinates
 xTop_velocity = xTop_text
-yTop_velocity = yTop_text - 0.1e5
+yTop_velocity = yTop_text - nextLineAt
 velocityText_noSolarPerturbations = ax1.text( xTop_velocity, yTop_velocity, '', fontsize=12 )
 Vx = inertial_Vx[nonPerturbingIndices]
 Vy = inertial_Vy[nonPerturbingIndices]
@@ -358,7 +359,7 @@ velocityData_noSolarPerturbations = velocityData.tolist( )
 range_template = 'Range = %0.3f [m]'
 # define velocity placement coordinates
 xTop_range = xTop_velocity
-yTop_range = yTop_velocity - 0.1e5
+yTop_range = yTop_velocity - nextLineAt
 rangeText_noSolarPerturbations = ax1.text( xTop_range, yTop_range, '', fontsize=12 )
 rangeData = np.sqrt( inertial_x[nonPerturbingIndices]**2 + inertial_y[nonPerturbingIndices]**2 + inertial_z[nonPerturbingIndices]**2 )
 rangeData_noSolarPerturbations = rangeData.tolist( )
@@ -380,13 +381,13 @@ time_template = 'Time = %.2f [hrs]'
 # define text placement coordinates
 # xTop_text = max( inertial_position_x ) + 0.25e5
 # yTop_text = max( inertial_position_y )
-xTop_text = -0.8e5
-yTop_text = -0.75e5
+xTop_text = 0.2e5
+yTop_text = 6.0e5
 timeText = ax2.text( xTop_text, yTop_text, '', fontsize=12 )
 timeData = t_solarPerturbations[ data_indices ] / ( 60.0 * 60.0 )
 timeData = timeData.tolist( )
 
-nextLineAt = 0.1e5
+nextLineAt = 0.5e5
 ## define the text handle showing velocity magnitude of the regolith
 velocity_template = 'Velocity = %0.3f [m/s]'
 # define velocity placement coordinates
@@ -462,8 +463,8 @@ anim = animation.FuncAnimation( fig, animate, init_func=init,
 ax1.grid(True)
 ax1.set_xlabel( 'x [m]' )
 ax1.set_ylabel( 'y [m]' )
-ax1.set_xlim( min( inertial_x ), 1.0e5 )
-ax1.set_ylim( min( inertial_position_y ), 0.4e5 )
+# ax1.set_xlim( min( inertial_x ), 1.0e5 )
+# ax1.set_ylim( min( inertial_position_y ), 0.4e5 )
 ax1.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False )
 ax1.set_aspect( 1 )
 ax1.set_title( 'No Solar Perturbations' )
@@ -471,8 +472,8 @@ ax1.set_title( 'No Solar Perturbations' )
 ax2.grid(True)
 ax2.set_xlabel( 'x [m]' )
 ax2.set_ylabel( 'y [m]' )
-ax2.set_xlim( min( inertial_x ), 1.0e5 )
-ax2.set_ylim( min( inertial_position_y ), 0.4e5 )
+# ax2.set_xlim( min( inertial_x ), 1.0e5 )
+# ax2.set_ylim( min( inertial_position_y ), 0.4e5 )
 ax2.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False )
 ax2.set_aspect( 1 )
 ax2.set_title( 'SRP + STBE' )

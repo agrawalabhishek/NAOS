@@ -59,6 +59,11 @@ gamma = 7000.0
 Wz = 0.00033118202125129593
 mu = 876514
 
+# Set up the figure
+fig = plt.figure( figsize=(10, 10) )
+gs = gridspec.GridSpec( 1, 1 )
+ax1 = plt.subplot( gs[ 0 ] )
+
 # Connect to SQLite database.
 savePath1 = "../data/regolith_launched_from_longest_edge/"
 savePath2 = "multiple_launch_velocity_with_perturbations/"
@@ -72,6 +77,10 @@ try:
                                + "multiple_launch_velocity_with_perturbations/"
                                + "simulation_time_9_months/"
                                + "3.2Density_1cmSize/longestEdgePerturbations.db")
+    # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
+    #                            + "multiple_launch_velocity/"
+    #                            + "simulation_time_9_months/"
+    #                            + "longestEdge_v2.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -82,7 +91,7 @@ print "Extracting data now...\n"
 lowerTimeDays = 0.0
 lowerTime = lowerTimeDays * 24.0 * 60.0 * 60.0
 
-upperTimeDays = 10.0
+upperTimeDays = 270.0
 upperTime = upperTimeDays * 24.0 * 60.0 * 60.0
 
 data = pd.read_sql( "SELECT     ROUND( initial_velocity_magnitude ),                            \
@@ -109,9 +118,9 @@ data = pd.read_sql( "SELECT     ROUND( initial_velocity_magnitude ),            
                                 gravAcc_z,                                                      \
                                 time                                                            \
                      FROM       regolith_trajectory_results                                     \
-                     WHERE      ROUND( launch_azimuth ) = 185.0                                 \
-                     AND        ROUND( initial_velocity_magnitude ) = 5.0                       \
-                     AND        ROUND( initial_solar_phase_angle ) = 135.0                      \
+                     WHERE      ROUND( launch_azimuth ) = 45.0                                  \
+                     AND        ROUND( initial_velocity_magnitude ) = 10.0                      \
+                     AND        ROUND( initial_solar_phase_angle ) = 45.0                       \
                      AND        time >= " + str(lowerTime)
                                 + " AND time <= " + str(upperTime) + " ;",                      \
                      database )
@@ -171,13 +180,9 @@ print "Processing data now...\n"
 
 print "Solar phase at start of the segment = " + str( changingSolarPhase[ 0 ] ) + " [deg]"
 
-# Set up the figure
-fig = plt.figure( )
-gs = gridspec.GridSpec( 1, 1 )
-ax1 = plt.subplot( gs[ 0 ] )
 plt.suptitle( '$V_{launch}$ = ' + str( initialVelocityMagnitude[ 0 ] ) + ' [m/s], '
               + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '
-              + 'Solar phase = ' + str( solarPhase[ 0 ] ) + ' [deg]', fontsize=10 )
+              + 'Solar phase = ' + str( solarPhase[ 0 ] ) + ' [deg]', fontsize=12 )
 
 # Draw ellipse through the patches package
 acwRotationAngle = 0.0
@@ -208,16 +213,17 @@ def init( ):
 def animate( i ):
     timeText.set_text( time_template % ( timeData[ i ] ) )
     velocityText.set_text( velocity_template % ( velocityData[ i ] ) )
+    rangeText.set_text( range_template % ( rangeData[ i ] ) )
     srpText.set_text( srp_template % ( srpData_SciNot[ i ] ) )
     solarTideText.set_text( solarTide_template % ( solarTideData_SciNot[ i ] ) )
     gravAccText.set_text( gravAcc_template % ( gravAcc_SciNot[ i ] ) )
     point.set_data( coordinate[ 0 ][ i ], coordinate[ 1 ][ i ] )
     ellipse.angle = RotationAngles[ i ]
-    return ellipse, point, timeText, velocityText, srpText, solarTideText, gravAccText
+    return ellipse, point, timeText, velocityText, rangeText, srpText, solarTideText, gravAccText
 
 ### main segment of the code
 ## data indices
-steps = 50
+steps = 100
 data_indices = range( 0, len( inertial_position_x ), steps )
 
 ## define the rotation angles for the ellipse
@@ -227,50 +233,73 @@ RotationAngles = RotationAngles.tolist( )
 ## define the text showing change in time value
 time_template = 'Time = %.2f [days]'
 # define text placement coordinates
-xTop_text = max( inertial_position_x ) + 0.25e5
-yTop_text = max( inertial_position_y )
-timeText = ax1.text( xTop_text, yTop_text, '', fontsize=8 )
+# xTop_text = max( inertial_position_x ) + 0.25e5
+# yTop_text = max( inertial_position_y )
+xTop_text = 0.0
+yTop_text = -0.4e6
+timeText = ax1.text( xTop_text, yTop_text, '', fontsize=12 )
 timeData = t[ data_indices ] / ( 24.0 * 60.0 * 60.0 )
 timeData = timeData.tolist( )
 
 ## define the text handle showing velocity magnitude of the regolith
-velocity_template = 'Velocity = %0.2f [m/s]'
+velocity_template = 'Velocity = %0.3f [m/s]'
 # define velocity placement coordinates
 xTop_velocity = xTop_text
-yTop_velocity = yTop_text - 0.25e5
-velocityText = ax1.text( xTop_velocity, yTop_velocity, '', fontsize=8 )
-velocityData = np.sqrt( inertial_velocity_x**2 + inertial_velocity_y**2 + inertial_velocity_z**2 )
+yTop_velocity = yTop_text - 0.50e5
+velocityText = ax1.text( xTop_velocity, yTop_velocity, '', fontsize=12 )
+Vx = inertial_velocity_x[data_indices]
+Vy = inertial_velocity_y[data_indices]
+Vz = inertial_velocity_z[data_indices]
+velocityData = np.sqrt( Vx**2 + Vy**2 + Vz**2 )
 velocityData = velocityData.tolist( )
+
+## define the text handle showing range magnitude of the regolith
+range_template = 'Range = %0.3f [m]'
+# define velocity placement coordinates
+xTop_range = xTop_velocity
+yTop_range = yTop_velocity - 0.50e5
+rangeText = ax1.text( xTop_range, yTop_range, '', fontsize=12 )
+rangeData = np.sqrt( inertial_position_x[data_indices]**2 + inertial_position_y[data_indices]**2 + inertial_position_z[data_indices]**2 )
+rangeData = rangeData.tolist( )
 
 ## define the text handle showing various accelerations acting on the regolith
 # SRP
-srp_template = 'SRP = %s $[m^2/s^2]$'
-xTop_srp = xTop_velocity
-yTop_srp = yTop_velocity - 0.25e5
-srpText = ax1.text( xTop_srp, yTop_srp, '', fontsize=8 )
-srpData = np.sqrt( srp_x**2 + srp_y**2 + srp_z**2 )
+srp_template = 'SRP = %s $[m/s^2]$'
+xTop_srp = xTop_range
+yTop_srp = yTop_range - 0.50e5
+srpText = ax1.text( xTop_srp, yTop_srp, '', fontsize=12 )
+xSRP = srp_x[data_indices]
+ySRP = srp_y[data_indices]
+zSRP = srp_z[data_indices]
+srpData = np.sqrt( xSRP**2 + ySRP**2 + zSRP**2 )
 srpData = srpData.tolist( )
 srpData_SciNot = []
 for index in range( 0, len( srpData ) ):
     srpData_SciNot.append( "{:.2e}".format( srpData[index] ) )
 
 # Solar tide
-solarTide_template = 'Solar tide = %s $[m^2/s^2]$'
+solarTide_template = 'Solar tide = %s $[m/s^2]$'
 xTop_solarTide = xTop_srp
-yTop_solarTide = yTop_srp - 0.25e5
-solarTideText = ax1.text( xTop_solarTide, yTop_solarTide, '', fontsize=8 )
-solarTideData = np.sqrt( solarTide_x**2 + solarTide_y**2 + solarTide_z**2 )
+yTop_solarTide = yTop_srp - 0.50e5
+solarTideText = ax1.text( xTop_solarTide, yTop_solarTide, '', fontsize=12 )
+xSTBE = solarTide_x[data_indices]
+ySTBE = solarTide_y[data_indices]
+zSTBE = solarTide_z[data_indices]
+solarTideData = np.sqrt( xSTBE**2 + ySTBE**2 + zSTBE**2 )
 solarTideData = solarTideData.tolist( )
 solarTideData_SciNot = []
 for index in range( 0, len( solarTideData ) ):
     solarTideData_SciNot.append( "{:.2e}".format( solarTideData[index] ) )
 
 # Gravity
-gravAcc_template = 'Grav. = %s $[m^2/s^2]$'
+gravAcc_template = 'Grav. = %s $[m/s^2]$'
 xTop_gravAcc = xTop_solarTide
-yTop_gravAcc = yTop_solarTide - 0.25e5
-gravAccText = ax1.text( xTop_gravAcc, yTop_gravAcc, '', fontsize=8 )
-gravAccData = np.sqrt( gravAcc_x**2 + gravAcc_y**2 + gravAcc_z**2 )
+yTop_gravAcc = yTop_solarTide - 0.50e5
+gravAccText = ax1.text( xTop_gravAcc, yTop_gravAcc, '', fontsize=12 )
+xGrav = gravAcc_x[data_indices]
+yGrav = gravAcc_y[data_indices]
+zGrav = gravAcc_z[data_indices]
+gravAccData = np.sqrt( xGrav**2 + yGrav**2 + zGrav**2 )
 gravAccData = gravAccData.tolist( )
 gravAcc_SciNot = []
 for index in range( 0, len( gravAccData ) ):
@@ -285,6 +314,8 @@ anim = animation.FuncAnimation( fig, animate, init_func=init,
                                 frames=len( RotationAngles ), interval=100, blit=False )
 
 ax1.grid(True)
+ax1.set_xlabel( 'x [m]' )
+ax1.set_ylabel( 'y [m]' )
 ax1.set_xlim( min( inertial_position_x ), max( inertial_position_x ) )
 ax1.set_ylim( min( inertial_position_y ), max( inertial_position_y ) )
 ax1.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False )
