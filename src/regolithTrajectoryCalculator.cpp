@@ -459,7 +459,7 @@ void executeRegolithTrajectoryCalculation( const double alpha,
     //                                                     0.0,
     //                                                     0.0 };
 
-    for( int sunLongitudeIterator = 0; sunLongitudeIterator < 360; sunLongitudeIterator++ )
+    for( int sunLongitudeIterator = 45; sunLongitudeIterator < 360; sunLongitudeIterator = sunLongitudeIterator + 90 )
     {
         double sunLongitude = 1.0 * sunLongitudeIterator;
         std::vector< double > initialSunOrbitalElements = { 1.0 * oneAstronomicalUnit,
@@ -490,20 +490,24 @@ void executeRegolithTrajectoryCalculation( const double alpha,
         double initialSunMeanAnomalyRadian
             = initialEccentricAnomalyRadian - eccentricity * std::sin( initialEccentricAnomalyRadian );
 
+        std::cout << "Initial sun mean anomaly [rads] = " << initialSunMeanAnomalyRadian << std::endl;
+
         // get the mean motion
         double semiMajorAxis = initialSunOrbitalElements[ 0 ];
         double semiMajorAxisCube = semiMajorAxis * semiMajorAxis * semiMajorAxis;
         double sunMeanMotion = std::sqrt( sunGravParameter / semiMajorAxisCube );
 
+        std::cout << "Mean motion of sun = " << sunMeanMotion << std::endl;
+
         // set the initial time for sun now based on its true anomaly
         const double initialTimeForSun = trueAnomalyRadian / sunMeanMotion;
 
-        // for( int velocityIterator = 1; velocityIterator <= 20; velocityIterator = velocityIterator + 1 )
-        // {
+        for( int velocityIterator = 1; velocityIterator <= 16; velocityIterator = velocityIterator + 1 )
+        {
             // all particles, irrespective of surface location will have the same velocity as computed
             // below.
-            // velocityMagnitude = 1.0 * velocityIterator;
-            velocityMagnitude = 10.0;
+            velocityMagnitude = 1.0 * velocityIterator;
+            // velocityMagnitude = 10.0;
 
             std::vector< double > regolithVelocityVector( 3 );
 
@@ -590,7 +594,7 @@ void executeRegolithTrajectoryCalculation( const double alpha,
                                                         sunMeanMotion,
                                                         databaseQuery,
                                                         dataSaveIntervals );
-        // } // end of for loop iterating over different magnitudes for the regolith velocity
+        } // end of for loop iterating over different magnitudes for the regolith velocity
     } // end of solar phase angle iterator loop
 }
 

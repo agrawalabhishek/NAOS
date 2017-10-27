@@ -44,9 +44,9 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     std::cout << userMode << std::endl << std::endl;
 
     // Physical parameters for Asteroid Eros, all in SI units, modelled as an ellipsoid.
-    const double alpha = 10.0 * 1.0e3;
-    const double beta = 10.0 * 1.0e3;
-    const double gamma = 10.0 * 1.0e3;
+    const double alpha = 20.0 * 1.0e3;
+    const double beta = 7.0 * 1.0e3;
+    const double gamma = 7.0 * 1.0e3;
     const double density = 3.2 * ( 1.0e-3 ) / ( 1.0e-6 );
     const double mass = ( 4.0 * naos::PI / 3.0 ) * density * alpha * beta * gamma;
     const double gravitationalParameter = naos::GRAVITATIONAL_CONSTANT * mass;
@@ -297,15 +297,18 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     else if( userMode.compare( "executeSunAsteroidTwoBodyProblem" ) == 0 )
     {
         const double integrationStepSize = 0.01;
-        const double startTime = 0.0;
-        const double endTime = 2.0 * 365.0 * 24.0 * 60.0 * 60.0;
-        const double dataSaveIntervals = 100.0;
+        // const double endTime = 2.0 * 365.0 * 24.0 * 60.0 * 60.0;
+        const double dataSaveIntervals = 5.0;
 
         double wallTimeStart = naos::getWallTime< double >( );
         double cpuTimeStart = naos::getCPUTime< double >( );
 
         std::ostringstream sunAsteroidFilePath;
-        sunAsteroidFilePath << "../../data/sun_asteroid_2BP/equatorial_and_circular_case/sunAsteroid2BP.csv";
+        sunAsteroidFilePath << "../../data/regolith_launched_from_longest_edge";
+        sunAsteroidFilePath << "/multiple_launch_velocity_with_perturbations";
+        sunAsteroidFilePath << "/simulation_time_9_months";
+        sunAsteroidFilePath << "/3.2Density_1cmSize/";
+        sunAsteroidFilePath << "sunEphemeris_phase45.csv";
 
         std::ostringstream integratedSunAsteroidFilePath;
         integratedSunAsteroidFilePath << "../../data/sun_asteroid_2BP/integratedSunAsteroid2BP.csv";
@@ -322,16 +325,26 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         //                                                  178.8050095729968,
         //                                                  0.0 };
 
-        std::vector< double > initialOrbitalElements = { 1.457945652635353 * oneAstronomicalUnit,
+        std::vector< double > initialOrbitalElements = { 1.0 * oneAstronomicalUnit,
                                                          0.0,
                                                          0.0,
                                                          0.0,
                                                          0.0,
-                                                         0.0 };
+                                                         45.0 };
 
         // accessed 3 jan 2016 from:
         // http://ssd.jpl.nasa.gov/?constants
-        const double sunGravParameter = 1.32712440018 * 10.0e+20;
+        const double sunGravParameter = 1.32712440018 * 1.0e+20;
+
+        // calculate the starting time based on the true anomaly
+        double semiMajorAxis = initialOrbitalElements[ 0 ];
+        double semiMajorAxisCube = semiMajorAxis * semiMajorAxis * semiMajorAxis;
+        double sunMeanMotion = std::sqrt( sunGravParameter / semiMajorAxisCube );
+        double trueAnomalyRadian = naos::convertDegreeToRadians( initialOrbitalElements[ 5 ] );
+        // const double startTime = trueAnomalyRadian / sunMeanMotion;
+        // const double endTime = startTime + ( 10.0 * 24.0 * 60.0 * 60.0 );
+        const double startTime = 0.0;
+        const double endTime = 270.0 * 24.0 * 60.0 * 60.0;
 
         // naos::executeSunAsteroidTwoBodyProblem( sunGravParameter,
         //                                         W,
@@ -380,7 +393,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
         // accessed 3 jan 2016 from:
         // http://ssd.jpl.nasa.gov/?constants
-        const double sunGravParameter = 1.32712440018 * 10.0e+20;
+        const double sunGravParameter = 1.32712440018 * 1.0e+20;
 
         // get the initial eccentric anomaly
         double trueAnomalyRadian = naos::convertDegreeToRadians( initialSunOrbitalElements[ 5 ] );
@@ -514,9 +527,9 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     else if( userMode.compare( "executeRegolithMonteCarlo" ) == 0 )
     {
         const double integrationStepSize = 0.01;
-        double sunPhaseAngle = naos::convertDegreeToRadians( 0.0 );
+        double phaseAngle = naos::convertDegreeToRadians( 0.0 );
         double Wz = W[ 2 ];
-        double timeCorrespondingToPhaseAngle = sunPhaseAngle / Wz;
+        double timeCorrespondingToPhaseAngle = phaseAngle / Wz;
         const double startTime = timeCorrespondingToPhaseAngle;
         const double endTime = 9.0 * 30.0 * 24.0 * 60.0 * 60.0;
         const double dataSaveIntervals = 10.0;
@@ -526,10 +539,15 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
         std::ostringstream databaseFilePath;
         databaseFilePath << "../../data/regolith_launched_from_longest_edge";
+        databaseFilePath << "/multiple_launch_velocity_with_perturbations";
+        databaseFilePath << "/simulation_time_9_months";
+        databaseFilePath << "/7.5Density_1cmSize";
+        databaseFilePath << "/longestEdgePerturbations.db";
+
+        // databaseFilePath << "../../data/regolith_launched_from_longest_edge";
         // databaseFilePath << "/multiple_launch_velocity";
         // databaseFilePath << "/simulation_time_9_months";
-        databaseFilePath << "/spherical_asteroid";
-        databaseFilePath << "/longestEdge.db";
+        // databaseFilePath << "/longestEdge_v2.db";
 
         naos::executeRegolithMonteCarlo( alpha,
                                          beta,

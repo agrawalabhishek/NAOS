@@ -88,6 +88,14 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                  SQLite::Statement &databaseQuery,
                                                  const double dataSaveIntervals );
 
+//! computes the (modified) solar phase angle
+double computeSolarPhaseAngle( const double regolithArgumentOfPeriapsis,
+                               const double currentTime,
+                               const double initialSunMeanAnomalyRadian,
+                               const double initialTimeForSun,
+                               const std::vector< double > initialSunOrbitalElements,
+                               const double sunMeanMotion );
+
 //! convert body frame state vector to inertial frame for a uniformly rotating case
 /*!
  * this function cnverts a given state vector in asteroid body frame coordinates to inertial frame.
@@ -110,7 +118,9 @@ void computeParticleEnergy( const double alpha,
                             const std::vector< double > &bodyFrameStateVector,
                             double &kineticEnergy,
                             double &potentialEnergy,
-                            double &totalEnergy );
+                            double &totalEnergy,
+                            double &truePotentialEnergy,
+                            double &trueTotalEnergy );
 
 //! check jacobi conservation
 /*!

@@ -262,9 +262,23 @@ void createDatabaseTable( SQLite::Database &database )
         << "\"potential_energy\"                                REAL,"
         << "\"total_energy\"                                    REAL,"
 
+        << "\"true_potential_energy\"                           REAL,"
+        << "\"true_total_energy\"                               REAL,"
+
         << "\"jacobi_integral\"                                 REAL,"
 
+        << "\"initial_solar_phase_angle\"                       REAL,"
         << "\"solar_phase_angle\"                               REAL,"
+        << "\"srp_x\"                                           REAL,"
+        << "\"srp_y\"                                           REAL,"
+        << "\"srp_z\"                                           REAL,"
+        << "\"solarTide_x\"                                     REAL,"
+        << "\"solarTide_y\"                                     REAL,"
+        << "\"solarTide_z\"                                     REAL,"
+
+        << "\"gravAcc_x\"                                       REAL,"
+        << "\"gravAcc_y\"                                       REAL,"
+        << "\"gravAcc_z\"                                       REAL,"
 
         << "\"start_flag\"                                      INTEGER,"
         << "\"end_flag\"                                        INTEGER,"
@@ -362,8 +376,20 @@ void executeRegolithMonteCarlo( const double alpha,
         << ":kinetic_energy,"
         << ":potential_energy,"
         << ":total_energy,"
+        << ":true_potential_energy,"
+        << ":true_total_energy,"
         << ":jacobi_integral,"
+        << ":initial_solar_phase_angle,"
         << ":solar_phase_angle,"
+        << ":srp_x,"
+        << ":srp_y,"
+        << ":srp_z,"
+        << ":solarTide_x,"
+        << ":solarTide_y,"
+        << ":solarTide_z,"
+        << ":gravAcc_x,"
+        << ":gravAcc_y,"
+        << ":gravAcc_z,"
         << ":start_flag,"
         << ":end_flag,"
         << ":escape_flag,"
@@ -385,13 +411,13 @@ void executeRegolithMonteCarlo( const double alpha,
     //                                         databaseQuery );
 
     // azimuth angle iterator begins here
-    // for( int azimuthIterator = 0; azimuthIterator < 360; azimuthIterator = azimuthIterator + 1 )
-    // {
+    for( int azimuthIterator = 0; azimuthIterator < 360; azimuthIterator = azimuthIterator + 5 )
+    {
         // calculate the azimuth angle
-        // const double coneAngleAzimuth
-        //         = naos::convertDegreeToRadians( coneAngleAzimuthFactor * azimuthIterator );
-        const double coneAngleAzimuth = naos::convertDegreeToRadians( 0.0 );
-        const double coneAngleDeclination = naos::convertDegreeToRadians( 0.0 );
+        const double coneAngleAzimuth
+                = naos::convertDegreeToRadians( coneAngleAzimuthFactor * azimuthIterator );
+        // const double coneAngleAzimuth = naos::convertDegreeToRadians( 0.0 );
+        const double coneAngleDeclination = naos::convertDegreeToRadians( 45.0 );
 
         executeRegolithTrajectoryCalculation( alpha,
                                               beta,
@@ -410,7 +436,7 @@ void executeRegolithMonteCarlo( const double alpha,
                                               endTime,
                                               dataSaveIntervals,
                                               databaseQuery );
-    // } // end of azimuth angle iterator loop
+    } // end of azimuth angle iterator loop
 
     transaction.commit( );
 }

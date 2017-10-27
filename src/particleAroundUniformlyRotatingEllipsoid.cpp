@@ -179,17 +179,17 @@ public:
         dXdt[ xVelocityIndex ] = gravAcceleration[ xPositionIndex ]
                                 + 2.0 * zRotation * stateVector[ yVelocityIndex ]
                                 + zRotation * zRotation * stateVector[ xPositionIndex ]
-                                + sunThirdBodyEffectAcceleration[ xPositionIndex ]
+                                + sunThirdBodyEffectAcceleration[ xPositionIndex ];
                                 + solarRadiationPressureAcceleration[ xPositionIndex ];
 
         dXdt[ yVelocityIndex ] = gravAcceleration[ yPositionIndex ]
                                 - 2.0 * zRotation * stateVector[ xVelocityIndex ]
                                 + zRotation * zRotation * stateVector[ yPositionIndex ]
-                                + sunThirdBodyEffectAcceleration[ yPositionIndex ]
+                                + sunThirdBodyEffectAcceleration[ yPositionIndex ];
                                 + solarRadiationPressureAcceleration[ yPositionIndex ];
 
         dXdt[ zVelocityIndex ] = gravAcceleration[ zPositionIndex ]
-                                + sunThirdBodyEffectAcceleration[ zPositionIndex ]
+                                + sunThirdBodyEffectAcceleration[ zPositionIndex ];
                                 + solarRadiationPressureAcceleration[ zPositionIndex ];
     }
 };
@@ -780,18 +780,21 @@ void computeParticleEnergy( const double alpha,
                             const std::vector< double > &bodyFrameStateVector,
                             double &kineticEnergy,
                             double &potentialEnergy,
-                            double &totalEnergy )
+                            double &totalEnergy,
+                            double &truePotentialEnergy,
+                            double &trueTotalEnergy )
 {
-    double gravPotential;
-    // computeEllipsoidGravitationalPotential( alpha,
-    //                                         beta,
-    //                                         gamma,
-    //                                         gravParameter,
-    //                                         bodyFrameStateVector[ xPositionIndex ],
-    //                                         bodyFrameStateVector[ yPositionIndex ],
-    //                                         bodyFrameStateVector[ zPositionIndex ],
-    //                                         gravPotential );
+    double trueGravPotential;
+    computeEllipsoidGravitationalPotential( alpha,
+                                            beta,
+                                            gamma,
+                                            gravParameter,
+                                            bodyFrameStateVector[ xPositionIndex ],
+                                            bodyFrameStateVector[ yPositionIndex ],
+                                            bodyFrameStateVector[ zPositionIndex ],
+                                            trueGravPotential );
 
+    double gravPotential;
     std::vector< double > positionVector = { inertialState[ xPositionIndex ],
                                              inertialState[ yPositionIndex ],
                                              inertialState[ zPositionIndex ] };
@@ -807,6 +810,9 @@ void computeParticleEnergy( const double alpha,
     kineticEnergy = velocityMagnitude * velocityMagnitude / 2.0;
     potentialEnergy = -1.0 * gravPotential;
     totalEnergy = kineticEnergy + potentialEnergy;
+
+    truePotentialEnergy = -1.0 * trueGravPotential;
+    trueTotalEnergy = kineticEnergy + truePotentialEnergy;
 }
 
 //! check jacobi conservation
@@ -868,8 +874,7 @@ double computeSolarPhaseAngle( const double regolithArgumentOfPeriapsis,
 {
     // radian conversion
     // double regolithArgumentOfPeriapsisRadian = convertDegreeToRadians( regolithArgumentOfPeriapsis );
-// std::cout << "current Time = " << currentTime << std::endl;
-// std::cout << "initial time for sun = " << initialTimeForSun << std::endl;
+
     // calculate the sun's longitude for the current time instance
     // double timeDifference = ( currentTime - initialTimeForSun );
     double timeDifference = ( currentTime );
@@ -963,6 +968,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     double kineticEnergy = 0.0;
     double potentialEnergy = 0.0;
     double initialParticleEnergy = 0.0;
+    double truePotentialEnergy = 0.0;
+    double trueInitialParticleEnergy = 0.0;
 
     computeParticleEnergy( alpha,
                            beta,
@@ -972,7 +979,9 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                            initialState,
                            kineticEnergy,
                            potentialEnergy,
-                           initialParticleEnergy );
+                           initialParticleEnergy,
+                           truePotentialEnergy,
+                           trueInitialParticleEnergy );
 
     //! get the initial jacobi integral
     double xVelocitySquare = initialState[ xVelocityIndex ] * initialState[ xVelocityIndex ];
@@ -1022,7 +1031,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     double stepSizeGuess = initialStepSize;
 
     // initialize the ode system
-    const double zRotation = asteroidRotationVector[ zPositionIndex ];
+    // const double zRotation = asteroidRotationVector[ zPositionIndex ];
     // equationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
     //                                                                          alpha,
     //                                                                          beta,
@@ -1168,6 +1177,9 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     databaseQuery.bind( ":potential_energy", potentialEnergy );
     databaseQuery.bind( ":total_energy", initialParticleEnergy );
 
+    databaseQuery.bind( ":true_potential_energy", truePotentialEnergy );
+    databaseQuery.bind( ":true_total_energy", trueInitialParticleEnergy );
+
     databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
     databaseQuery.bind( ":initial_solar_phase_angle", initialSolarPhaseAngle );
@@ -1273,6 +1285,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
 
             // calculate energy and check the sign
             double particleEnergy = 0.0;
+            double trueParticleEnergy = 0.0;
             computeParticleEnergy( alpha,
                                    beta,
                                    gamma,
@@ -1281,7 +1294,9 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                    currentStateVector,
                                    kineticEnergy,
                                    potentialEnergy,
-                                   particleEnergy );
+                                   particleEnergy,
+                                   truePotentialEnergy,
+                                   trueParticleEnergy );
 
             bool energyFlag = false;
             if( particleEnergy > 0.0 )
@@ -1431,6 +1446,9 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                 databaseQuery.bind( ":potential_energy", potentialEnergy );
                 databaseQuery.bind( ":total_energy", particleEnergy );
 
+                databaseQuery.bind( ":true_potential_energy", truePotentialEnergy );
+                databaseQuery.bind( ":true_total_energy", trueParticleEnergy );
+
                 databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
                 databaseQuery.bind( ":initial_solar_phase_angle", initialSolarPhaseAngle );
@@ -1494,6 +1512,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                             orbitalElements );
 
             double particleEnergy = 0.0;
+            double trueParticleEnergy = 0.0;
             computeParticleEnergy( alpha,
                                    beta,
                                    gamma,
@@ -1502,7 +1521,9 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                    currentStateVector,
                                    kineticEnergy,
                                    potentialEnergy,
-                                   particleEnergy );
+                                   particleEnergy,
+                                   truePotentialEnergy,
+                                   trueParticleEnergy );
 
             //! get the jacobi integral
             xVelocitySquare = currentStateVector[ xVelocityIndex ] * currentStateVector[ xVelocityIndex ];
@@ -1618,6 +1639,9 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             databaseQuery.bind( ":kinetic_energy", kineticEnergy );
             databaseQuery.bind( ":potential_energy", potentialEnergy );
             databaseQuery.bind( ":total_energy", particleEnergy );
+
+            databaseQuery.bind( ":true_potential_energy", truePotentialEnergy );
+            databaseQuery.bind( ":true_total_energy", trueParticleEnergy );
 
             databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
@@ -1716,6 +1740,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                             orbitalElements );
 
             double particleEnergy = 0.0;
+            double trueParticleEnergy = 0.0;
             computeParticleEnergy( alpha,
                                    beta,
                                    gamma,
@@ -1724,7 +1749,9 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                    currentStateVector,
                                    kineticEnergy,
                                    potentialEnergy,
-                                   particleEnergy );
+                                   particleEnergy,
+                                   truePotentialEnergy,
+                                   trueParticleEnergy );
 
             //! get the jacobi integral
             xVelocitySquare = currentStateVector[ xVelocityIndex ] * currentStateVector[ xVelocityIndex ];
@@ -1841,6 +1868,9 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             databaseQuery.bind( ":potential_energy", potentialEnergy );
             databaseQuery.bind( ":total_energy", particleEnergy );
 
+            databaseQuery.bind( ":true_potential_energy", truePotentialEnergy );
+            databaseQuery.bind( ":true_total_energy", trueParticleEnergy );
+
             databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
             databaseQuery.bind( ":initial_solar_phase_angle", initialSolarPhaseAngle );
@@ -1891,6 +1921,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                         orbitalElements );
 
         double particleEnergy = 0.0;
+        double trueParticleEnergy = 0.0;
         computeParticleEnergy( alpha,
                                beta,
                                gamma,
@@ -1899,7 +1930,9 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                currentStateVector,
                                kineticEnergy,
                                potentialEnergy,
-                               particleEnergy );
+                               particleEnergy,
+                               truePotentialEnergy,
+                               trueParticleEnergy );
 
         //! get the jacobi integral
         xVelocitySquare = currentStateVector[ xVelocityIndex ] * currentStateVector[ xVelocityIndex ];
@@ -2015,6 +2048,9 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
         databaseQuery.bind( ":kinetic_energy", kineticEnergy );
         databaseQuery.bind( ":potential_energy", potentialEnergy );
         databaseQuery.bind( ":total_energy", particleEnergy );
+
+        databaseQuery.bind( ":true_potential_energy", truePotentialEnergy );
+        databaseQuery.bind( ":true_total_energy", trueParticleEnergy );
 
         databaseQuery.bind( ":jacobi_integral", jacobiIntegral );
 
