@@ -16,6 +16,7 @@ import pandas as pd
 import math
 from scipy.interpolate import griddata
 from decimal import Decimal
+from operator import add
 
 # System
 import sys
@@ -30,6 +31,7 @@ import matplotlib.lines as mlines
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
+import matplotlib.ticker as ticker
 from matplotlib import animation
 from matplotlib import rcParams
 from matplotlib import cm
@@ -65,7 +67,7 @@ try:
        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
                                    + "multiple_launch_velocity/"
                                    + "simulation_time_9_months/"
-                                   + "longestEdge.db")
+                                   + "longestEdge_v2.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -80,11 +82,20 @@ data = pd.read_sql( "SELECT     position_x,                                     
                                 inertial_position_x,                                \
                                 inertial_position_y,                                \
                                 inertial_position_z,                                \
+                                inertial_velocity_x,                                \
+                                inertial_velocity_y,                                \
+                                inertial_velocity_z,                                \
+                                gravAcc_x,                                          \
+                                gravAcc_y,                                          \
+                                gravAcc_z,                                          \
+                                kinetic_energy,                                     \
+                                potential_energy,                                   \
+                                total_energy,                                       \
                                 ROUND( launch_azimuth ),                            \
                                 time                                                \
                      FROM       regolith_trajectory_results                         \
-                     WHERE      ROUND( launch_azimuth ) = 185.0                     \
-                     AND        ROUND( initial_velocity_magnitude ) = 5.0;",        \
+                     WHERE      ROUND( launch_azimuth ) = 45.0                      \
+                     AND        ROUND( initial_velocity_magnitude ) = 10.0;",       \
                      database )
 
 data.columns = [ 'x',                                                   \
@@ -94,8 +105,20 @@ data.columns = [ 'x',                                                   \
                  'inertial_x',                                          \
                  'inertial_y',                                          \
                  'inertial_z',                                          \
+                 'inertial_velocity_x',                                 \
+                 'inertial_velocity_y',                                 \
+                 'inertial_velocity_z',                                 \
+                 'gravAcc_x',                                           \
+                 'gravAcc_y',                                           \
+                 'gravAcc_z',                                           \
+                 'kinetic_energy',                                      \
+                 'potential_energy',                                    \
+                 'total_energy',                                        \
                  'launch_azimuth',                                      \
                  'time' ]
+
+body_x                   = data[ 'x' ]
+body_y                   = data[ 'y' ]
 
 x                   = data[ 'x' ]
 y                   = data[ 'y' ]
@@ -104,8 +127,19 @@ velocityMagnitude   = data[ 'velocity_magnitude' ]
 inertial_x          = data[ 'inertial_x' ]
 inertial_y          = data[ 'inertial_y' ]
 inertial_z          = data[ 'inertial_z' ]
+inertial_xVel       = data[ 'inertial_velocity_x' ]
+inertial_yVel       = data[ 'inertial_velocity_y' ]
+inertial_zVel       = data[ 'inertial_velocity_z' ]
+gravAcc_x_noPert    = data[ 'gravAcc_x' ]
+gravAcc_y_noPert    = data[ 'gravAcc_y' ]
+gravAcc_z_noPert    = data[ 'gravAcc_z' ]
 launchAzimuth       = data[ 'launch_azimuth' ]
-t                   = data[ 'time' ]
+
+kinetic_energy_noPert       = data[ 'kinetic_energy' ]
+potential_energy_noPert     = data[ 'potential_energy' ]
+total_energy_noPert         = data[ 'total_energy' ]
+
+t_noSolarPerturbations = data[ 'time' ]
 
 if database:
     database.close( )
@@ -116,7 +150,7 @@ endIndex = np.size( x )
 string1 = 'Particle trajectory projection around asteroid Eros (Body fixed frame) \n'
 string2 = '$V_{initial}$=' + str( velocityMagnitude[ 0 ] ) + '[m/s], '
 string3 = 'Launch azimuth=' + str( launchAzimuth[ 0 ] ) + '[deg], '
-string4 = 'time=' + str( t[ endIndex-1 ] / (60.0*60.0) ) + '[hrs]'
+string4 = 'time=' + str( t_noSolarPerturbations[ endIndex-1 ] / (60.0*60.0) ) + '[hrs]'
 topTitleBodyFrame = string1 + string2 + string3 + string4
 
 fig = plt.figure( )
@@ -166,7 +200,7 @@ upperTimeDays = 50.0
 upperTime = upperTimeDays * 24.0 * 60.0 * 60.0
 
 # auto set time from the non-perturbing results
-upperTime = t[ endIndex-1 ]
+upperTime = t_noSolarPerturbations[ endIndex-1 ]
 upperTimeDays = upperTime / ( 24.0 * 60.0 * 60.0 )
 
 data = pd.read_sql( "SELECT     ROUND( initial_velocity_magnitude ),                            \
@@ -191,11 +225,14 @@ data = pd.read_sql( "SELECT     ROUND( initial_velocity_magnitude ),            
                                 gravAcc_x,                                                      \
                                 gravAcc_y,                                                      \
                                 gravAcc_z,                                                      \
+                                kinetic_energy,                                                 \
+                                potential_energy,                                               \
+                                total_energy,                                                   \
                                 ROUND( time )                                                   \
                      FROM       regolith_trajectory_results                                     \
-                     WHERE      ROUND( launch_azimuth ) = 185.0                                 \
-                     AND        ROUND( initial_velocity_magnitude ) = 5.0                       \
-                     AND        ROUND( initial_solar_phase_angle ) = 135.0                      \
+                     WHERE      ROUND( launch_azimuth ) = 45.0                                  \
+                     AND        ROUND( initial_velocity_magnitude ) = 10.0                      \
+                     AND        ROUND( initial_solar_phase_angle ) = 45.0                       \
                      AND        time >= " + str(lowerTime)
                                 + " AND time <= " + str(upperTime) + " ;",                      \
                      database )
@@ -225,6 +262,9 @@ data.columns = [ 'initial_velocity_magnitude',                                  
                  'gravAcc_x',                                                                   \
                  'gravAcc_y',                                                                   \
                  'gravAcc_z',                                                                   \
+                 'kinetic_energy',                                                              \
+                 'potential_energy',                                                            \
+                 'total_energy',                                                                \
                  'time' ]
 
 initialVelocityMagnitude    = data[ 'initial_velocity_magnitude' ]
@@ -251,11 +291,15 @@ gravAcc_y                   = data[ 'gravAcc_y' ]
 gravAcc_z                   = data[ 'gravAcc_z' ]
 t                           = data[ 'time' ]
 
+kinetic_energy_pert         = data[ 'kinetic_energy' ]
+potential_energy_pert       = data[ 'potential_energy' ]
+total_energy_pert           = data[ 'total_energy' ]
+
 ## get data for the sun's trajectory
 data2 = pd.read_csv("../data/regolith_launched_from_longest_edge/"
                     + "multiple_launch_velocity_with_perturbations/"
                     + "simulation_time_9_months/"
-                    + "3.2Density_1cmSize/sunEphemeris_phase135.csv")
+                    + "3.2Density_1cmSize/sunEphemeris_phase45.csv")
 
 sun_xBody           = data2["x_body_frame"].values
 sun_yBody           = data2["y_body_frame"].values
@@ -308,21 +352,22 @@ ax3.set_xlabel('x [m]')
 ax3.set_title('Inertial frame')
 ax3.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False )
 
-## Set up the figure for the actual plot
-fig = plt.figure( figsize=( 10, 10 ) )
+### main segment of the code
+
+## Set up the figure
+fig = plt.figure( figsize=( 6, 6 ) )
 gs = gridspec.GridSpec( 1, 1 )
 ax1 = plt.subplot( gs[ 0 ] )
-plt.suptitle( 'Ellipsoid longest edge, Body frame plot\n'
+plt.suptitle( 'Ellipsoid longest edge, Rotating frame plot\n'
               + '$V_{launch}$ = ' + str( initialVelocityMagnitude[ 0 ] ) + ' [m/s], '
               + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '
               + 'Solar phase = ' + str( solarPhase[ 0 ] ) + ' [deg]\n'
               + 'Time = ' + str( lowerTimeDays ) + ' to ' + str( upperTimeDays ) + ' [days]',
               fontsize=10 )
 
-### main segment of the code
 # Draw the entire trajectory path for the regolith
 regolithTrajectory = ax1.plot( position_x, position_y,
-                               linewidth=0.1, color=colors.cnames['purple'],
+                               linewidth=1, color=colors.cnames['purple'],
                                label='Regolith trajectory' )
 
 ## data indices
@@ -332,7 +377,7 @@ limitUpperTrajectory = np.sqrt( 1.0e5**2 + 1.0e5**2 )
 
 data_indices_1 = np.where( xyRange <= limitLowerTrajectory )
 data_indices_1 = data_indices_1[ 0 ]
-data_indices_1 = data_indices_1[ 0::4000 ]
+data_indices_1 = data_indices_1[ 0::500 ]
 
 data_indices_2 = np.where( (xyRange > limitLowerTrajectory) & (xyRange < limitUpperTrajectory) )
 data_indices_2 = data_indices_2[ 0 ]
@@ -341,7 +386,14 @@ data_indices_2 = data_indices_2[ 0::200 ]
 data_indices_3 = np.where( xyRange > limitUpperTrajectory )
 data_indices_3 = data_indices_3[ 0 ]
 
-data_indices = data_indices_1.tolist( ) + data_indices_2.tolist( ) + data_indices_3.tolist( )
+# data_indices = data_indices_1.tolist( ) + data_indices_2.tolist( ) + data_indices_3.tolist( )
+
+## data indices based on magnitude of grav. acceleration acting on particle
+gravMagnitudeLimit = 1.0e-2
+gravMag = np.sqrt( gravAcc_x**2 + gravAcc_y**2 + gravAcc_z**2 )
+data_indices = np.where( gravMag < gravMagnitudeLimit )
+data_indices = data_indices[ 0 ]
+data_indices = data_indices[ 0::100 ]
 
 plotTimes = t[data_indices]
 plotTimes = plotTimes.tolist( )
@@ -349,15 +401,18 @@ plotTimes = plotTimes.tolist( )
 sunTimeValues = []
 sunDataIndices = []
 for index in range( 0, len( plotTimes ) ):
-    sunDataIndicesTemp = np.where( sunKeplerSolverTime == plotTimes[ index ] )
-    sunDataIndicesTemp = sunDataIndicesTemp[ 0 ]
+    # sunDataIndicesTemp = np.where( sunKeplerSolverTime == plotTimes[ index ] )
+    # sunDataIndicesTemp = sunDataIndicesTemp[ 0 ]
+    # sunDataIndices.append( sunDataIndicesTemp )
+    # sunTimeValues.append( sunKeplerSolverTime[ sunDataIndicesTemp ] )
+    sunDataIndicesTemp = (np.abs(sunKeplerSolverTime - plotTimes[index])).argmin( )
     sunDataIndices.append( sunDataIndicesTemp )
     sunTimeValues.append( sunKeplerSolverTime[ sunDataIndicesTemp ] )
 
-sunTimeValues = np.concatenate( sunTimeValues, axis=0 )
-sunTimeValues = sunTimeValues.tolist( )
+# sunTimeValues = np.concatenate( sunTimeValues, axis=0 )
+# sunTimeValues = sunTimeValues.tolist( )
 
-plotStepSize = 1
+plotStepSize = 2
 
 ## srp vector plot
 y = position_y[ data_indices ].tolist( )
@@ -365,6 +420,14 @@ x = position_x[ data_indices ].tolist( )
 z = position_z[ data_indices ].tolist( )
 srp_xPlot = srp_x[ data_indices ].tolist( )
 srp_yPlot = srp_y[ data_indices ].tolist( )
+stbe_xPlot = solarTide_x[ data_indices ].tolist()
+stbe_yPlot = solarTide_y[ data_indices ].tolist()
+
+# totalPerturbation_xPlot = map(add, srp_xPlot, stbe_xPlot)
+# totalPerturbation_yPlot = map(add, srp_yPlot, stbe_yPlot)
+totalPerturbation_xPlot = np.add( srp_xPlot, stbe_xPlot ).tolist( )
+totalPerturbation_yPlot = np.add( srp_yPlot, stbe_yPlot ).tolist( )
+
 srpVector = []
 for index in range( 0, len( srp_xPlot ), plotStepSize ):
     currentVector = ax1.quiver( x[index], y[index],
@@ -398,7 +461,7 @@ for index in range( 0, len( solarTide_xPlot ), plotStepSize ):
                                 label='Solar-TBE' if index == 0 else '_nolegend_' )
 
 ## sort out sun data to be plotted
-sunDataIndices = np.concatenate( sunDataIndices, axis=0 ).tolist( )
+# sunDataIndices = np.concatenate( sunDataIndices, axis=0 ).tolist( )
 sun_xPlot = sun_xBody[ sunDataIndices ]
 sun_yPlot = sun_yBody[ sunDataIndices ]
 sun_zPlot = sun_zBody[ sunDataIndices ]
@@ -477,6 +540,501 @@ leg = ax1.legend( ).draggable( )
 
 if database:
     database.close( )
+
+## do the same analysis for inertial frame orbits
+sun_xInertialPlot = sun_xInertial[ sunDataIndices ]
+sun_yInertialPlot = sun_yInertial[ sunDataIndices ]
+sun_zInertialPlot = sun_zInertial[ sunDataIndices ]
+
+regolith_xInertialPlot = inertial_position_x[ data_indices ]
+regolith_yInertialPlot = inertial_position_y[ data_indices ]
+regolith_zInertialPlot = inertial_position_z[ data_indices ]
+
+# compute SRP in the inertial frame
+rho = 1.0
+solarConstant = 1.0e17
+
+regolithGrainDensity = 3.2 * 1.0e3;
+regolithGrainRadius = 1.0 * 1.0e-2;
+areaToMassRatio = 3.0 / ( 4.0 * regolithGrainRadius * regolithGrainDensity );
+
+multiplicationConstant = -1.0 * ( 1.0 + rho ) * solarConstant * areaToMassRatio;
+
+DminusR_xInertial = sun_xInertialPlot - regolith_xInertialPlot
+DminusR_yInertial = sun_yInertialPlot - regolith_yInertialPlot
+DminusR_zInertial = sun_zInertialPlot - regolith_zInertialPlot
+
+DminusRcube = ( np.sqrt( DminusR_xInertial**2 + DminusR_yInertial**2 + DminusR_zInertial**2 ) )**3
+
+srp_xInertial = multiplicationConstant * DminusR_xInertial / ( DminusRcube )
+srp_yInertial = multiplicationConstant * DminusR_yInertial / ( DminusRcube )
+srp_zInertial = multiplicationConstant * DminusR_zInertial / ( DminusRcube )
+
+# compute STBE for the inertial frame
+RminusD_xInertial = regolith_xInertialPlot - sun_xInertialPlot
+RminusD_yInertial = regolith_yInertialPlot - sun_yInertialPlot
+RminusD_zInertial = regolith_zInertialPlot - sun_zInertialPlot
+
+RminusD_MagnitudeCubeInertial = ( np.sqrt( RminusD_xInertial**2 + RminusD_yInertial**2 + RminusD_zInertial**2 ) )**3
+
+sun_MagnitudeCubeInertial = ( np.sqrt( sun_xInertialPlot**2 + sun_yInertialPlot**2 + sun_zInertialPlot**2 ) )**3
+
+stbe_xInertial = -muSun * ( RminusD_xInertial / RminusD_MagnitudeCubeInertial + sun_xInertialPlot / sun_MagnitudeCubeInertial )
+stbe_yInertial = -muSun * ( RminusD_yInertial / RminusD_MagnitudeCubeInertial + sun_yInertialPlot / sun_MagnitudeCubeInertial )
+stbe_zInertial = -muSun * ( RminusD_zInertial / RminusD_MagnitudeCubeInertial + sun_zInertialPlot / sun_MagnitudeCubeInertial )
+
+# total perturbing acceleration
+totalPerturbingAcc_xInertial = map( add, srp_xInertial, stbe_xInertial )
+totalPerturbingAcc_yInertial = map( add, srp_yInertial, stbe_yInertial )
+totalPerturbingAcc_zInertial = map( add, srp_zInertial, stbe_zInertial )
+
+# set up the figure now
+fig = plt.figure( figsize=(7, 10) )
+gs = gridspec.GridSpec( 2, 1 )
+ax1 = plt.subplot( gs[ 0 ] )
+ax2 = plt.subplot( gs[ 1 ] )
+plt.suptitle( 'Ellipsoid longest edge, Inertial frame plot\n'
+              + '$V_{launch}$ = ' + str( initialVelocityMagnitude[ 0 ] ) + ' [m/s], '
+              + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '
+              + 'Solar phase = ' + str( solarPhase[ 0 ] ) + ' [deg]\n'
+              + 'Time = ' + str( lowerTimeDays ) + ' to ' + str( upperTimeDays ) + ' [days]',
+              fontsize=10 )
+
+# plot the inertial frame trajectory for unperturbed case
+ax1.plot( inertial_x, inertial_y,
+          color=trajectoryColor, linewidth=0.5,
+          label='Regolith trajectory' )
+
+# indicate starting point
+ax1.text( inertial_x[0], inertial_y[0], 'start', size=12, color=startColor )
+
+# indicate ending point
+ax1.text( inertial_x[endIndex-1], inertial_y[endIndex-1], 'end', size=12, color=endColor )
+
+# common tick spacing
+x_tick_spacing = 0.25e5
+y_tick_spacing = 0.25e5
+
+# format axis and title
+ax1.set_title( 'No Solar perturbations' )
+ax1.set_xlabel('x [m]')
+ax1.set_ylabel('y [m]')
+ax1.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False )
+ax1.grid( True )
+# ax1.axis('equal')
+ax1.xaxis.set_major_locator(ticker.MultipleLocator(x_tick_spacing))
+ax1.yaxis.set_major_locator(ticker.MultipleLocator(y_tick_spacing))
+ax1.legend( ).draggable( )
+
+# plot inertial trajectory for perturbed case
+ax2.plot( inertial_position_x, inertial_position_y,
+          color=trajectoryColor, linewidth=0.5,
+          label='Regolith trajectory with Solar perturbations' )
+
+# indicate starting point
+ax2.text( inertial_position_x[0], inertial_position_y[0], 'start', size=12, color=startColor )
+
+# indicate ending point
+ax2.text( inertial_position_x[len(inertial_position_x)-1],
+          inertial_position_y[len(inertial_position_x)-1],
+          'end', size=12,
+          color=endColor )
+
+# mark the regolith points and draw the srp vector
+inertialSRPSanityCheckFlag = False
+colors = plt.cm.Vega20( np.linspace( 0, 1, len( regolith_xInertialPlot ) ) )
+
+regolith_xInertialPlot = regolith_xInertialPlot.tolist( )
+regolith_yInertialPlot = regolith_yInertialPlot.tolist( )
+srp_xInertial = srp_xInertial.tolist( )
+srp_yInertial = srp_yInertial.tolist( )
+sun_xInertialPlot = sun_xInertialPlot.tolist( )
+sun_yInertialPlot = sun_yInertialPlot.tolist( )
+stbe_xInertial = stbe_xInertial.tolist( )
+stbe_yInertial = stbe_yInertial.tolist( )
+
+ax2.plot( inertial_x, inertial_y,
+          color='black', linewidth=0.5, linestyle='dotted',
+          label='Regolith trajectory without Solar perturbations' )
+
+ax2.text( inertial_x[ len(inertial_x) - 1 ], inertial_y[ len(inertial_x) - 1 ],
+          'end', size=12, color=endColor )
+
+for index in range( 0, len( regolith_xInertialPlot ), plotStepSize ):
+    # ax2.scatter( regolith_xInertialPlot[index], regolith_yInertialPlot[index],
+    #              s=40, c=colors[index],
+    #              marker='o', edgecolors='face',
+    #              label='Regolith' if index == 0 else '_nolegend_' )
+
+    ax2.quiver( regolith_xInertialPlot[index], regolith_yInertialPlot[index],
+                srp_xInertial[index], srp_yInertial[index],
+                angles='xy',
+                width=0.002,
+                headwidth=4,
+                headlength=4,
+                headaxislength=4,
+                linewidths=0.5,
+                pivot='tail',
+                color='red',
+                label='SRP' if index == 0 else '_nolegend_' )
+
+    # ax2.quiver( regolith_xInertialPlot[index], regolith_yInertialPlot[index],
+    #             stbe_xInertial[index], stbe_yInertial[index],
+    #             angles='xy',
+    #             width=0.002,
+    #             headwidth=4,
+    #             headlength=4,
+    #             headaxislength=4,
+    #             linewidths=0.5,
+    #             pivot='tail',
+    #             color='green',
+    #             label='STBE' if index == 0 else '_nolegend_' )
+
+    if inertialSRPSanityCheckFlag == True:
+        ax2.quiver( regolith_xInertialPlot[index], regolith_yInertialPlot[index],
+                    sun_xInertialPlot[index], sun_yInertialPlot[index],
+                    angles='xy',
+                    width=0.002,
+                    headwidth=4,
+                    headlength=4,
+                    headaxislength=4,
+                    linewidths=0.5,
+                    pivot='tail',
+                    color='black',
+                    label="Sun's direction" if index == 0 else "_nolegend_" )
+
+ax2.grid(True)
+ax2.set_title( 'With Solar perturbations' )
+ax2.set_xlabel( 'x [m]' )
+ax2.set_ylabel( 'y [m]' )
+ax2.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False )
+# ax2.axis('equal')
+ax2.xaxis.set_major_locator(ticker.MultipleLocator(x_tick_spacing))
+ax2.yaxis.set_major_locator(ticker.MultipleLocator(y_tick_spacing))
+ax2.legend( ).draggable( )
+
+## plot comparative analysis in just one graph in inertial frame
+# plot inertial trajectory for perturbed case
+fig = plt.figure( figsize=(6, 6) )
+ax2 = plt.subplot(111)
+
+ax2.plot( inertial_position_x, inertial_position_y,
+          color=trajectoryColor, linewidth=1.0,
+          label='Regolith trajectory with Solar perturbations' )
+
+# indicate starting point
+ax2.text( inertial_position_x[0], inertial_position_y[0], 'start', size=12, color=startColor )
+
+# indicate ending point
+# ax2.text( inertial_position_x[len(inertial_position_x)-1],
+#           inertial_position_y[len(inertial_position_x)-1],
+#           'end', size=12,
+#           color=endColor )
+
+ax2.plot( inertial_x, inertial_y,
+          color='black', linewidth=1.0, linestyle='dotted',
+          label='Regolith trajectory without Solar perturbations' )
+
+# ax2.text( inertial_x[ len(inertial_x) - 1 ], inertial_y[ len(inertial_x) - 1 ],
+#           'end', size=12, color=endColor )
+
+ax2.quiver( regolith_xInertialPlot, regolith_yInertialPlot,
+            totalPerturbingAcc_xInertial, totalPerturbingAcc_yInertial,
+            angles='xy',
+            width=0.002,
+            headwidth=4,
+            headlength=4,
+            headaxislength=4,
+            linewidths=0.5,
+            pivot='tail',
+            color='red',
+            label='SRP + STBE' )
+
+# ax2.grid( True )
+ax2.legend( ).draggable( )
+ax2.set_xlabel( 'x [m]' )
+ax2.set_ylabel( 'y [m]' )
+plt.suptitle( 'Ellipsoid longest edge, Inertial frame plot\n'
+              + '$V_{launch}$ = ' + str( initialVelocityMagnitude[ 0 ] ) + ' [m/s], '
+              + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '
+              + 'Solar phase = ' + str( solarPhase[ 0 ] ) + ' [deg]\n'
+              + 'Time = ' + str( lowerTimeDays ) + ' to ' + str( upperTimeDays ) + ' [days]',
+              fontsize=10 )
+ax2.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False )
+
+## plot comparative analysis in just one graph but in body frame
+fig = plt.figure( figsize=(12, 6) )
+ax1 = plt.subplot( 121 )
+ax2 = plt.subplot( 122 )
+
+ax1.plot( position_x, position_y,
+          color=trajectoryColor, linewidth=1.0,
+          label='Regolith trajectory with Solar perturbations' )
+
+ax1.plot( body_x, body_y,
+          color='black', linewidth=1.0, linestyle='dotted',
+          label='Regolith trajectory without Solar perturbations' )
+
+# indicate starting point
+ax1.text( position_x[0], position_y[0], 'start', size=12, color=startColor )
+
+# indicate ending point
+ax1.text( position_x[len(position_x)-1],
+          position_y[len(position_x)-1],
+          'end', size=12,
+          color=endColor )
+
+ax1.text( body_x[ len(body_x) - 1 ], body_y[ len(body_x) - 1 ],
+          'end', size=12, color=endColor )
+
+ax1.legend( ).draggable( )
+ax1.set_xlabel( 'x [m]' )
+ax1.set_ylabel( 'y [m]' )
+ax1.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False )
+
+# second plot with the perturbation vector is drawn from here onwards
+ax2.plot( position_x, position_y,
+          color=trajectoryColor, linewidth=1.0,
+          label='Regolith trajectory with Solar perturbations' )
+
+# indicate starting point
+# ax2.text( position_x[0], position_y[0], 'start', size=12, color=startColor )
+
+# indicate ending point
+# ax2.text( position_x[len(position_x)-1],
+#           position_y[len(position_x)-1],
+#           'end', size=12,
+#           color=endColor )
+
+ax2.plot( body_x, body_y,
+          color='black', linewidth=1.0, linestyle='dotted',
+          label='Regolith trajectory without Solar perturbations' )
+
+# ax2.text( body_x[ len(body_x) - 1 ], body_y[ len(body_x) - 1 ],
+#           'end', size=12, color=endColor )
+
+ax2.quiver( x, y,
+            totalPerturbation_xPlot, totalPerturbation_yPlot,
+            angles='xy',
+            width=0.002,
+            headwidth=4,
+            headlength=4,
+            headaxislength=4,
+            linewidths=0.5,
+            pivot='tail',
+            color='red',
+            label='SRP + STBE' )
+
+# ax2.grid( True )
+ax2.legend( ).draggable( )
+ax2.set_xlabel( 'x [m]' )
+ax2.set_ylabel( 'y [m]' )
+plt.suptitle( 'Ellipsoid longest edge, Rotating frame plot\n'
+              + '$V_{launch}$ = ' + str( initialVelocityMagnitude[ 0 ] ) + ' [m/s], '
+              + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '
+              + 'Solar phase = ' + str( solarPhase[ 0 ] ) + ' [deg]\n'
+              + 'Time = ' + str( lowerTimeDays ) + ' to ' + str( upperTimeDays ) + ' [days]',
+              fontsize=10 )
+ax2.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False )
+
+## plot inertial velocity comparison
+fig = plt.figure( figsize=(6, 6) )
+ax1 = plt.subplot( 111 )
+plt.suptitle( 'Ellipsoid longest edge, Inertial frame plot\n'
+              + '$V_{launch}$ = ' + str( initialVelocityMagnitude[ 0 ] ) + ' [m/s], '
+              + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '
+              + 'Solar phase = ' + str( solarPhase[ 0 ] ) + ' [deg]\n'
+              + 'Time = ' + str( lowerTimeDays ) + ' to ' + str( upperTimeDays ) + ' [days]',
+              fontsize=10 )
+
+ax1.plot( t_noSolarPerturbations / ( 60.0 * 60.0 ),
+          np.sqrt( inertial_xVel**2 + inertial_yVel**2 + inertial_zVel**2 ),
+          color='black',
+          # linestyle='dotted',
+          label='No solar perturbations' )
+
+ax1.plot( t / ( 60.0 * 60.0 ),
+          np.sqrt( inertial_velocity_x**2 + inertial_velocity_y**2 + inertial_velocity_z**2 ),
+          color='red',
+          label='SRP + STBE' )
+
+ax1.grid(True)
+ax1.set_xlabel( "Time [hrs]" )
+ax1.set_ylabel( "Inertial velocity [m/s]" )
+ax1.legend( ).draggable( )
+
+## comparative acceleration plot against rotation state of asteroid
+fig = plt.figure( figsize=(6, 6) )
+ax1 = plt.subplot( 111 )
+ax2 = ax1.twinx( )
+
+plt.suptitle( 'Ellipsoid longest edge, Inertial frame plot\n'
+              + '$V_{launch}$ = ' + str( initialVelocityMagnitude[ 0 ] ) + ' [m/s], '
+              + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '
+              + 'Solar phase = ' + str( solarPhase[ 0 ] ) + ' [deg]\n'
+              + 'Time = ' + str( lowerTimeDays ) + ' to ' + str( upperTimeDays ) + ' [days]',
+              fontsize=10 )
+
+# note: magnitude of a vector would remain unchanged when moving between
+#       two frames not accelerating wrt each other (uniform motion)
+rotationState_nonPerturbingCase = t_noSolarPerturbations * Wz
+rotationState_nonPerturbingCase = np.mod( rotationState_nonPerturbingCase * 180.0 / np.pi, 360 )
+
+rotationState_perturbingCase = ( t * Wz ) * 180.0 / np.pi
+rotationState_perturbingCase = np.mod( rotationState_perturbingCase, 360 )
+
+ax1.plot( t_noSolarPerturbations / ( 24.0 * 60.0 * 60.0 ),
+          np.sqrt( gravAcc_x_noPert**2 + gravAcc_y_noPert**2 + gravAcc_z_noPert**2 ),
+          color='orange',
+          label='Grav. Acceleration, unperturbed case' )
+
+netAcc_perturbingCase_x = srp_x + solarTide_x + gravAcc_x
+netAcc_perturbingCase_y = srp_y + solarTide_y + gravAcc_y
+netAcc_perturbingCase_z = srp_z + solarTide_z + gravAcc_z
+netAcc = np.sqrt( netAcc_perturbingCase_x**2 + netAcc_perturbingCase_y**2 + netAcc_perturbingCase_z**2 )
+
+
+ax1.plot( t / ( 24.0 * 60.0 * 60.0 ),
+          netAcc,
+          color='red',
+          label='Net Acceleration, perturbed case' )
+
+ax1.plot( t / ( 24.0 * 60.0 * 60.0 ),
+          np.sqrt( gravAcc_x**2 + gravAcc_y**2 + gravAcc_z**2 ),
+          color='green',
+          label='Grav. Acceleration, perturbed case' )
+
+ax2.plot( t_noSolarPerturbations / ( 24.0 * 60.0 * 60.0 ),
+          rotationState_nonPerturbingCase,
+          color='blue',
+          label='Angle, unperturbed case' )
+
+# ax2.plot( t / ( 24.0 * 60.0 * 60.0 ),
+#           rotationState_perturbingCase,
+#           color='red',
+#           label='Angle' )
+
+# ax2.grid(True)
+ax2.set_xlabel( "Time [days]" )
+ax2.set_ylabel( "Asteroid rotation angle [deg]" )
+ax2.legend( ).draggable( )
+
+ax1.grid(True)
+ax1.set_xlabel( "Time [days]" )
+ax1.set_ylabel( "Acceleration $[m/s^2]$" )
+ax1.legend( ).draggable( )
+
+## energy plots
+# kinetic energy plots
+fig = plt.figure( figsize=(6, 6) )
+ax1 = plt.subplot(111)
+ax2 = ax1.twinx( )
+
+plt.suptitle( 'Ellipsoid longest edge\n'
+              + '$V_{launch}$ = ' + str( initialVelocityMagnitude[ 0 ] ) + ' [m/s], '
+              + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '
+              + 'Solar phase = ' + str( solarPhase[ 0 ] ) + ' [deg]\n'
+              + 'Time = ' + str( lowerTimeDays ) + ' to ' + str( upperTimeDays ) + ' [days]',
+              fontsize=10 )
+
+ax1.plot( t_noSolarPerturbations / ( 24.0 * 60.0 * 60.0 ),
+          kinetic_energy_noPert,
+          color='red',
+          linestyle='dotted',
+          label='kinetic energy, unperturbed case' )
+
+ax1.plot( t / ( 24.0 * 60.0 * 60.0 ),
+          kinetic_energy_pert,
+          color='red',
+          label='kinetic energy, perturbed case' )
+
+ax2.plot( t_noSolarPerturbations / ( 24.0 * 60.0 * 60.0 ),
+          rotationState_nonPerturbingCase,
+          color='blue',
+          label='Angle' )
+
+ax1.grid(True)
+ax1.set_xlabel( "Time [days]" )
+ax1.set_ylabel( "Energy $[m^2/s^2]$" )
+ax1.legend( ).draggable( )
+
+ax2.set_xlabel( "Time [days]" )
+ax2.set_ylabel( "Asteroid rotation angle [deg]" )
+ax2.legend( ).draggable( )
+
+# potential energy plots
+fig = plt.figure( figsize=(6, 6) )
+ax1 = plt.subplot(111)
+ax2 = ax1.twinx( )
+
+plt.suptitle( 'Ellipsoid longest edge\n'
+              + '$V_{launch}$ = ' + str( initialVelocityMagnitude[ 0 ] ) + ' [m/s], '
+              + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '
+              + 'Solar phase = ' + str( solarPhase[ 0 ] ) + ' [deg]\n'
+              + 'Time = ' + str( lowerTimeDays ) + ' to ' + str( upperTimeDays ) + ' [days]',
+              fontsize=10 )
+
+ax1.plot( t_noSolarPerturbations / ( 24.0 * 60.0 * 60.0 ),
+          potential_energy_noPert,
+          color='red',
+          linestyle='dotted',
+          label='potential energy, unperturbed case' )
+
+ax1.plot( t / ( 24.0 * 60.0 * 60.0 ),
+          potential_energy_pert,
+          color='red',
+          label='potential energy, perturbed case' )
+
+ax2.plot( t_noSolarPerturbations / ( 24.0 * 60.0 * 60.0 ),
+          rotationState_nonPerturbingCase,
+          color='blue',
+          label='Angle' )
+
+ax1.grid(True)
+ax1.set_xlabel( "Time [days]" )
+ax1.set_ylabel( "Energy $[m^2/s^2]$" )
+ax1.legend( ).draggable( )
+
+ax2.set_xlabel( "Time [days]" )
+ax2.set_ylabel( "Asteroid rotation angle [deg]" )
+ax2.legend( ).draggable( )
+
+## total kepler energy plots
+fig = plt.figure( figsize=(6, 6) )
+ax1 = plt.subplot(111)
+ax2 = ax1.twinx( )
+
+plt.suptitle( 'Ellipsoid longest edge\n'
+              + '$V_{launch}$ = ' + str( initialVelocityMagnitude[ 0 ] ) + ' [m/s], '
+              + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '
+              + 'Solar phase = ' + str( solarPhase[ 0 ] ) + ' [deg]\n'
+              + 'Time = ' + str( lowerTimeDays ) + ' to ' + str( upperTimeDays ) + ' [days]',
+              fontsize=10 )
+
+ax1.plot( t_noSolarPerturbations / ( 60.0 * 60.0 ),
+          total_energy_noPert,
+          color='red',
+          linestyle='dotted',
+          label='total energy, unperturbed case' )
+
+ax1.plot( t / ( 60.0 * 60.0 ),
+          total_energy_pert,
+          color='red',
+          label='total energy, perturbed case' )
+
+ax2.plot( t_noSolarPerturbations / ( 60.0 * 60.0 ),
+          rotationState_nonPerturbingCase,
+          color='blue',
+          label='Angle' )
+
+ax1.grid(True)
+ax1.set_xlabel( "Time [hrs]" )
+ax1.set_ylabel( "Energy $[m^2/s^2]$" )
+ax1.legend( ).draggable( )
+
+ax2.set_xlabel( "Time [hrs]" )
+ax2.set_ylabel( "Asteroid rotation angle [deg]" )
+ax2.legend( ).draggable( )
 
 # Stop timer
 end_time = time.time( )
