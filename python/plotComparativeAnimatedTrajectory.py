@@ -387,7 +387,7 @@ timeText = ax2.text( xTop_text, yTop_text, '', fontsize=12 )
 timeData = t_solarPerturbations[ data_indices ] / ( 60.0 * 60.0 )
 timeData = timeData.tolist( )
 
-nextLineAt = 0.5e5
+nextLineAt = 1.0e4
 ## define the text handle showing velocity magnitude of the regolith
 velocity_template = 'Velocity = %0.3f [m/s]'
 # define velocity placement coordinates
