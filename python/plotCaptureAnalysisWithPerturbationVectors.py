@@ -555,8 +555,8 @@ rho = 1.0
 solarConstant = 1.0e17
 
 regolithGrainDensity = 3.2 * 1.0e3;
-regolithGrainRadius = 1.0 * 1.0e-2;
-areaToMassRatio = 3.0 / ( 4.0 * regolithGrainRadius * regolithGrainDensity );
+regolithGrainRadius = 4.0 * 1.0e-2;
+areaToMassRatio = 3.0 / ( regolithGrainRadius * regolithGrainDensity );
 
 multiplicationConstant = -1.0 * ( 1.0 + rho ) * solarConstant * areaToMassRatio;
 
