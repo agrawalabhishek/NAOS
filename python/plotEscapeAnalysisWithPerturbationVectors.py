@@ -444,8 +444,10 @@ solarConstant = 1.0e17
 muSun = 1.32712440018 * 1.0e+20
 
 regolithGrainDensity = 3.2 * 1.0e3;
-regolithGrainRadius = 4.0 * 1.0e-2;
-areaToMassRatio = 3.0 / ( regolithGrainRadius * regolithGrainDensity );
+regolithGrainRadius = 1.0 * 1.0e-2;
+regolithCrossSectionalArea = np.pi * regolithGrainRadius**2
+regolithMass = (4.0 / 3.0) * np.pi * regolithGrainRadius**3 * regolithGrainDensity
+areaToMassRatio = regolithCrossSectionalArea / regolithMass;
 
 multiplicationConstant = -1.0 * ( 1.0 + rho ) * solarConstant * areaToMassRatio;
 
