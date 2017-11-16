@@ -66,14 +66,14 @@ Wz = 0.00033118202125129593
 
 # Connect to SQLite database.
 try:
+        # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
+        #                            + "multiple_launch_velocity_with_perturbations/"
+        #                            + "simulation_time_9_months/"
+        #                            + "3.2Density_1cmRadius/longestEdgePerturbations.db")
         database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
                                    + "multiple_launch_velocity_with_perturbations/"
                                    + "simulation_time_9_months/"
-                                   + "3.2Density_1cmSize/longestEdgePerturbations.db")
-        # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
-        #                            + "multiple_launch_velocity/"
-        #                            + "simulation_time_9_months/"
-        #                            + "longestEdgePerturbations.db")
+                                   + "longestEdgePerturbationsTest.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]

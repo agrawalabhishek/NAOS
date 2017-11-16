@@ -126,6 +126,8 @@ def plotCompartiveCaptureCases( case1_solarPhase, case1_launchVelocity, case1_la
     ax3 = plt.subplot( gs[ 2 ] )
     ax4 = plt.subplot( gs[ 3 ] )
 
+    plt.suptitle( "Capture case initial conditions for different regolith types \n Ellipsoid longest edge" )
+
     plotHandles = [ ax1, ax2, ax3, ax4 ]
     uniqueSolarPhases = np.arange( 45.0, 360.0, 90.0 )
     for index in range( 0, len( uniqueSolarPhases ) ):
@@ -191,7 +193,7 @@ def plotCompartiveCaptureCases( case1_solarPhase, case1_launchVelocity, case1_la
         currentPlotHandle.set_title( 'Solar phase = ' + str(currentSolarPhase) + ' [deg]' )
         currentPlotHandle.set_xlabel( 'Launch Azimuth [deg]' )
         currentPlotHandle.set_ylabel( 'Launch Velocity [m/s]' )
-        # currentPlotHandle.xaxis.set_ticks( np.arange( 0.0, 360.0, 10.0 ) )
+        # currentPlotHandle.xaxis.set_ticks( np.arange( 0.0, 360.0, 20.0 ) )
         currentPlotHandle.yaxis.set_ticks( np.arange( 0.0, 16.0, 1.0 ) )
         if index == 0:
             currentPlotHandle.legend( ).draggable( )
