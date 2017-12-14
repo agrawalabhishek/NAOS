@@ -399,9 +399,9 @@ void executeRegolithTrajectoryCalculation( const double alpha,
     // this normal vector is not in the same direction as the position vector unless the central
     // body is a sphere.
     std::vector< double > regolithNormalVector
-                               = { regolithPositionVector[ xPositionIndex ] / ( alpha * alpha ),
-                                   regolithPositionVector[ yPositionIndex ] / ( beta * beta ),
-                                   regolithPositionVector[ zPositionIndex ] / ( gamma * gamma ) };
+                               = { 2.0 * regolithPositionVector[ xPositionIndex ] / ( alpha * alpha ),
+                                   2.0 * regolithPositionVector[ yPositionIndex ] / ( beta * beta ),
+                                   2.0 * regolithPositionVector[ zPositionIndex ] / ( gamma * gamma ) };
 
     // get the unit normal vector
     std::vector< double > regolithNormalUnitVector = naos::normalize( regolithNormalVector );
