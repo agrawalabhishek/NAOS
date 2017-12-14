@@ -541,8 +541,8 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         databaseFilePath << "../../data/regolith_launched_from_longest_edge";
         databaseFilePath << "/multiple_launch_velocity_with_perturbations";
         databaseFilePath << "/simulation_time_9_months";
-        databaseFilePath << "/3.2Density_0.1cmRadius";
-        databaseFilePath << "/longestEdgePerturbationsTest.db";
+        // databaseFilePath << "/3.2Density_0.1cmRadius";
+        databaseFilePath << "/test.db";
 
         // databaseFilePath << "../../data/regolith_launched_from_longest_edge";
         // databaseFilePath << "/multiple_launch_velocity";
