@@ -313,9 +313,14 @@ void executeRegolithMonteCarlo( const double alpha,
                                 const double dataSaveIntervals,
                                 std::ostringstream &databaseFilePath )
 {
-    double aXValue = 1.0;
-    double aYValue = 0.0;
-    double aZValue = 0.0;
+    const double launchLocationLongitude = naos::convertDegreeToRadians( 0.0 ); // [deg]
+    const double launchLocationLatitude = naos::convertDegreeToRadians( 0.0 ); // [deg]
+    // double aXValue = 1.0;
+    // double aYValue = 0.0;
+    // double aZValue = 0.0;
+    double aXValue = std::cos( launchLocationLatitude ) * std::cos( launchLocationLongitude );
+    double aYValue = std::cos( launchLocationLatitude ) * std::sin( launchLocationLongitude );
+    double aZValue = std::sin( launchLocationLatitude );
     const double velocityMagnitudeFactor = 0.9;
     const double coneAngleAzimuthFactor = 1.0;
 
@@ -411,7 +416,7 @@ void executeRegolithMonteCarlo( const double alpha,
     //                                         databaseQuery );
 
     // azimuth angle iterator begins here
-    for( int azimuthIterator = 0; azimuthIterator < 360; azimuthIterator = azimuthIterator + 5 )
+    for( int azimuthIterator = 45; azimuthIterator < 46; azimuthIterator = azimuthIterator + 5 )
     {
         // calculate the azimuth angle
         const double coneAngleAzimuth
