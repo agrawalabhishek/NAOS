@@ -58,6 +58,7 @@ Wz = 0.00033118202125129593
 fig = plt.figure( figsize=( 6, 6 ) )
 gs = gridspec.GridSpec( 1, 1 )
 ax1 = plt.subplot( gs[ 0 ], projection = '3d' )
+# ax1.set_aspect('equal')
 
 u = np.linspace(0, 2 * np.pi, 100)
 v = np.linspace(0, np.pi, 100)
@@ -66,13 +67,40 @@ ellipsoid_x = alpha * np.outer(np.cos(u), np.sin(v))
 ellipsoid_y = beta * np.outer(np.sin(u), np.sin(v))
 ellipsoid_z = gamma * np.outer(np.ones(np.size(u)), np.cos(v))
 
-newColor = colors.cnames["slategray"]
+newColor = colors.cnames["brown"]
 ax1.plot_surface( ellipsoid_x, ellipsoid_y, ellipsoid_z,
-                         rstride=5, cstride=5, color=newColor, linewidth=10.0 )
+                         rstride=5, cstride=5, color=newColor, linewidth=10.0, alpha=0.7 )
 
+# draw the body frame x-axis
+ax1.quiver3D( 0.0, 0.0, 0.0,
+              alpha+8000.0, 0.0, 0.0,
+              length=1.0, lw=1, pivot='tail', arrow_length_ratio=0.1,
+              color=colors.cnames["black"], linestyles='dashed' )
+
+# draw the body frame y-axis
+ax1.quiver3D( 0.0, 0.0, 0.0,
+              0.0, beta+8000.0, 0.0,
+              length=1.0, lw=1, pivot='tail', arrow_length_ratio=0.1,
+              color=colors.cnames["black"], linestyles='dashed' )
+
+# draw the body frame z-axis
+ax1.quiver3D( 0.0, 0.0, 0.0,
+              0.0, 0.0, gamma+8000.0,
+              length=1.0, lw=1, pivot='tail', arrow_length_ratio=0.1,
+              color=colors.cnames["black"], linestyles='dashed' )
+
+
+## format axis and title
+ax1.set_xlim( [ -alpha, alpha ] )
+ax1.set_ylim( [ -alpha, alpha ] )
+ax1.set_zlim( [ -alpha, alpha ] )
 ax1.set_xlabel('x [m]')
 ax1.set_ylabel('y [m]')
 ax1.set_zlabel('z [m]')
+ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0), offset=False)
+
+# ax1.axis('equal')
+plt.axis('off')
 
 # Stop timer
 end_time = time.time( )
