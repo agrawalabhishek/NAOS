@@ -335,7 +335,7 @@ std::vector< double > computeSolarRadiationPressureAcceleration( const std::vect
 
     // specify the area to mass ratio for the regolith
     const double regolithGrainDensity = 3.2 * 1.0e3;
-    const double regolithGrainRadius = 0.1 * 1.0e-2;
+    const double regolithGrainRadius = 1.0 * 1.0e-2;
 
     const double regolithCrossSectionalArea = naos::PI *
                                                 ( regolithGrainRadius * regolithGrainRadius );
