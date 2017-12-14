@@ -73,7 +73,7 @@ try:
         database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
                                    + "multiple_launch_velocity_with_perturbations/"
                                    + "simulation_time_9_months/"
-                                   + "longestEdgePerturbationsTest.db")
+                                   + "test.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
