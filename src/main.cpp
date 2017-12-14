@@ -25,10 +25,10 @@
 #include "NAOS/particleAroundUniformlyRotatingEllipsoid.hpp"
 #include "NAOS/regolithTrajectoryCalculator.hpp"
 #include "NAOS/regolithMonteCarlo.hpp"
-#include "NAOS/sunAsteroidKeplerProblemSolver.hpp"
 #include "NAOS/perturbingAccelerations.hpp"
 #include "NAOS/asteroidSurfaceGravitationalAndPerturbingAccelerations.hpp"
 #include "NAOS/computePerturbationsForSpecificCoordinates.hpp"
+#include "NAOS/sunAsteroidKeplerProblemSolver.hpp"
 // #include "NAOS/sunAsteroidTwoBodyProblem.hpp"
 // #include "NAOS/particleAroundSpheroidAndElllipsoidGravitationalPotential.hpp"
 // #include "NAOS/boostIntegratorRestrictedTwoBodyProblem.hpp"
@@ -298,7 +298,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     {
         const double integrationStepSize = 0.01;
         // const double endTime = 2.0 * 365.0 * 24.0 * 60.0 * 60.0;
-        const double dataSaveIntervals = 5.0;
+        const double dataSaveIntervals = 10.0;
 
         double wallTimeStart = naos::getWallTime< double >( );
         double cpuTimeStart = naos::getCPUTime< double >( );
@@ -311,7 +311,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         sunAsteroidFilePath << "sunEphemeris_phase45.csv";
 
         std::ostringstream integratedSunAsteroidFilePath;
-        integratedSunAsteroidFilePath << "../../data/sun_asteroid_2BP/integratedSunAsteroid2BP.csv";
+        integratedSunAsteroidFilePath << "../../data/sun_asteroid_2BP/sunEphemeris_phase45.csv";
 
         const double oneAstronomicalUnit = 149597870700.0;
 
@@ -541,8 +541,8 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         databaseFilePath << "../../data/regolith_launched_from_longest_edge";
         databaseFilePath << "/multiple_launch_velocity_with_perturbations";
         databaseFilePath << "/simulation_time_9_months";
-        databaseFilePath << "/7.5Density_1cmSize";
-        databaseFilePath << "/longestEdgePerturbations.db";
+        databaseFilePath << "/3.2Density_0.1cmRadius";
+        databaseFilePath << "/longestEdgePerturbationsTest.db";
 
         // databaseFilePath << "../../data/regolith_launched_from_longest_edge";
         // databaseFilePath << "/multiple_launch_velocity";
