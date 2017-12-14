@@ -179,17 +179,17 @@ public:
         dXdt[ xVelocityIndex ] = gravAcceleration[ xPositionIndex ]
                                 + 2.0 * zRotation * stateVector[ yVelocityIndex ]
                                 + zRotation * zRotation * stateVector[ xPositionIndex ]
-                                + sunThirdBodyEffectAcceleration[ xPositionIndex ];
+                                + sunThirdBodyEffectAcceleration[ xPositionIndex ]
                                 + solarRadiationPressureAcceleration[ xPositionIndex ];
 
         dXdt[ yVelocityIndex ] = gravAcceleration[ yPositionIndex ]
                                 - 2.0 * zRotation * stateVector[ xVelocityIndex ]
                                 + zRotation * zRotation * stateVector[ yPositionIndex ]
-                                + sunThirdBodyEffectAcceleration[ yPositionIndex ];
+                                + sunThirdBodyEffectAcceleration[ yPositionIndex ]
                                 + solarRadiationPressureAcceleration[ yPositionIndex ];
 
         dXdt[ zVelocityIndex ] = gravAcceleration[ zPositionIndex ]
-                                + sunThirdBodyEffectAcceleration[ zPositionIndex ];
+                                + sunThirdBodyEffectAcceleration[ zPositionIndex ]
                                 + solarRadiationPressureAcceleration[ zPositionIndex ];
     }
 };
