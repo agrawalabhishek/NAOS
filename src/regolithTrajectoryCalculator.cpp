@@ -373,7 +373,8 @@ void executeRegolithTrajectoryCalculation( const double alpha,
 {
     // get the initial position coordinates for the particle on the surface
     std::vector< double > aVector { aXValue, aYValue, aZValue };
-    std::vector< double > positionUnitVector = naos::normalize( aVector );
+    // std::vector< double > positionUnitVector = naos::normalize( aVector );
+    std::vector< double > positionUnitVector = aVector;
 
     double xTempTerm
         = ( positionUnitVector[ xPositionIndex ] * positionUnitVector[ xPositionIndex ] )
@@ -459,7 +460,7 @@ void executeRegolithTrajectoryCalculation( const double alpha,
     //                                                     0.0,
     //                                                     0.0 };
 
-    for( int sunLongitudeIterator = 45; sunLongitudeIterator < 360; sunLongitudeIterator = sunLongitudeIterator + 90 )
+    for( int sunLongitudeIterator = 315; sunLongitudeIterator < 360; sunLongitudeIterator = sunLongitudeIterator + 90 )
     {
         double sunLongitude = 1.0 * sunLongitudeIterator;
         std::vector< double > initialSunOrbitalElements = { 1.0 * oneAstronomicalUnit,
@@ -502,7 +503,7 @@ void executeRegolithTrajectoryCalculation( const double alpha,
         // set the initial time for sun now based on its true anomaly
         const double initialTimeForSun = trueAnomalyRadian / sunMeanMotion;
 
-        for( int velocityIterator = 1; velocityIterator <= 16; velocityIterator = velocityIterator + 1 )
+        for( int velocityIterator = 10; velocityIterator <= 10; velocityIterator = velocityIterator + 1 )
         {
             // all particles, irrespective of surface location will have the same velocity as computed
             // below.
