@@ -8,6 +8,7 @@ See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 # I/O
 import csv
 from pprint import pprint
+import sqlite3
 
 # Numerical
 import numpy as np
@@ -68,15 +69,68 @@ start_time = time.time( )
 fig = plt.figure()
 ax1 = fig.gca( projection = '3d' )
 
-# Read data in csv file. data returned as a panda series.
-data = pd.read_csv( '../data/singleRegolithEjectaURESolution.csv' )
-x = data[ 'x' ].values
-y = data[ 'y' ].values
-z = data[ 'z' ].values
-vx = data[ 'vx' ].values
-vy = data[ 'vy' ].values
-vz = data[ 'vz' ].values
-t = data[ 't' ].values
+# # Read data in csv file. data returned as a panda series.
+# data = pd.read_csv( '../data/singleRegolithEjectaURESolution.csv' )
+# x = data[ 'x' ].values
+# y = data[ 'y' ].values
+# z = data[ 'z' ].values
+# vx = data[ 'vx' ].values
+# vy = data[ 'vy' ].values
+# vz = data[ 'vz' ].values
+# t = data[ 't' ].values
+
+# Connect to SQLite database.
+try:
+    database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
+                               + "multiple_launch_velocity_with_perturbations/"
+                               + "simulation_time_9_months/"
+                               + "test.db")
+
+except sqlite3.Error, e:
+        print "Error %s:" % e.args[0]
+        sys.exit(1)
+
+print "Extracting data now...\n"
+
+lowerTime = 0.0
+upperTime = 270.0 * 24.0 * 60.0 * 60.0
+solarPhase = 315.0
+
+data = pd.read_sql( "SELECT     position_x,                                                     \
+                                position_y,                                                     \
+                                position_z,                                                     \
+                                velocity_x,                                                     \
+                                velocity_y,                                                     \
+                                velocity_z,                                                     \
+                                time                                                            \
+                     FROM       regolith_trajectory_results                                     \
+                     WHERE      ROUND( initial_solar_phase_angle ) = " + str(solarPhase) + "    \
+                     AND        time >= " + str(lowerTime)
+                                + " AND time <= " + str(upperTime) + "                          \
+                     AND        ROUND( launch_azimuth ) = 45.0                                  \
+                     AND        ROUND( initial_velocity_magnitude ) = 10.0;",                   \
+                     database )
+
+data.columns = [ 'x',                                                   \
+                 'y',                                                   \
+                 'z',                                                   \
+                 'velocity_x',                                          \
+                 'velocity_y',                                          \
+                 'velocity_z',                                          \
+                 'time' ]
+
+if database:
+    database.close( )
+
+x                   = data[ 'x' ]
+y                   = data[ 'y' ]
+z                   = data[ 'z' ]
+vx                  = data[ 'velocity_x' ]
+vy                  = data[ 'velocity_y' ]
+vz                  = data[ 'velocity_z' ]
+t                   = data[ 'time' ]
+
+print "Processing data now...\n"
 
 ## Plot the ellipsoidal shape of the asteroid
 alpha = 20000.0
@@ -92,9 +146,10 @@ ellipsoid_z = gamma * np.outer(np.ones(np.size(u)), np.cos(v))
 
 newColor = colors.cnames["slategray"]
 surf = ax1.plot_surface( ellipsoid_x, ellipsoid_y, ellipsoid_z,
+                         color=newColor,
                          rstride=5, cstride=5, alpha=0.3 )
-surf.set_facecolor( newColor )
-surf.set_linewidth( 0.1 )
+# surf.set_facecolor( newColor )
+surf.set_linewidth( 3.0 )
 
 ax1.hold( True )
 
@@ -102,20 +157,24 @@ ax1.hold( True )
 velocityVector = [ vx[0], vy[0], vz[0] ]
 positionVector = [ x[0], y[0], z[0] ]
 
-# draw the position vector
-radius = np.sqrt( ( positionVector[ 0 ] - 0.0 )**2
-                + ( positionVector[ 1 ] - 0.0 )**2
-                + ( positionVector[ 2 ] - 0.0 )**2 )
-ax1.quiver3D( 0.0, 0.0, 0.0,
-              positionVector[ 0 ], positionVector[ 1 ], positionVector[ 2 ],
-              length=radius, lw = 1, pivot='tail', arrow_length_ratio=0.2,
-              color=colors.cnames["black"], linestyles='solid' )
+# # draw the position vector
+# radius = np.sqrt( ( positionVector[ 0 ] - 0.0 )**2
+#                 + ( positionVector[ 1 ] - 0.0 )**2
+#                 + ( positionVector[ 2 ] - 0.0 )**2 )
+# ax1.quiver3D( 0.0, 0.0, 0.0,
+#               positionVector[ 0 ], positionVector[ 1 ], positionVector[ 2 ],
+#               length=radius, lw = 1, pivot='tail', arrow_length_ratio=0.2,
+#               color=colors.cnames["black"], linestyles='solid' )
 
-# draw the north pole vector
+# # draw the north pole vector
+# ax1.quiver3D( 0.0, 0.0, 0.0,
+#               0.0, 0.0, gamma,
+#               length=500, lw=1, pivot='tail', arrow_length_ratio=0.01,
+#               color=colors.cnames["black"], linestyles='solid' )
 ax1.quiver3D( 0.0, 0.0, 0.0,
               0.0, 0.0, gamma,
-              length=gamma+2000.0, lw=1, pivot='tail', arrow_length_ratio=0.2,
-              color=colors.cnames["black"], linestyles='solid' )
+              lw=1, pivot='tail',
+              color=colors.cnames["black"], linestyles='solid', label='North Pole' )
 
 # get the surface unit normal vector (body fixed frame) and plot it
 # this is also the z basis vector for the surface frame in body fixed coordinates
@@ -170,10 +229,10 @@ ax1.quiver3D( positionVector[ 0 ], positionVector[ 1 ], positionVector[ 2 ],
               color=colors.cnames["blue"], linestyles='solid', label='Y axis' )
 
 # plot the velocity vector now
-ax1.quiver3D( positionVector[ 0 ], positionVector[ 1 ], positionVector[ 2 ],
-              velocityVector[ 0 ], velocityVector[ 1 ], velocityVector[ 2 ],
-              length=3000, lw=1, pivot='tail', arrow_length_ratio=0.2,
-              color=colors.cnames["green"], linestyles='solid', label='Velocity' )
+# ax1.quiver3D( positionVector[ 0 ], positionVector[ 1 ], positionVector[ 2 ],
+#               velocityVector[ 0 ], velocityVector[ 1 ], velocityVector[ 2 ],
+#               length=500, lw=1, pivot='tail', arrow_length_ratio=0.2,
+#               color=colors.cnames["green"], linestyles='solid', label='Velocity' )
 
 # vel_start = [ positionVector[0], positionVector[1], positionVector[2] ]
 # vel_end = [ positionVector[0] + 500 * velocityVector[0],

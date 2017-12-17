@@ -115,23 +115,26 @@ mu = 876514
 ## Operations
 # Connect to SQLite database.
 try:
-    # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db" )
-    database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
+    database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
+                               + "multiple_launch_velocity_with_perturbations/"
+                               + "simulation_time_9_months/"
+                               + "test.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
         sys.exit(1)
 
+print "Extracting data now...\n"
+
 phaseAngle = 'N.A.'
 
-fig = plt.figure( )
-gs  = gridspec.GridSpec( 1, 2 )
+fig = plt.figure( figsize=(6,6) )
+gs  = gridspec.GridSpec( 1, 1 )
 ax1 = plt.subplot( gs[ 0 ], projection = '3d' )
-ax2 = plt.subplot( gs[ 1 ], projection = '3d' )
 
 ## 3D figure, ellipsoid with velocity vectors at certain angles
-launch_angles = range( 0, 360, 90 )
-launch_angles.append( 30 )
+launch_angles = range( 0, 360, 45 )
+# launch_angles.append( 30 )
 launch_angle_tuple = tuple( launch_angles )
 
 data1 = pd.read_sql( "SELECT    initial_position_x,                                             \
@@ -147,7 +150,7 @@ data1 = pd.read_sql( "SELECT    initial_position_x,                             
                      FROM       regolith_trajectory_results                                     \
                      WHERE      ROUND( launch_azimuth ) IN " + str( launch_angle_tuple ) + "    \
                      AND        start_flag = 1                                                  \
-                     AND        ROUND( initial_velocity_magnitude ) = 7;",                      \
+                     AND        ROUND( initial_velocity_magnitude ) = 10;",                      \
                      database )
 
 data1.columns = [ 'pos_x',                                                                  \
@@ -180,16 +183,12 @@ ellipsoid_x = alpha * np.outer(np.cos(u), np.sin(v))
 ellipsoid_y = beta * np.outer(np.sin(u), np.sin(v))
 ellipsoid_z = gamma * np.outer(np.ones(np.size(u)), np.cos(v))
 
-newColor = colors.cnames["black"]
+newColor = colors.cnames["slategray"]
 surf = ax1.plot_surface( ellipsoid_x, ellipsoid_y, ellipsoid_z,
-                         rstride=5, cstride=5, alpha=0.3 )
-surf.set_facecolor( newColor )
-surf.set_linewidth( 0.1 )
-
-surf = ax2.plot_surface( ellipsoid_x, ellipsoid_y, ellipsoid_z,
-                         rstride=5, cstride=5, alpha=0.3 )
-surf.set_facecolor( newColor )
-surf.set_linewidth( 0.1 )
+                         rstride=5, cstride=5, alpha=1.0,
+                         color=newColor )
+# surf.set_facecolor( newColor )
+surf.set_linewidth( 1.0 )
 
 # plot the velocity vector now
 colors = plt.cm.Vega20( np.linspace( 0, 1, len( azimuth ) ) )
@@ -201,18 +200,34 @@ for index in range( 0, len( azimuth ) ):
                   color=colors[ index ], linestyles='solid',
                   label="Azimuth = " + str( azimuth[ index ] ) + " [deg]" )
 
-    ax2.quiver3D( pos_x[ index ], pos_y[ index ], pos_z[ index ],
-                  inertial_vel_x[ index ], inertial_vel_y[ index ], inertial_vel_z[ index ],
-                  length=500, lw=1, pivot='tail', arrow_length_ratio=0.2,
-                  color=colors[ index ], linestyles='solid',
-                  label="Azimuth = " + str( azimuth[ index ] ) + " [deg]" )
-
 ax1.legend( ).draggable( )
 ax1.grid( )
 ax1.set_title( 'Rotating frame' )
 ax1.set_xlabel( 'x [m]' )
 ax1.set_ylabel( 'y [m]' )
 ax1.set_zlabel( 'z [m]' )
+
+## format axis and title
+ax1.set_xlim( [ -20000, 20000 ] )
+ax1.set_ylim( [ -20000, 20000 ] )
+ax1.set_zlim( [ -20000, 20000 ] )
+ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0), offset=False)
+
+fig = plt.figure( figsize=(6,6) )
+gs  = gridspec.GridSpec( 1, 1 )
+ax2 = plt.subplot( gs[ 0 ], projection = '3d' )
+
+surf = ax2.plot_surface( ellipsoid_x, ellipsoid_y, ellipsoid_z,
+                         rstride=5, cstride=5, alpha=1.0,
+                         color=newColor )
+surf.set_linewidth( 1.0 )
+
+for index in range( 0, len( azimuth ) ):
+    ax2.quiver3D( pos_x[ index ], pos_y[ index ], pos_z[ index ],
+                  inertial_vel_x[ index ], inertial_vel_y[ index ], inertial_vel_z[ index ],
+                  length=500, lw=1, pivot='tail', arrow_length_ratio=0.2,
+                  color=colors[ index ], linestyles='solid',
+                  label="Azimuth = " + str( azimuth[ index ] ) + " [deg]" )
 
 ax2.legend( ).draggable( )
 ax2.grid( )
@@ -221,9 +236,15 @@ ax2.set_xlabel( 'x [m]' )
 ax2.set_ylabel( 'y [m]' )
 ax2.set_zlabel( 'z [m]' )
 
+## format axis and title
+ax2.set_xlim( [ -20000, 20000 ] )
+ax2.set_ylim( [ -20000, 20000 ] )
+ax2.set_zlim( [ -20000, 20000 ] )
+ax2.ticklabel_format(style='sci', axis='both', scilimits=(0,0), offset=False)
+
 ## set global plot title
-plt.suptitle( 'Launch velocity vectors for ejecta material \n Longest edge, $V_{mag}$ = 7.0 [m/s], \
-              Phase angle = ' + str( phaseAngle ) )
+# plt.suptitle( 'Launch velocity vectors for ejecta material \n Longest edge, $V_{mag}$ = 7.0 [m/s], \
+#               Phase angle = ' + str( phaseAngle ) )
 
 ## Plot the metadata (velocity vector components)
 fig = plt.figure( )
