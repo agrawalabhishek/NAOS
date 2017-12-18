@@ -1031,25 +1031,25 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     double stepSizeGuess = initialStepSize;
 
     // initialize the ode system
-    // const double zRotation = asteroidRotationVector[ zPositionIndex ];
-    // equationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
-    //                                                                          alpha,
-    //                                                                          beta,
-    //                                                                          gamma,
-    //                                                                          zRotation );
+    const double zRotation = asteroidRotationVector[ zPositionIndex ];
+    equationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
+                                                                             alpha,
+                                                                             beta,
+                                                                             gamma,
+                                                                             zRotation );
 
     // initialize the (perturbed) ode system
     // Note - initial time for sun's position (corresponding true anomaly for sun) is independant of
     // start time for regolith trajectory simulation
-    perturbedEquationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
-                                                                                      alpha,
-                                                                                      beta,
-                                                                                      gamma,
-                                                                                      asteroidRotationVector,
-                                                                                      initialTimeForSun,
-                                                                                      initialSunMeanAnomalyRadian,
-                                                                                      initialSunOrbitalElements,
-                                                                                      sunMeanMotion );
+    // perturbedEquationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
+    //                                                                                   alpha,
+    //                                                                                   beta,
+    //                                                                                   gamma,
+    //                                                                                   asteroidRotationVector,
+    //                                                                                   initialTimeForSun,
+    //                                                                                   initialSunMeanAnomalyRadian,
+    //                                                                                   initialSunOrbitalElements,
+    //                                                                                   sunMeanMotion );
 
     // compute the (initial) solar phase angle
     double initialArgumentOfPeriapsisForRegolith
