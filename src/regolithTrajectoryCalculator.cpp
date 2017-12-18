@@ -537,12 +537,43 @@ void executeRegolithTrajectoryCalculation( const double alpha,
             // calculate the non conservative inertial escape speed magnitude and store it in
             // a seperate .csv file instead of the database
             double angularRate = W[ 2 ];
-            double tempTerm1 = angularRate * positionMagnitude * ( std::sin( coneAngleDeclination ) );
+
+            std::vector< double > initialStateVectorInertialFrame( 6, 0.0 );
+            std::vector< double > initialStateVectorRotatingFrame( 6, 0.0 );
+            initialStateVectorRotatingFrame[ 0 ] = regolithPositionVector[ xPositionIndex ];
+            initialStateVectorRotatingFrame[ 1 ] = regolithPositionVector[ yPositionIndex ];
+            initialStateVectorRotatingFrame[ 2 ] = regolithPositionVector[ zPositionIndex ];
+            initialStateVectorRotatingFrame[ 3 ] = regolithVelocityVector[ 0 ];
+            initialStateVectorRotatingFrame[ 4 ] = regolithVelocityVector[ 1 ];
+            initialStateVectorRotatingFrame[ 5 ] = regolithVelocityVector[ 2 ];
+            convertBodyFrameVectorToInertialFrame( W,
+                                                   initialStateVectorRotatingFrame,
+                                                   0.0,
+                                                   initialStateVectorInertialFrame );
+
+            std::vector< double > initialPositionVectorInertialFrame( 3, 0.0 );
+            std::vector< double > initialVelocityVectorInertialFrame( 3, 0.0 );
+
+            initialPositionVectorInertialFrame[ 0 ] = initialStateVectorInertialFrame[ xPositionIndex ];
+            initialPositionVectorInertialFrame[ 1 ] = initialStateVectorInertialFrame[ yPositionIndex ];
+            initialPositionVectorInertialFrame[ 2 ] = initialStateVectorInertialFrame[ zPositionIndex ];
+
+            initialVelocityVectorInertialFrame[ 0 ] = initialStateVectorInertialFrame[ xVelocityIndex ];
+            initialVelocityVectorInertialFrame[ 1 ] = initialStateVectorInertialFrame[ yVelocityIndex ];
+            initialVelocityVectorInertialFrame[ 2 ] = initialStateVectorInertialFrame[ zVelocityIndex ];
+
+            double omegaDot_Hcap = dotProduct( W,
+                                        normalize(
+                                            crossProduct( initialPositionVectorInertialFrame,
+                                                          initialVelocityVectorInertialFrame ) ) );
+
+            double tempTerm1 = positionMagnitude * ( std::sin( coneAngleDeclination ) ) * omegaDot_Hcap;
             double tempTerm1Squared = tempTerm1 * tempTerm1;
+
             int qInfinityUpperLimit = static_cast< int >( alpha );
             // for( int qInfinity = 0; qInfinity <= qInfinityUpperLimit; qInfinity = qInfinity + 100 )
             // {
-                double qInfinity = 0.7 * alpha;
+                double qInfinity = 0.3 * alpha;
                 double qInfinityTerm
                     = 2.0 * angularRate * std::sqrt( 2.0 * gravitationalParameter * qInfinity );
 
