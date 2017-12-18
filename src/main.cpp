@@ -538,16 +538,16 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         double cpuTimeStart = naos::getCPUTime< double >( );
 
         std::ostringstream databaseFilePath;
-        databaseFilePath << "../../data/regolith_launched_from_longest_edge";
-        databaseFilePath << "/multiple_launch_velocity_with_perturbations";
-        databaseFilePath << "/simulation_time_9_months";
-        // databaseFilePath << "/3.2Density_0.1cmRadius";
-        databaseFilePath << "/test.db";
-
         // databaseFilePath << "../../data/regolith_launched_from_longest_edge";
-        // databaseFilePath << "/multiple_launch_velocity";
+        // databaseFilePath << "/multiple_launch_velocity_with_perturbations";
         // databaseFilePath << "/simulation_time_9_months";
-        // databaseFilePath << "/longestEdge_v2.db";
+        // databaseFilePath << "/3.2Density_0.1cmRadius";
+        // databaseFilePath << "/test.db";
+
+        databaseFilePath << "../../data/guarantee_escape_speed";
+        databaseFilePath << "/longest_edge";
+        // databaseFilePath << "/simulation_time_9_months";
+        databaseFilePath << "/longestEdge_v2.db";
 
         naos::executeRegolithMonteCarlo( alpha,
                                          beta,
