@@ -415,14 +415,27 @@ void executeRegolithMonteCarlo( const double alpha,
     //                                         dataSaveIntervals,
     //                                         databaseQuery );
 
+    // set up a csv file to store the new escape speed calculations
+    std::ofstream escapeSpeedFile;
+    escapeSpeedFile.open( "../../data/guarantee_escape_speed/longest_edge/nonConventionalEscape.csv" );
+    escapeSpeedFile << "launch_declination" << ",";
+    escapeSpeedFile << "q_infinity" << ",";
+    escapeSpeedFile << "inertial_frame_escape_speed_plus" << ",";
+    escapeSpeedFile << "inertial_frame_escape_speed_minus" << ",";
+    escapeSpeedFile << "body_frame_escape_speed_plus" << ",";
+    escapeSpeedFile << "body_frame_escape_speed_minus" << std::endl;
+
     // azimuth angle iterator begins here
-    for( int azimuthIterator = 0; azimuthIterator < 360; azimuthIterator = azimuthIterator + 45 )
+    // for( int azimuthIterator = 0; azimuthIterator < 360; azimuthIterator = azimuthIterator + 45 )
+    // {
+    for( int declinationIterator = 10; declinationIterator <= 80; declinationIterator++ )
     {
         // calculate the azimuth angle
         const double coneAngleAzimuth
-                = naos::convertDegreeToRadians( coneAngleAzimuthFactor * azimuthIterator );
+                = naos::convertDegreeToRadians( 270.0 );
         // const double coneAngleAzimuth = naos::convertDegreeToRadians( 0.0 );
-        const double coneAngleDeclination = naos::convertDegreeToRadians( 45.0 );
+
+        const double coneAngleDeclination = naos::convertDegreeToRadians( 1.0 * declinationIterator );
 
         executeRegolithTrajectoryCalculation( alpha,
                                               beta,
@@ -440,10 +453,13 @@ void executeRegolithMonteCarlo( const double alpha,
                                               startTime,
                                               endTime,
                                               dataSaveIntervals,
-                                              databaseQuery );
-    } // end of azimuth angle iterator loop
+                                              databaseQuery,
+                                              escapeSpeedFile );
+    // } // end of azimuth angle iterator loop
+    }
 
     transaction.commit( );
+    escapeSpeedFile.close( );
 }
 
 } // namespace naos
