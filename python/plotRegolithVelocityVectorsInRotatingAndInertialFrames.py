@@ -115,10 +115,11 @@ mu = 876514
 ## Operations
 # Connect to SQLite database.
 try:
-    database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
-                               + "multiple_launch_velocity_with_perturbations/"
-                               + "simulation_time_9_months/"
-                               + "test.db")
+    # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
+    #                            + "multiple_launch_velocity_with_perturbations/"
+    #                            + "simulation_time_9_months/"
+    #                            + "test.db")
+    database = sqlite3.connect("../data/guarantee_escape_speed/longest_edge/longestEdge.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -133,7 +134,7 @@ gs  = gridspec.GridSpec( 1, 1 )
 ax1 = plt.subplot( gs[ 0 ], projection = '3d' )
 
 ## 3D figure, ellipsoid with velocity vectors at certain angles
-launch_angles = range( 0, 360, 45 )
+launch_angles = range( 10, 90, 10 )
 # launch_angles.append( 30 )
 launch_angle_tuple = tuple( launch_angles )
 
@@ -146,11 +147,11 @@ data1 = pd.read_sql( "SELECT    initial_position_x,                             
                                 initial_inertial_velocity_x,                                    \
                                 initial_inertial_velocity_y,                                    \
                                 initial_inertial_velocity_z,                                    \
-                                ROUND( launch_azimuth )                                         \
+                                ROUND( launch_declination )                                     \
                      FROM       regolith_trajectory_results                                     \
-                     WHERE      ROUND( launch_azimuth ) IN " + str( launch_angle_tuple ) + "    \
+                     WHERE      ROUND( launch_declination ) IN " + str( launch_angle_tuple ) + "\
                      AND        start_flag = 1                                                  \
-                     AND        ROUND( initial_velocity_magnitude ) = 10;",                      \
+                     AND        ROUND( initial_velocity_magnitude ) = 6;",                      \
                      database )
 
 data1.columns = [ 'pos_x',                                                                  \
@@ -162,7 +163,7 @@ data1.columns = [ 'pos_x',                                                      
                   'inertial_vel_x',                                                         \
                   'inertial_vel_y',                                                         \
                   'inertial_vel_z',                                                         \
-                  'launch_azimuth' ]
+                  'launch_declination' ]
 
 pos_x                           = data1[ 'pos_x' ]
 pos_y                           = data1[ 'pos_y' ]
@@ -173,7 +174,7 @@ vel_z                           = data1[ 'vel_z' ]
 inertial_vel_x                  = data1[ 'inertial_vel_x' ]
 inertial_vel_y                  = data1[ 'inertial_vel_y' ]
 inertial_vel_z                  = data1[ 'inertial_vel_z' ]
-azimuth                         = data1[ 'launch_azimuth' ]
+declination                         = data1[ 'launch_declination' ]
 
 # plot the ellipsoid
 u = np.linspace(0, 2 * np.pi, 100)
@@ -191,14 +192,14 @@ surf = ax1.plot_surface( ellipsoid_x, ellipsoid_y, ellipsoid_z,
 surf.set_linewidth( 1.0 )
 
 # plot the velocity vector now
-colors = plt.cm.Vega20( np.linspace( 0, 1, len( azimuth ) ) )
+colors = plt.cm.Vega20( np.linspace( 0, 1, len( declination ) ) )
 
-for index in range( 0, len( azimuth ) ):
+for index in range( 0, len( declination ) ):
     ax1.quiver3D( pos_x[ index ], pos_y[ index ], pos_z[ index ],
                   vel_x[ index ], vel_y[ index ], vel_z[ index ],
-                  length=500, lw=1, pivot='tail', arrow_length_ratio=0.2,
+                  length=1000, lw=1, pivot='tail', arrow_length_ratio=0.2,
                   color=colors[ index ], linestyles='solid',
-                  label="Azimuth = " + str( azimuth[ index ] ) + " [deg]" )
+                  label="Declination = " + str( declination[ index ] ) + " [deg]" )
 
 ax1.legend( ).draggable( )
 ax1.grid( )
@@ -222,12 +223,12 @@ surf = ax2.plot_surface( ellipsoid_x, ellipsoid_y, ellipsoid_z,
                          color=newColor )
 surf.set_linewidth( 1.0 )
 
-for index in range( 0, len( azimuth ) ):
+for index in range( 0, len( declination ) ):
     ax2.quiver3D( pos_x[ index ], pos_y[ index ], pos_z[ index ],
                   inertial_vel_x[ index ], inertial_vel_y[ index ], inertial_vel_z[ index ],
-                  length=500, lw=1, pivot='tail', arrow_length_ratio=0.2,
+                  length=1000, lw=1, pivot='tail', arrow_length_ratio=0.2,
                   color=colors[ index ], linestyles='solid',
-                  label="Azimuth = " + str( azimuth[ index ] ) + " [deg]" )
+                  label="Declination = " + str( declination[ index ] ) + " [deg]" )
 
 ax2.legend( ).draggable( )
 ax2.grid( )
@@ -247,38 +248,38 @@ ax2.ticklabel_format(style='sci', axis='both', scilimits=(0,0), offset=False)
 #               Phase angle = ' + str( phaseAngle ) )
 
 ## Plot the metadata (velocity vector components)
-fig = plt.figure( )
-gs  = gridspec.GridSpec( 1, 1 )
-ax1 = plt.subplot( gs[ 0 ] )
-ax1.axis( 'off' )
+# fig = plt.figure( )
+# gs  = gridspec.GridSpec( 1, 1 )
+# ax1 = plt.subplot( gs[ 0 ] )
+# ax1.axis( 'off' )
 
-metadata_table = []
+# metadata_table = []
 
-columnLabels = [ "Launch \n Azimuth [deg]",             \
-                 "Component",                           \
-                 "V (Rotating \n Frame) [m/s]",         \
-                 "W x R [m/s]",                         \
-                 "V (Inertial \n Frame) [m/s]" ]
+# columnLabels = [ "Launch \n Azimuth [deg]",             \
+#                  "Component",                           \
+#                  "V (Rotating \n Frame) [m/s]",         \
+#                  "W x R [m/s]",                         \
+#                  "V (Inertial \n Frame) [m/s]" ]
 
-OmegaCrossPosition_Y = Wz * alpha
+# OmegaCrossPosition_Y = Wz * alpha
 
-# add data for all azimuths
-for index in range( 0, len( azimuth ) ):
-    metadata_table.append( [ azimuth[ index ], "x", vel_x[ index ], 0.0, inertial_vel_x[ index ] ] )
-    metadata_table.append( [ azimuth[ index ], "y", vel_y[ index ], OmegaCrossPosition_Y, inertial_vel_y[ index ] ] )
-    metadata_table.append( [ azimuth[ index ], "z", vel_z[ index ], 0.0, inertial_vel_z[ index ] ] )
+# # add data for all azimuths
+# for index in range( 0, len( azimuth ) ):
+#     metadata_table.append( [ azimuth[ index ], "x", vel_x[ index ], 0.0, inertial_vel_x[ index ] ] )
+#     metadata_table.append( [ azimuth[ index ], "y", vel_y[ index ], OmegaCrossPosition_Y, inertial_vel_y[ index ] ] )
+#     metadata_table.append( [ azimuth[ index ], "z", vel_z[ index ], 0.0, inertial_vel_z[ index ] ] )
 
-table = ax1.table( cellText = metadata_table,
-                   colLabels = columnLabels,
-                   cellLoc = 'center', loc = 'center' )
+# table = ax1.table( cellText = metadata_table,
+#                    colLabels = columnLabels,
+#                    cellLoc = 'center', loc = 'center' )
 
-table.auto_set_font_size(False)
-table.set_fontsize( 12 )
-table_properties = table.properties( )
-table_cells = table_properties[ 'child_artists' ]
-for cell in table_cells: cell.set_height( 0.10 )
-cell_dict = table.get_celld( )
-# for row in xrange( 0, 3 * len( azimuth ) ): cell_dict[ ( row, 2 ) ].set_width( 0.1 )
+# table.auto_set_font_size(False)
+# table.set_fontsize( 12 )
+# table_properties = table.properties( )
+# table_cells = table_properties[ 'child_artists' ]
+# for cell in table_cells: cell.set_height( 0.10 )
+# cell_dict = table.get_celld( )
+# # for row in xrange( 0, 3 * len( azimuth ) ): cell_dict[ ( row, 2 ) ].set_width( 0.1 )
 
 ##close the database
 if database:
