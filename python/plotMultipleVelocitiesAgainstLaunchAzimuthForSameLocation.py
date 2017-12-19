@@ -61,20 +61,13 @@ maxTime = 9.0 * 30.0 * 24.0 * 60.0 * 60.0
 
 phaseAngle = 'N.A.'
 
-## Set up the figure
-fig = plt.figure( )
-plt.suptitle( 'Inertial launch velocities for Escape and Re-impact \n Ellipsoidal asteroid, Phase angle = ' + str(phaseAngle) + '[deg]' )
-gs = gridspec.GridSpec( 2, 1, height_ratios = [ 1, 1 ] )
-ax1 = plt.subplot( gs[ 0 ] )
-ax2 = plt.subplot( gs[ 1 ] )
-
 ## Operations
 # Connect to SQLite database.
 try:
         # database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity_with_perturbations/phase_0/leadingEdge.db")
         # database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/phase_0/simulation_time_9_months/leadingEdge.db")
-        # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
-        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db")
+        database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
+        # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -124,20 +117,51 @@ escape_inertial_vy                     = data1[ 'inertial_vy' ]
 escape_inertial_vz                     = data1[ 'inertial_vz' ]
 escape_azimuth                         = data1[ 'launch_azimuth' ]
 
-## plot launch azimuth versus rot frame initial velocity for escape cases
-# escape_rotFrameInitialVelocity = np.sqrt( escape_rotFrame_vx**2 + escape_rotFrame_vy**2 + escape_rotFrame_vz**2 )
-# ax1Handle1 = ax1.scatter( escape_azimuth, escape_rotFrameInitialVelocity, color=colors.cnames['purple'], label='actual speed' )
-# ax1Handle2, = ax1.plot( directionalEscapeAzimuth, directionalEscapeSpeed, color=colors.cnames['red'], label='directional escape speed', lw=2 )
+# Set up the figure
+fig = plt.figure( )
+plt.suptitle( 'Regolith launch and guaranteed escape velocity for a spherical asteroid\nEscape cases' )
+gs = gridspec.GridSpec( 2, 1, height_ratios = [ 1, 1 ] )
+ax1 = plt.subplot( gs[ 0 ] )
+ax2 = plt.subplot( gs[ 1 ] )
+
+## plot launch azimuth versus rotating frame initial velocity for escape cases
+escape_rotFrameInitialVelocity = np.sqrt( escape_rotFrame_vx**2 + escape_rotFrame_vy**2 + escape_rotFrame_vz**2 )
+ax1Handle1 = ax1.scatter( escape_azimuth, escape_rotFrameInitialVelocity, s=5, color=colors.cnames['purple'], label='actual speed' )
+ax1Handle2, = ax1.plot( directionalEscapeAzimuth, directionalEscapeSpeed, color=colors.cnames['red'], label='Conservative escape speed', lw=2 )
 
 ## format axis and title
-# ax1.set_xlabel('Launch azimuth [deg]')
-# ax1.set_ylabel('$V_{initial}$ [m/s]')
-# ax1.set_xlim( 0, 360 )
+ax1.set_xlabel('Launch azimuth [deg]')
+ax1.set_ylabel('$V_{initial}$ [m/s]')
+ax1.set_xlim( 0, 360 )
 # ax1.set_title( 'Regolith (escape) initial velocity versus launch azimuth (rotating frame) \n Phase angle = ' + str(phaseAngle) + '[deg]' )
-# ax1.legend( ).draggable( )
-# ax1.grid( )
+ax1.set_title( 'Rotating frame' )
+ax1.legend( ).draggable( )
+ax1.grid( )
+
+## plot launch azimuth versus inertial frame initial velocity for escape cases
+escape_inertialInitialVelocity = np.sqrt( escape_inertial_vx**2 + escape_inertial_vy**2 + escape_inertial_vz**2 )
+ax2Handle1 = ax2.scatter( escape_azimuth, escape_inertialInitialVelocity, s=5, color=colors.cnames['orange'], label='actual speed' )
+ax2Handle2, = ax2.plot( directionalEscapeAzimuth, inertialDirectionalEscapeSpeed, color=colors.cnames['red'], label='Conservative escape speed', lw=2 )
+
+## format axis and title
+ax2.set_xlabel('Launch azimuth [deg]')
+ax2.set_ylabel('$V_{initial}$ [m/s]')
+ax2.set_xlim( 0, 360 )
+ax2.set_title( 'Inertial frame' )
+ax2.legend( ).draggable( )
+ax2.grid( )
+
+# plt.show( )
+# sys.exit( )
 
 ## Plot launch azimuth versus inertial initial velocity for escape cases
+# Set up the figure
+fig = plt.figure( )
+plt.suptitle( 'Inertial launch velocities for Escape and Re-impact \n Ellipsoidal asteroid, Phase angle = ' + str(phaseAngle) + '[deg]' )
+gs = gridspec.GridSpec( 2, 1, height_ratios = [ 1, 1 ] )
+ax1 = plt.subplot( gs[ 0 ] )
+ax2 = plt.subplot( gs[ 1 ] )
+
 escape_inertialInitialVelocity = np.sqrt( escape_inertial_vx**2 + escape_inertial_vy**2 + escape_inertial_vz**2 )
 ax1Handle1 = ax1.scatter( escape_azimuth, escape_inertialInitialVelocity, s=5, color=colors.cnames['orange'], label='actual speed' )
 ax1Handle2, = ax1.plot( directionalEscapeAzimuth, inertialDirectionalEscapeSpeed, color=colors.cnames['red'], label='directional escape speed', lw=2 )
