@@ -68,7 +68,7 @@ ax2 = plt.subplot( gs[ 1 ] )
 ## Operations
 # Connect to SQLite database.
 try:
-        database = sqlite3.connect("../data/guarantee_escape_speed/longest_edge/longestEdge_v2.db")
+        database = sqlite3.connect("../data/guarantee_escape_speed/longest_edge/longestEdge.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -128,30 +128,52 @@ data3.columns = [ 'crash_declination' ]
 crash_declination = data3[ 'crash_declination' ]
 
 ## extract data from csv file for the new escape speed values
-data4 = pd.read_csv( "../data/guarantee_escape_speed/longest_edge/nonConventionalEscape.csv" )
+data4 = pd.read_csv( "../data/guarantee_escape_speed/longest_edge/no_solar_perturbations/nonConventionalEscape_qinfinity_0.1alpha.csv" )
+data5 = pd.read_csv( "../data/guarantee_escape_speed/longest_edge/no_solar_perturbations/nonConventionalEscape_qinfinity_0.2alpha.csv" )
+data6 = pd.read_csv( "../data/guarantee_escape_speed/longest_edge/no_solar_perturbations/nonConventionalEscape_qinfinity_0.3alpha.csv" )
 
 launchDeclination = data4['launch_declination'].values
 # print launchDeclination
 
-qInfinity = data4['q_infinity'].values
-print qInfinity
+qInfinity4 = data4['q_infinity'].values
+# print qInfinity4
+qInfinity5 = data5['q_infinity'].values
+qInfinity6 = data6['q_infinity'].values
 
-inertialFrameEscapeSpeedWithPlus = data4["inertial_frame_escape_speed_plus"].values
-# print inertialFrameEscapeSpeedWithPlus
+inertialFrameEscapeSpeedWithPlus4 = data4["inertial_frame_escape_speed_plus"].values
+inertialFrameEscapeSpeedWithPlus5 = data5["inertial_frame_escape_speed_plus"].values
+inertialFrameEscapeSpeedWithPlus6 = data6["inertial_frame_escape_speed_plus"].values
+# print inertialFrameEscapeSpeedWithPlus4
 
-inertialFrameEscapeSpeedWithMinus = data4["inertial_frame_escape_speed_minus"].values
+inertialFrameEscapeSpeedWithMinus4 = data4["inertial_frame_escape_speed_minus"].values
+inertialFrameEscapeSpeedWithMinus5 = data5["inertial_frame_escape_speed_minus"].values
+inertialFrameEscapeSpeedWithMinus6 = data6["inertial_frame_escape_speed_minus"].values
 
-bodyFrameEscapeSpeedWithPlus = data4["body_frame_escape_speed_plus"].values
-print bodyFrameEscapeSpeedWithPlus
+bodyFrameEscapeSpeedWithPlus4 = data4["body_frame_escape_speed_plus"].values
+bodyFrameEscapeSpeedWithPlus5 = data5["body_frame_escape_speed_plus"].values
+bodyFrameEscapeSpeedWithPlus6 = data6["body_frame_escape_speed_plus"].values
+# print bodyFrameEscapeSpeedWithPlus
 
-bodyFrameEscapeSpeedWithMinus = data4["body_frame_escape_speed_minus"].values
-print bodyFrameEscapeSpeedWithMinus
+bodyFrameEscapeSpeedWithMinus4 = data4["body_frame_escape_speed_minus"].values
+bodyFrameEscapeSpeedWithMinus5 = data5["body_frame_escape_speed_minus"].values
+bodyFrameEscapeSpeedWithMinus6 = data6["body_frame_escape_speed_minus"].values
+print bodyFrameEscapeSpeedWithMinus4
+print bodyFrameEscapeSpeedWithMinus5
+print bodyFrameEscapeSpeedWithMinus6
 
 ## plot launch azimuth versus rot frame initial velocity
 rotFrameInitialVelocity = np.sqrt( rotFrame_vx**2 + rotFrame_vy**2 + rotFrame_vz**2 )
 ax1Handle1 = ax1.plot( declination, rotFrameInitialVelocity, color=colors.cnames['purple'], label='launch speed' )
 ax1Handle2 = ax1.plot( declination, directionalEscapeSpeed, color=colors.cnames['black'], label='conservative escape speed' )
-ax1.plot( launchDeclination, bodyFrameEscapeSpeedWithPlus, color=colors.cnames['red'], label='non-conservative escape speed' )
+ax1.plot( launchDeclination, bodyFrameEscapeSpeedWithPlus4, color=colors.cnames['red'],
+    label='$q_\infty$ = ' + str( qInfinity4[ 0 ] / alpha ) + ' alpha' )
+ax1.plot( launchDeclination, bodyFrameEscapeSpeedWithPlus5, color=colors.cnames['blue'],
+    label='$q_\infty$ = ' + str( qInfinity5[ 0 ] / alpha ) + ' alpha' )
+ax1.plot( launchDeclination, bodyFrameEscapeSpeedWithPlus6, color=colors.cnames['green'],
+    label='$q_\infty$ = ' + str( qInfinity6[ 0 ] / alpha ) + ' alpha' )
+
+# meanEscapeSpeed = np.mean( [ directionalEscapeSpeed, bodyFrameEscapeSpeedWithPlus4, bodyFrameEscapeSpeedWithPlus5, bodyFrameEscapeSpeedWithPlus6 ], axis=0 )
+# ax1.plot( launchDeclination, meanEscapeSpeed, color=colors.cnames['brown'], linestyle='dotted', label='mean escape speed' )
 
 ## format axis and title
 ax1.set_xlabel('Launch declination [deg]')
@@ -166,7 +188,14 @@ ax1.grid( )
 inertialInitialVelocity = np.sqrt( inertial_vx**2 + inertial_vy**2 + inertial_vz**2 )
 ax2Handle1, = ax2.plot( declination, inertialInitialVelocity, color=colors.cnames['purple'], label='launch speed' )
 ax2Handle2, = ax2.plot( declination, inertialDirectionalEscapeSpeed, color=colors.cnames['black'], label='conservative escape speed' )
-ax2Handle3, = ax2.plot( declination, inertialFrameEscapeSpeedWithPlus, color=colors.cnames['red'], label='non-conservative escape speed' )
+# ax2Handle3, = ax2.plot( declination, inertialFrameEscapeSpeedWithPlus, color=colors.cnames['red'], label='non-conservative escape speed' )
+ax2Handle4, = ax2.plot( launchDeclination, inertialFrameEscapeSpeedWithPlus4, color=colors.cnames['red'],
+    label='$q_\infty$ = ' + str( qInfinity4[ 0 ] / alpha ) + ' alpha' )
+ax2Handle5, = ax2.plot( launchDeclination, inertialFrameEscapeSpeedWithPlus5, color=colors.cnames['blue'],
+    label='$q_\infty$ = ' + str( qInfinity5[ 0 ] / alpha ) + ' alpha' )
+ax2Handle6, = ax2.plot( launchDeclination, inertialFrameEscapeSpeedWithPlus6, color=colors.cnames['green'],
+    label='$q_\infty$ = ' + str( qInfinity6[ 0 ] / alpha ) + ' alpha' )
+
 
 # Find bounds for azimuths that lead to escape
 escapeBoundMins = []
@@ -210,7 +239,7 @@ ax2.set_title( 'Guaranteed escape velocity versus launch declination (inertial f
 ax2.grid( )
 
 ## Show the plot
-plt.legend( handles = [ ax2Handle1, ax2Handle2, ax2Handle3, escapeBoundHandle, crashBoundHandle ],
+plt.legend( handles = [ ax2Handle1, ax2Handle2, ax2Handle4, ax2Handle5, ax2Handle6, escapeBoundHandle, crashBoundHandle ],
             bbox_to_anchor = ( 0.95, 0.5 ),
             loc = 1 )
 
