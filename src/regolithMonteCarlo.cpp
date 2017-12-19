@@ -417,7 +417,7 @@ void executeRegolithMonteCarlo( const double alpha,
 
     // set up a csv file to store the new escape speed calculations
     std::ofstream escapeSpeedFile;
-    escapeSpeedFile.open( "../../data/guarantee_escape_speed/longest_edge/nonConventionalEscape.csv" );
+    escapeSpeedFile.open( "../../data/guarantee_escape_speed/longest_edge/nonConventionalEscape_qinfinity_0.2alpha.csv" );
     escapeSpeedFile << "launch_declination" << ",";
     escapeSpeedFile << "q_infinity" << ",";
     escapeSpeedFile << "inertial_frame_escape_speed_plus" << ",";

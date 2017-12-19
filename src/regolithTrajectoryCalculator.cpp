@@ -573,7 +573,7 @@ void executeRegolithTrajectoryCalculation( const double alpha,
             int qInfinityUpperLimit = static_cast< int >( alpha );
             // for( int qInfinity = 0; qInfinity <= qInfinityUpperLimit; qInfinity = qInfinity + 100 )
             // {
-                double qInfinity = 0.3 * alpha;
+                double qInfinity = 0.2 * alpha;
                 double qInfinityTerm
                     = 2.0 * angularRate * std::sqrt( 2.0 * gravitationalParameter * qInfinity );
 
