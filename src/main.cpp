@@ -547,7 +547,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         databaseFilePath << "../../data/guarantee_escape_speed";
         databaseFilePath << "/longest_edge";
         // databaseFilePath << "/simulation_time_9_months";
-        databaseFilePath << "/longestEdge_v2.db";
+        databaseFilePath << "/longestEdge.db";
 
         naos::executeRegolithMonteCarlo( alpha,
                                          beta,
