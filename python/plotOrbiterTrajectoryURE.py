@@ -70,10 +70,13 @@ try:
         #                            + "multiple_launch_velocity_with_perturbations/"
         #                            + "simulation_time_9_months/"
         #                            + "3.2Density_1cmRadius/longestEdgePerturbations.db")
-        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
-                                   + "multiple_launch_velocity_with_perturbations/"
-                                   + "simulation_time_9_months/"
-                                   + "test.db")
+        # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
+        #                            + "multiple_launch_velocity_with_perturbations/"
+        #                            + "simulation_time_9_months/"
+        #                            + "test.db")
+        database = sqlite3.connect("../data/guarantee_escape_speed/"
+                                   + "longest_edge/"
+                                   + "longestEdge_v2.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -93,13 +96,14 @@ data = pd.read_sql( "SELECT     position_x,                                     
                                 inertial_position_y,                                            \
                                 inertial_position_z,                                            \
                                 ROUND( launch_azimuth ),                                        \
+                                ROUND( launch_declination ),                                    \
                                 time                                                            \
                      FROM       regolith_trajectory_results                                     \
                      WHERE      ROUND( initial_solar_phase_angle ) = " + str(solarPhase) + "    \
                      AND        time >= " + str(lowerTime)
                                 + " AND time <= " + str(upperTime) + "                          \
-                     AND        ROUND( launch_azimuth ) = 45.0                                  \
-                     AND        ROUND( initial_velocity_magnitude ) = 10.0;",                   \
+                     AND        ROUND( launch_declination ) = 16.0                              \
+                     AND        ROUND( initial_velocity_magnitude ) = 6.0;",                    \
                      database )
 
 data.columns = [ 'x',                                                   \
@@ -110,6 +114,7 @@ data.columns = [ 'x',                                                   \
                  'inertial_y',                                          \
                  'inertial_z',                                          \
                  'launch_azimuth',                                      \
+                 'launch_declination',                                  \
                  'time' ]
 
 if database:
@@ -123,6 +128,7 @@ inertial_x          = data[ 'inertial_x' ]
 inertial_y          = data[ 'inertial_y' ]
 inertial_z          = data[ 'inertial_z' ]
 launchAzimuth       = data[ 'launch_azimuth' ]
+launchDeclination   = data[ 'launch_declination' ]
 t                   = data[ 'time' ]
 
 print "Processing data now...\n"
@@ -141,29 +147,29 @@ impactCheck = (xSquare / alpha**2) + (ySquare / beta**2) + (zSquare / gamma**2) 
 
 rangeCheck = np.sqrt( x**2 + y**2 + z**2 )
 
-firstRun = True
-impactCheckFlag = False
-for index in range( 1, len( impactCheck ) ):
-    if impactCheck[index] <= 0.0:
-        if firstRun == True:
-            fig = plt.figure( )
-            ax1 = plt.subplot(211)
-            ax2 = plt.subplot(212)
-            theta = np.linspace(0, 2 * np.pi, 360)
-            plotEllipse( alpha, beta, theta, ax1 )
-            ax1.plot( x, y )
-            ax2.plot( t, rangeCheck )
-            firstRun = False
-            print "\nParticle impacted yet trajectory continued in simulation - This is an error!!\n"
-            print "Impact at time = " + str( t[index] ) + " [s]\n"
+# firstRun = True
+# impactCheckFlag = False
+# for index in range( 1, len( impactCheck ) ):
+#     if impactCheck[index] <= 0.0:
+#         if firstRun == True:
+#             fig = plt.figure( )
+#             ax1 = plt.subplot(211)
+#             ax2 = plt.subplot(212)
+#             theta = np.linspace(0, 2 * np.pi, 360)
+#             plotEllipse( alpha, beta, theta, ax1 )
+#             ax1.plot( x, y )
+#             ax2.plot( t, rangeCheck )
+#             firstRun = False
+#             print "\nParticle impacted yet trajectory continued in simulation - This is an error!!\n"
+#             print "Impact at time = " + str( t[index] ) + " [s]\n"
 
-        ax1.scatter( x[index], y[index], c='red' )
-        ax2.scatter( t[index], rangeCheck[index], c='red' )
-        impactCheckFlag = True
+#         ax1.scatter( x[index], y[index], c='red' )
+#         ax2.scatter( t[index], rangeCheck[index], c='red' )
+#         impactCheckFlag = True
 
-if impactCheckFlag == True:
-    plt.show( )
-    sys.exit( )
+# if impactCheckFlag == True:
+#     plt.show( )
+#     sys.exit( )
 
 fig = plt.figure( )
 ax1 = plt.subplot(111)
@@ -189,19 +195,21 @@ ellipsoid_x = alpha * np.outer(np.cos(u), np.sin(v))
 ellipsoid_y = beta * np.outer(np.sin(u), np.sin(v))
 ellipsoid_z = gamma * np.outer(np.ones(np.size(u)), np.cos(v))
 
-newColor = colors.cnames["slategray"]
+newColor = colors.cnames["brown"]
 surf = ax1.plot_surface( ellipsoid_x, ellipsoid_y, ellipsoid_z,
-                         rstride=5, cstride=5, alpha=0.5 )
-surf.set_facecolor( newColor )
-surf.set_linewidth( 0.1 )
+                         rstride=5, cstride=5, alpha=1.0,
+                         color=newColor )
+# surf.set_facecolor( newColor )
+surf.set_linewidth( 1.0 )
 
 surf2 = ax2.plot_surface( ellipsoid_x, ellipsoid_y, ellipsoid_z,
-                         rstride=5, cstride=5, alpha=0.5 )
-surf2.set_facecolor( newColor )
-surf2.set_linewidth( 0.1 )
+                         rstride=5, cstride=5, alpha=1.0,
+                         color=newColor )
+# surf2.set_facecolor( newColor )
+surf2.set_linewidth( 1.0 )
 
 ## Plot 3D trajectory of the orbiting particle
-ax1.plot( x, y, z, zdir = 'z', color=colors.cnames["purple"], linewidth=0.02 )
+ax1.plot( x, y, z, zdir = 'z', color=colors.cnames["purple"], linewidth=1.0 )
 
 # velocity vector
 # ax1.quiver3D( x[10000], y[10000], z[10000],
@@ -238,18 +246,29 @@ ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useoffset=False)
 #                'Launch azimuth=' + str( launchAzimuth[ 0 ] ) + '[deg], '                    \
 #                'time=' + str( t[ endIndex-1 ] / (24.0*60.0*60.0) ) + '[day(s)]' )
 
+# ax1.set_title( 'Ellipsoid longest edge, Rotating frame trajectory\n'
+#                + '$V_{launch}$ = ' + str( velocityMagnitude[ 0 ] ) + ' [m/s], '                 \
+#                + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '                   \
+#                + 'Solar phase = ' + str( solarPhase ) + ' [deg]\n'                              \
+#                + 'Time = ' + str( lowerTime ) + ' to '                                          \
+#                + str( upperTime / (24.0 * 60.0 * 60.0) ) + ' [days]',                           \
+#                fontsize=10 )
+
 ax1.set_title( 'Ellipsoid longest edge, Rotating frame trajectory\n'
                + '$V_{launch}$ = ' + str( velocityMagnitude[ 0 ] ) + ' [m/s], '                 \
                + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '                   \
-               + 'Solar phase = ' + str( solarPhase ) + ' [deg]\n'                              \
-               + 'Time = ' + str( lowerTime ) + ' to '                                          \
-               + str( upperTime / (24.0 * 60.0 * 60.0) ) + ' [days]',                           \
+               + 'Launch declination = ' + str( launchDeclination[ 0 ] ) + ' [deg]\n',               \
                fontsize=10 )
+
 ax1.grid( )
+limits = max( max( x.tolist(), y.tolist(), z.tolist() ) )
+ax1.set_xlim( [ -limits, limits ] )
+ax1.set_ylim( [ -limits, limits ] )
+ax1.set_zlim( [ -0.5e5, 0.5e5 ] )
 # ax1.axis('equal')
 
 ## plot the 3d trajectory in inertial frame
-ax2.plot( inertial_x, inertial_y, inertial_z, zdir = 'z', color=colors.cnames["purple"], linewidth=0.2 )
+ax2.plot( inertial_x, inertial_y, inertial_z, zdir = 'z', color=colors.cnames["purple"], linewidth=1.0 )
 
 ax2.text( inertial_x[0], inertial_y[0], inertial_z[0], 'start', size=10, zorder=1, color=colors.cnames["black"] )
 ax2.text( inertial_x[endIndex-1], inertial_y[endIndex-1], inertial_z[endIndex-1],
@@ -263,14 +282,26 @@ ax2.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useoffset=False)
 #                '$V_{initial}$=' + str( velocityMagnitude[ 0 ] ) + '[m/s], '                 \
 #                'Launch azimuth=' + str( launchAzimuth[ 0 ] ) + '[deg], '                    \
 #                'time=' + str( t[ endIndex-1 ] / (24.0*60.0*60.0) ) + '[day(s)]' )
+
+# ax2.set_title( 'Ellipsoid longest edge, Inertial frame trajectory\n'
+#                + '$V_{launch}$ = ' + str( velocityMagnitude[ 0 ] ) + ' [m/s], '                 \
+#                + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '                   \
+#                + 'Solar phase = ' + str( solarPhase ) + ' [deg]\n'                              \
+#                + 'Time = ' + str( lowerTime ) + ' to '                                          \
+#                + str( upperTime / (24.0 * 60.0 * 60.0) ) + ' [days]',                           \
+#                fontsize=10 )
+
 ax2.set_title( 'Ellipsoid longest edge, Inertial frame trajectory\n'
                + '$V_{launch}$ = ' + str( velocityMagnitude[ 0 ] ) + ' [m/s], '                 \
                + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '                   \
-               + 'Solar phase = ' + str( solarPhase ) + ' [deg]\n'                              \
-               + 'Time = ' + str( lowerTime ) + ' to '                                          \
-               + str( upperTime / (24.0 * 60.0 * 60.0) ) + ' [days]',                           \
+               + 'Launch declination = ' + str( launchDeclination[ 0 ] ) + ' [deg]\n',               \
                fontsize=10 )
+
 ax2.grid( )
+limits = max( max( inertial_x.tolist(), inertial_y.tolist(), inertial_z.tolist() ) )
+ax2.set_xlim( [ -limits, limits ] )
+ax2.set_ylim( [ -limits, limits ] )
+ax2.set_zlim( [ -0.5e5, 0.5e5 ] )
 # ax2.axis('equal')
 
 ## plot the 2D trajectory projections now
