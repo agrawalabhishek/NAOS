@@ -544,10 +544,11 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         // databaseFilePath << "/3.2Density_0.1cmRadius";
         // databaseFilePath << "/test.db";
 
-        databaseFilePath << "../../data/guarantee_escape_speed";
-        databaseFilePath << "/longest_edge";
+        databaseFilePath << "../../data/VandV";
+        databaseFilePath << "/new";
+        databaseFilePath << "/orbital_dynamics";
         // databaseFilePath << "/simulation_time_9_months";
-        databaseFilePath << "/longestEdge.db";
+        databaseFilePath << "/leadingEdge3.db";
 
         naos::executeRegolithMonteCarlo( alpha,
                                          beta,
