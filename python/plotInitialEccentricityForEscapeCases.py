@@ -117,7 +117,7 @@ mu = 876514
 try:
     # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db" )
     # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
-    database = sqlite3.connect( "../data/guarantee_escape_speed/longest_edge/no_solar_perturbations/longestEdge_v2.db" )
+    database = sqlite3.connect( "../data/guarantee_escape_speed/longest_edge/longestEdge.db" )
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -164,6 +164,28 @@ data2.columns = [ 'eccentricity',                                               
 initial_eccentricity              =  data2[ 'eccentricity' ]
 data2_initial_velocity_magnitude  =  data2[ 'vel_mag' ]
 data2_initial_declination             =  data2[ 'launch_declination' ]
+
+data3 = pd.read_sql( "SELECT    eccentricity,                                                   \
+                                ROUND( initial_velocity_magnitude ),                            \
+                                ROUND( launch_azimuth ),                                        \
+                                ROUND( launch_declination ),                                    \
+                                time                                                            \
+                     FROM       regolith_trajectory_results                                     \
+                     WHERE      ROUND(initial_velocity_magnitude) = 6.0                         \
+                     AND        ROUND(launch_declination) = 15;",                               \
+                     database )
+
+data3.columns = [ 'eccentricity',                                                       \
+                  'vel_mag',                                                            \
+                  'launch_azimuth',                                                     \
+                  'launch_declination',                                                 \
+                  'time' ]
+
+eccentricity              = data3[ 'eccentricity' ]
+data3_velocity_magnitude  = data3[ 'vel_mag' ]
+data3_declination         = data3[ 'launch_declination' ]
+data3_azimuth             = data3[ 'launch_azimuth' ]
+data3_time                = data3[ 'time' ]
 
 ##close the database
 if database:
@@ -219,6 +241,16 @@ ax4.set_xlabel( 'Launch azimuth [deg]' )
 ax4.set_ylabel( 'Initial eccentricity' )
 ax4.set_title( 'Escape case' )
 # cbar.ax.set_ylabel( 'Initial eccentricity' )
+
+fig = plt.figure( )
+plt.suptitle( 'Eccentricity variation with time' )
+gs = gridspec.GridSpec( 1, 1 )
+ax5 = plt.subplot( gs[ 0 ] )
+
+ax5.plot(data3_time, eccentricity)
+
+ax5.grid(True)
+ax5.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useoffset=False)
 
 # Stop timer
 end_time = time.time( )
