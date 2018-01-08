@@ -78,16 +78,6 @@ start_time = time.time( )
 fig = plt.figure()
 ax1 = fig.gca( projection = '3d' )
 
-# # Read data in csv file. data returned as a panda series.
-# data = pd.read_csv( '../data/singleRegolithEjectaURESolution.csv' )
-# x = data[ 'x' ].values
-# y = data[ 'y' ].values
-# z = data[ 'z' ].values
-# vx = data[ 'vx' ].values
-# vy = data[ 'vy' ].values
-# vz = data[ 'vz' ].values
-# t = data[ 't' ].values
-
 # Connect to SQLite database.
 try:
     # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
