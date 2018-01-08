@@ -313,8 +313,8 @@ void executeRegolithMonteCarlo( const double alpha,
                                 const double dataSaveIntervals,
                                 std::ostringstream &databaseFilePath )
 {
-    const double launchLocationLongitude = naos::convertDegreeToRadians( 0.0 ); // [deg]
-    const double launchLocationLatitude = naos::convertDegreeToRadians( 0.0 ); // [deg]
+    const double launchLocationLongitude = naos::convertDegreeToRadians( 30.0 ); // [deg]
+    const double launchLocationLatitude = naos::convertDegreeToRadians( 60.0 ); // [deg]
     // double aXValue = 1.0;
     // double aYValue = 0.0;
     // double aZValue = 0.0;
@@ -417,49 +417,48 @@ void executeRegolithMonteCarlo( const double alpha,
 
     // set up a csv file to store the new escape speed calculations
     std::ofstream escapeSpeedFile;
-    escapeSpeedFile.open( "../../data/guarantee_escape_speed/longest_edge/nonConventionalEscape_qinfinity_0.2alpha.csv" );
-    escapeSpeedFile << "launch_declination" << ",";
-    escapeSpeedFile << "q_infinity" << ",";
-    escapeSpeedFile << "inertial_frame_escape_speed_plus" << ",";
-    escapeSpeedFile << "inertial_frame_escape_speed_minus" << ",";
-    escapeSpeedFile << "body_frame_escape_speed_plus" << ",";
-    escapeSpeedFile << "body_frame_escape_speed_minus" << std::endl;
+    // escapeSpeedFile.open( "../../data/guarantee_escape_speed/longest_edge/nonConservative_qinfinity_0.3alpha.csv" );
+    // escapeSpeedFile << "launch_declination" << ",";
+    // escapeSpeedFile << "q_infinity" << ",";
+    // escapeSpeedFile << "inertial_frame_escape_speed_plus" << ",";
+    // escapeSpeedFile << "inertial_frame_escape_speed_minus" << ",";
+    // escapeSpeedFile << "body_frame_escape_speed_plus" << ",";
+    // escapeSpeedFile << "body_frame_escape_speed_minus" << std::endl;
 
     // azimuth angle iterator begins here
-    // for( int azimuthIterator = 0; azimuthIterator < 360; azimuthIterator = azimuthIterator + 45 )
-    // {
-    for( int declinationIterator = 10; declinationIterator <= 80; declinationIterator++ )
+    for( int azimuthIterator = 135; azimuthIterator <= 135; azimuthIterator = azimuthIterator + 45 )
     {
-        // calculate the azimuth angle
-        const double coneAngleAzimuth
-                = naos::convertDegreeToRadians( 270.0 );
-        // const double coneAngleAzimuth = naos::convertDegreeToRadians( 0.0 );
+        // declination angle iterator begins here
+        for( int declinationIterator = 30; declinationIterator <= 30; declinationIterator = declinationIterator + 30 )
+        {
+            // calculate the azimuth angle
+            const double coneAngleAzimuth = naos::convertDegreeToRadians( 1.0 * azimuthIterator );
 
-        const double coneAngleDeclination = naos::convertDegreeToRadians( 1.0 * declinationIterator );
+            const double coneAngleDeclination = naos::convertDegreeToRadians( 1.0 * declinationIterator );
 
-        executeRegolithTrajectoryCalculation( alpha,
-                                              beta,
-                                              gamma,
-                                              gravitationalParameter,
-                                              angularVelocityVector,
-                                              angularVelocityMagnitude,
-                                              aXValue,
-                                              aYValue,
-                                              aZValue,
-                                              coneAngleAzimuth,
-                                              coneAngleDeclination,
-                                              velocityMagnitudeFactor,
-                                              integrationStepSize,
-                                              startTime,
-                                              endTime,
-                                              dataSaveIntervals,
-                                              databaseQuery,
-                                              escapeSpeedFile );
-    // } // end of azimuth angle iterator loop
-    }
+            executeRegolithTrajectoryCalculation( alpha,
+                                                  beta,
+                                                  gamma,
+                                                  gravitationalParameter,
+                                                  angularVelocityVector,
+                                                  angularVelocityMagnitude,
+                                                  aXValue,
+                                                  aYValue,
+                                                  aZValue,
+                                                  coneAngleAzimuth,
+                                                  coneAngleDeclination,
+                                                  velocityMagnitudeFactor,
+                                                  integrationStepSize,
+                                                  startTime,
+                                                  endTime,
+                                                  dataSaveIntervals,
+                                                  databaseQuery,
+                                                  escapeSpeedFile );
+        } // end of declination angle iterator
+    } // end of azimuth angle iterator loop
 
     transaction.commit( );
-    escapeSpeedFile.close( );
+    // escapeSpeedFile.close( );
 }
 
 } // namespace naos
