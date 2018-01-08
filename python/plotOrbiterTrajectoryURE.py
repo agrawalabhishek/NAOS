@@ -76,7 +76,9 @@ try:
         #                            + "test.db")
         database = sqlite3.connect("../data/guarantee_escape_speed/"
                                    + "longest_edge/"
-                                   + "longestEdge_v2.db")
+                                   + "normalLaunch.db")
+        # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/"
+        #                             + "spherical_asteroid/longestEdge.db" )
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -102,9 +104,24 @@ data = pd.read_sql( "SELECT     position_x,                                     
                      WHERE      ROUND( initial_solar_phase_angle ) = " + str(solarPhase) + "    \
                      AND        time >= " + str(lowerTime)
                                 + " AND time <= " + str(upperTime) + "                          \
-                     AND        ROUND( launch_declination ) = 16.0                              \
-                     AND        ROUND( initial_velocity_magnitude ) = 6.0;",                    \
+                     AND        ROUND( launch_declination ) = 0.0                               \
+                     AND        ROUND( initial_velocity_magnitude ) = 9.0;",                    \
                      database )
+
+# data = pd.read_sql( "SELECT     position_x,                                                     \
+#                                 position_y,                                                     \
+#                                 position_z,                                                     \
+#                                 ROUND( initial_velocity_magnitude ),                            \
+#                                 inertial_position_x,                                            \
+#                                 inertial_position_y,                                            \
+#                                 inertial_position_z,                                            \
+#                                 ROUND( launch_azimuth ),                                        \
+#                                 ROUND( launch_declination ),                                    \
+#                                 time                                                            \
+#                      FROM       regolith_trajectory_results                                     \
+#                      WHERE      ROUND( launch_azimuth ) = 246.0                                 \
+#                      AND        ROUND( initial_velocity_magnitude ) = 11.0;",                   \
+#                      database )
 
 data.columns = [ 'x',                                                   \
                  'y',                                                   \
