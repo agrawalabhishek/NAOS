@@ -434,10 +434,12 @@ void executeRegolithTrajectoryCalculation( const double alpha,
     if( ellipsoidGravPotential > pointMassGravPotential )
     {
         maxPotentialValue = ellipsoidGravPotential;
+        std::cout << "maxPotentialValue = ellipsoid model = " << maxPotentialValue << std::endl;
     }
     else
     {
         maxPotentialValue = pointMassGravPotential;
+        std::cout << "maxPotentialValue = point mass model" << maxPotentialValue << std::endl;
     }
 
     double localNormalEscapeSpeed
@@ -504,7 +506,7 @@ void executeRegolithTrajectoryCalculation( const double alpha,
         // set the initial time for sun now based on its true anomaly
         const double initialTimeForSun = trueAnomalyRadian / sunMeanMotion;
 
-        for( int velocityIterator = 6; velocityIterator <= 6; velocityIterator = velocityIterator + 1 )
+        for( int velocityIterator = 10; velocityIterator <= 10; velocityIterator = velocityIterator + 1 )
         {
             // all particles, irrespective of surface location will have the same velocity as computed
             // below.
@@ -573,7 +575,7 @@ void executeRegolithTrajectoryCalculation( const double alpha,
             int qInfinityUpperLimit = static_cast< int >( alpha );
             // for( int qInfinity = 0; qInfinity <= qInfinityUpperLimit; qInfinity = qInfinity + 100 )
             // {
-                double qInfinity = 0.2 * alpha;
+                double qInfinity = 0.3 * alpha;
                 double qInfinityTerm
                     = 2.0 * angularRate * std::sqrt( 2.0 * gravitationalParameter * qInfinity );
 
@@ -607,12 +609,12 @@ void executeRegolithTrajectoryCalculation( const double alpha,
                      + std::sqrt( regolithDirectionDotOmegaCrossPositionSquare
                      + inertialEscapeSpeedWithPlusSquared - omegaCrossPositionSquare );
 
-                 escapeSpeedFileHandle << convertRadiansToDegree( coneAngleDeclination ) << ",";
-                 escapeSpeedFileHandle << qInfinity << ",";
-                 escapeSpeedFileHandle << inertialEscapeSpeedWithPlus << ",";
-                 escapeSpeedFileHandle << inertialEscapeSpeedWithMinus << ",";
-                 escapeSpeedFileHandle << bodyFrameDirectionalEscapeSpeedWithPlus << ",";
-                 escapeSpeedFileHandle << bodyFrameDirectionalEscapeSpeedWithMinus << std::endl;
+                 // escapeSpeedFileHandle << convertRadiansToDegree( coneAngleDeclination ) << ",";
+                 // escapeSpeedFileHandle << qInfinity << ",";
+                 // escapeSpeedFileHandle << inertialEscapeSpeedWithPlus << ",";
+                 // escapeSpeedFileHandle << inertialEscapeSpeedWithMinus << ",";
+                 // escapeSpeedFileHandle << bodyFrameDirectionalEscapeSpeedWithPlus << ",";
+                 // escapeSpeedFileHandle << bodyFrameDirectionalEscapeSpeedWithMinus << std::endl;
              // }
 
             const double localRegolithDirectionEscapeSpeed
