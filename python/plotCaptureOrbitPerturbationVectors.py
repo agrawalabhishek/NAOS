@@ -72,7 +72,7 @@ try:
     database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
                                + "multiple_launch_velocity_with_perturbations/"
                                + "simulation_time_9_months/"
-                               + "3.2Density_1cmSize/longestEdgePerturbations.db")
+                               + "3.2Density_1cmRadius/longestEdgePerturbations.db")
     # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
     #                            + "multiple_launch_velocity_with_perturbations/"
     #                            + "simulation_time_9_months/"
@@ -176,7 +176,7 @@ t                           = data[ 'time' ]
 data2 = pd.read_csv("../data/regolith_launched_from_longest_edge/"
                     + "multiple_launch_velocity_with_perturbations/"
                     + "simulation_time_9_months/"
-                    + "3.2Density_1cmSize/sunEphemeris_phase45.csv")
+                    + "3.2Density_1cmRadius/sunEphemeris_phase45.csv")
 
 sun_xBody           = data2["x_body_frame"].values
 sun_yBody           = data2["y_body_frame"].values
