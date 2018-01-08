@@ -1225,6 +1225,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                             currentTime,
                             intermediateEndTime,
                             stepSizeGuess );
+        // std::cout << std::endl;
+        // std::cout << "Integration steps = " << steps;
 
         double radialDistance
             = std::sqrt( currentStateVector[ xPositionIndex ] * currentStateVector[ xPositionIndex ]
