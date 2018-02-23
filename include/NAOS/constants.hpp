@@ -30,6 +30,14 @@ namespace naos
 
     //! Pi
     const static double PI = 3.14159265358979323846;
+
+    // accessed 3 jan 2016 from:
+    // http://ssd.jpl.nasa.gov/?constants
+    const double sunGravParameter = 1.32712440018 * 1.0e+20;
+
+    // astronomical unit [m]
+    const double oneAstronomicalUnit = 149597870700.0;
+
 } // namespace naos
 
 #endif // NAOS_CONSTANTS_HPP

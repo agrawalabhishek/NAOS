@@ -34,13 +34,6 @@ namespace naos
  * frame. More details are given in the thesis report and author's personal notes.
  *
  */
-void computeRegolithVelocityVector( std::vector< double > regolithPositionVector,
-                                    const double velocityMagnitude,
-                                    const double coneAngleAzimuth,
-                                    const double coneAngleDeclination,
-                                    std::vector< double > &unitNormalVector,
-                                    std::vector< double > &regolithVelocityVector );
-
 void computeRegolithVelocityVector2( std::vector< double > regolithPositionVector,
                                      const double velocityMagnitude,
                                      const double coneAngleAzimuth,
@@ -48,32 +41,6 @@ void computeRegolithVelocityVector2( std::vector< double > regolithPositionVecto
                                      std::vector< double > &unitNormalVector,
                                      std::vector< double > &regolithVelocityVector,
                                      std::vector< double > &regolithDirectionUnitVector );
-
-//! Compute trajectory for regolith ejected from the surface of an asteroid
-/*!
- * This routine computes the trajectory for a single regolith ejected from the surface of an
- * asteroid by first computing the appropriate initial conditions (IC) and then integrating the
- * equations of motion using those ICs.
- *
- */
-void calculateRegolithTrajectory( const double alpha,
-                                  const double beta,
-                                  const double gamma,
-                                  const double gravitationalParameter,
-                                  const double density,
-                                  const std::vector< double > W,
-                                  const double Wmagnitude,
-                                  const double aXValue,
-                                  const double aYValue,
-                                  const double aZValue,
-                                  const double coneAngleAzimuth,
-                                  const double coneAngleDeclination,
-                                  const double velocityMagnitudeFactor,
-                                  const double integrationStepSize,
-                                  const double startTime,
-                                  const double endTime,
-                                  const double dataSaveIntervals,
-                                  std::ostringstream &filePath );
 
 //! Compute trajectory for regolith ejected from the surface of an asteroid (data saved in SQL db)
 /*!

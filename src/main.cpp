@@ -101,203 +101,9 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                                                                      springMassFilePath );
     }
 
-    // else if( userMode.compare( "executeRestricted2BP" ) == 0 )
-    // {
-    //     // Point mass gravity R2BP orbiter problem solution
-    //     std::ostringstream pointMassFilePath;
-    //     pointMassFilePath << "../../data/solutionrestricted2BP.csv";
-    //     const double semiMajor = 35000.0;
-    //     const double eccentricity = 0.1;
-    //     const double inclination = 10.0;
-    //     const double RAAN = 50.0;
-    //     const double AOP = 100.0;
-    //     const double TA = 0.0;
-
-    //     naos::Vector6 initialVector { semiMajor,
-    //                                   eccentricity,
-    //                                   inclination,
-    //                                   RAAN,
-    //                                   AOP,
-    //                                   TA };
-
-    //     const double integrationStepSize = 0.01;
-    //     const double startTime = 0.0;
-    //     const double endTime = 24.0 * 30.0 * 24.0 * 60.0 * 60.0;
-    //     const int dataSaveIntervals = 1000;
-
-    //     double wallTimeStart = naos::getWallTime< double >( );
-    //     double cpuTimeStart = naos::getCPUTime< double >( );
-
-    //     naos::boostIntegratorRestrictedTwoBodyProblem( gravitationalParameter,
-    //                                                    initialVector,
-    //                                                    integrationStepSize,
-    //                                                    startTime,
-    //                                                    endTime,
-    //                                                    pointMassFilePath,
-    //                                                    dataSaveIntervals );
-
-    //     double wallTimeEnd = naos::getWallTime< double >( );
-    //     double cpuTimeEnd = naos::getCPUTime< double >( );
-
-    //     std::cout << "Total wall time for execution = " << wallTimeEnd - wallTimeStart << std::endl;
-    //     std::cout << "Total CPU time for execution = " << cpuTimeEnd - cpuTimeStart << std::endl;
-    // }
-
-    // else if( userMode.compare( "executeParticleAroundSpheroid" ) == 0 )
-    // {
-    //     // Particle around spheroid orbiter problem solution
-    //     std::ostringstream filePath;
-    //     filePath << "../../data/solutionParticleAroundRotatingSpheroid.csv";
-    //     const double semiMajor = 35000.0;
-    //     const double eccentricity = 0.1;
-    //     const double inclination = 10.0;
-    //     const double RAAN = 50.0;
-    //     const double AOP = 10.0;
-    //     const double TA = 0.0;
-
-    //     naos::Vector6 initialVector { semiMajor,
-    //                                   eccentricity,
-    //                                   inclination,
-    //                                   RAAN,
-    //                                   AOP,
-    //                                   TA };
-
-    //     const double integrationStepSize = 0.01;
-    //     const double startTime = 0.0;
-    //     const double endTime = 2.0 * 365.0 * 24.0 * 60.0 * 60.0;
-    //     const int dataSaveIntervals = 1000;
-
-    //     double wallTimeStart = naos::getWallTime< double >( );
-    //     double cpuTimeStart = naos::getCPUTime< double >( );
-
-    //     naos::executeParticleAroundSpheroid( alpha,
-    //                                          gravitationalParameter,
-    //                                          W,
-    //                                          initialVector,
-    //                                          integrationStepSize,
-    //                                          startTime,
-    //                                          endTime,
-    //                                          filePath,
-    //                                          dataSaveIntervals );
-
-    //     double wallTimeEnd = naos::getWallTime< double >( );
-    //     double cpuTimeEnd = naos::getCPUTime< double >( );
-
-    //     std::cout << "Total wall time for execution = " << wallTimeEnd - wallTimeStart << std::endl;
-    //     std::cout << "Total CPU time for execution = " << cpuTimeEnd - cpuTimeStart << std::endl;
-    // }
-
-    else if( userMode.compare( "executeParticleAroundUniformlyRotatingEllipsoid" ) == 0 )
-    {
-        // Particle around spheroid orbiter problem solution
-        std::ostringstream filePath;
-        filePath << "../../data/solutionParticleAroundUniformlyRotatingEllipsoid.csv";
-        const double semiMajor = 35000.0;
-        const double eccentricity = 0.1;
-        const double inclination = 10.0;
-        const double RAAN = 50.0;
-        const double AOP = 10.0;
-        const double TA = 0.0;
-
-        naos::Vector6 initialVector { semiMajor,
-                                      eccentricity,
-                                      inclination,
-                                      RAAN,
-                                      AOP,
-                                      TA };
-
-        const double integrationStepSize = 0.01;
-        const double startTime = 0.0;
-        const double endTime = 100000;
-        const int dataSaveIntervals = 100;
-
-        double wallTimeStart = naos::getWallTime< double >( );
-        double cpuTimeStart = naos::getCPUTime< double >( );
-
-        naos::executeParticleAroundEllipsoid( alpha,
-                                              beta,
-                                              gamma,
-                                              gravitationalParameter,
-                                              W,
-                                              initialVector,
-                                              integrationStepSize,
-                                              startTime,
-                                              endTime,
-                                              filePath,
-                                              dataSaveIntervals );
-
-        double wallTimeEnd = naos::getWallTime< double >( );
-        double cpuTimeEnd = naos::getCPUTime< double >( );
-
-        std::cout << "Total wall time for execution = " << wallTimeEnd - wallTimeStart << std::endl;
-        std::cout << "Total CPU time for execution = " << cpuTimeEnd - cpuTimeStart << std::endl;
-    }
-
-    else if( userMode.compare( "executeRegolithTrajectoryCalculationForVaryingAzimuth" ) == 0 )
-    {
-        const double integrationStepSize = 0.01;
-        const double startTime = 0.0;
-        const double endTime = 1.0 * 30.0 * 24.0 * 60.0 * 60.0;
-        const double dataSaveIntervals = 100;
-
-        const double aXValue = 1.0;
-        const double aYValue = 1.0;
-        const double aZValue = 1.0;
-        const double velocityMagnitudeFactor = 0.9;
-        const double coneAngleDeclination = naos::convertDegreeToRadians( 45.0 );
-        const double coneAngleAzimuthFactor = 10.0;
-
-        double wallTimeStart = naos::getWallTime< double >( );
-        double cpuTimeStart = naos::getCPUTime< double >( );
-
-        // azimuth angle iterator begins here
-        for( int azimuthIterator = 0; azimuthIterator < 36; azimuthIterator++ )
-        {
-            // calculate the azimuth angle
-            const double coneAngleAzimuth
-                    = naos::convertDegreeToRadians( coneAngleAzimuthFactor * azimuthIterator );
-
-            // set the output file name for the current azimuth angle
-            std::stringstream dynamicPathConstruction;
-            dynamicPathConstruction << "../../data/trajectory_for_different_launch_azimuth/";
-            dynamicPathConstruction << "regolithTrajectoryAtAzimuth";
-            dynamicPathConstruction << naos::convertRadiansToDegree( coneAngleAzimuth );
-            dynamicPathConstruction << ".csv";
-
-            std::ostringstream regolithAroundUREFilePath;
-            regolithAroundUREFilePath << dynamicPathConstruction.str( );
-
-            naos::calculateRegolithTrajectory( alpha,
-                                               beta,
-                                               gamma,
-                                               gravitationalParameter,
-                                               density,
-                                               W,
-                                               Wmagnitude,
-                                               aXValue,
-                                               aYValue,
-                                               aZValue,
-                                               coneAngleAzimuth,
-                                               coneAngleDeclination,
-                                               velocityMagnitudeFactor,
-                                               integrationStepSize,
-                                               startTime,
-                                               endTime,
-                                               dataSaveIntervals,
-                                               regolithAroundUREFilePath );
-        }
-
-        double wallTimeEnd = naos::getWallTime< double >( );
-        double cpuTimeEnd = naos::getCPUTime< double >( );
-
-        std::cout << "Total wall time for execution = " << wallTimeEnd - wallTimeStart << std::endl;
-        std::cout << "Total CPU time for execution = " << cpuTimeEnd - cpuTimeStart << std::endl;
-    }
-
     else if( userMode.compare( "executeSunAsteroidTwoBodyProblem" ) == 0 )
     {
         const double integrationStepSize = 0.01;
-        // const double endTime = 2.0 * 365.0 * 24.0 * 60.0 * 60.0;
         const double dataSaveIntervals = 10.0;
 
         double wallTimeStart = naos::getWallTime< double >( );
@@ -313,40 +119,35 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         std::ostringstream integratedSunAsteroidFilePath;
         integratedSunAsteroidFilePath << "../../data/sun_asteroid_2BP/sunEphemeris_phase45.csv";
 
-        const double oneAstronomicalUnit = 149597870700.0;
-
         // data taken from url:
         // http://ssd.jpl.nasa.gov/sbdb.cgi?sstr=433
         // accessed 3 jan 2017
-        // std::vector< double > initialOrbitalElements = { 1.457945652635353 * oneAstronomicalUnit,
+        // std::vector< double > initialOrbitalElements = { 1.457945652635353 * naos::oneAstronomicalUnit,
         //                                                  0.2225680937603629,
         //                                                  10.82771477612614,
         //                                                  304.3265065906873,
         //                                                  178.8050095729968,
         //                                                  0.0 };
 
-        std::vector< double > initialOrbitalElements = { 1.0 * oneAstronomicalUnit,
+        std::vector< double > initialOrbitalElements = { 1.0 * naos::oneAstronomicalUnit,
                                                          0.0,
                                                          0.0,
                                                          0.0,
                                                          0.0,
                                                          45.0 };
 
-        // accessed 3 jan 2016 from:
-        // http://ssd.jpl.nasa.gov/?constants
-        const double sunGravParameter = 1.32712440018 * 1.0e+20;
-
         // calculate the starting time based on the true anomaly
-        double semiMajorAxis = initialOrbitalElements[ 0 ];
-        double semiMajorAxisCube = semiMajorAxis * semiMajorAxis * semiMajorAxis;
-        double sunMeanMotion = std::sqrt( sunGravParameter / semiMajorAxisCube );
-        double trueAnomalyRadian = naos::convertDegreeToRadians( initialOrbitalElements[ 5 ] );
+        // double semiMajorAxis = initialOrbitalElements[ 0 ];
+        // double semiMajorAxisCube = semiMajorAxis * semiMajorAxis * semiMajorAxis;
+        // double sunMeanMotion = std::sqrt( naos::sunGravParameter / semiMajorAxisCube );
+        // double trueAnomalyRadian = naos::convertDegreeToRadians( initialOrbitalElements[ 5 ] );
         // const double startTime = trueAnomalyRadian / sunMeanMotion;
         // const double endTime = startTime + ( 10.0 * 24.0 * 60.0 * 60.0 );
+
         const double startTime = 0.0;
         const double endTime = 270.0 * 24.0 * 60.0 * 60.0;
 
-        // naos::executeSunAsteroidTwoBodyProblem( sunGravParameter,
+        // naos::executeSunAsteroidTwoBodyProblem( naos::sunGravParameter,
         //                                         W,
         //                                         initialOrbitalElements,
         //                                         integrationStepSize,
@@ -355,7 +156,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         //                                         integratedSunAsteroidFilePath,
         //                                         dataSaveIntervals );
 
-        naos::executeSunAsteroidKeplerSolver( sunGravParameter,
+        naos::executeSunAsteroidKeplerSolver( naos::sunGravParameter,
                                               W,
                                               initialOrbitalElements,
                                               startTime,
@@ -377,145 +178,155 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
         std::vector< double > testSunThirdBodyPerturbingAcceleration( 3, 0.0 );
         std::vector< double > testSolarRadiationPerturbingAcceleration( 3, 0.0 );
-        std::vector< double > testRegolithPositionVector = { 25000.0, 0.0, 0.0 };
 
+        // Test data taken from TUDAT - general 3D case
+        std::vector< double > targetPositionVector = { -40000000.0,
+                                                       9000000.0,
+                                                       -9500000.0 };
+
+        std::vector< double > perturberPositionVector = { 25000000.0,
+                                                          -380000000.0,
+                                                          -55000000.0 };
+        const double testGravParameter = 4900.0e9;
+
+        std::vector< double > expectedRealisticAcceleration =
+                                    { 2.9394638802044552864534126789629e-6,
+                                      2.2253948636344714462843917227786e-6,
+                                      1.1680066249314399399805985890762e-6 };
+
+        std::vector< double > thirdBodyEffectAcceleration( 3, 0.0 );
+        thirdBodyEffectAcceleration = naos::computeThirdBodyEffect( perturberPositionVector,
+                                                                    targetPositionVector,
+                                                                    testGravParameter );
+
+        std::cout << "Test for third body effect from TUDAT data:";
+        naos::printVector( thirdBodyEffectAcceleration, 3 );
+
+        std::cout << "\nExpected acceleration values for TUDAT test data:";
+        naos::printVector( expectedRealisticAcceleration, 3 );
+
+        // Regolith sun specific test for third body effect
+        std::vector< double > testRegolithPositionVector = { 25000.0,
+                                                             0.0,
+                                                             0.0 };
+
+        std::vector< double > sunPositionVector = { -1.0 * naos::oneAstronomicalUnit,
+                                                    0.0,
+                                                    0.0 };
+
+        thirdBodyEffectAcceleration = naos::computeThirdBodyEffect( sunPositionVector,
+                                                                    testRegolithPositionVector,
+                                                                    naos::sunGravParameter );
+
+        // expected value for the acceleration when grav parameter = 1 in above computation
+        // expectedRealisticAcceleration = { 1.4934602208384173e-29, 0.0, 0.0 };
+
+        // expected value of acceleration when grav parameter is the Sun's grav parameter
+        expectedRealisticAcceleration = { 1.9820074997728747e-09, 0.0, 0.0 };
+
+        std::cout << "third body perturbing acceleration test with Sun position vector:";
+        naos::printVector( thirdBodyEffectAcceleration, 3 );
+
+        std::cout << "\nHand calculated expected acceleration values:";
+        naos::printVector( expectedRealisticAcceleration, 3 );
+
+        // Regolith sun test with sun orbital elements
         // set initial conditions for the Sun (to compute perturbations)
-        // NOTE: initial true anomaly for sun's position is independant of the starting time for regolith
-        // simulation
-        const double oneAstronomicalUnit = 149597870700.0;
-        const double initialTimeForSun = 0.0;
-        std::vector< double > initialSunOrbitalElements = { 1.457945652635353 * oneAstronomicalUnit,
-                                                            0.2225680937603629,
-                                                            10.82771477612614,
+        std::vector< double > initialSunOrbitalElements = { 1.0 * naos::oneAstronomicalUnit,
                                                             0.0,
                                                             0.0,
-                                                            0.0 };
-
-        // accessed 3 jan 2016 from:
-        // http://ssd.jpl.nasa.gov/?constants
-        const double sunGravParameter = 1.32712440018 * 1.0e+20;
-
-        // get the initial eccentric anomaly
-        double trueAnomalyRadian = naos::convertDegreeToRadians( initialSunOrbitalElements[ 5 ] );
-        double eccentricity = initialSunOrbitalElements[ 1 ];
-        double eccentricitySquare = eccentricity * eccentricity;
-
-        double sineOfEccentricAnomaly
-            = ( std::sqrt( 1.0 - eccentricitySquare ) * std::sin( trueAnomalyRadian ) )
-            / ( 1.0 + eccentricity * std::cos( trueAnomalyRadian ) );
-
-        double cosineOfEccentricAnomaly
-            = ( eccentricity + std::cos( trueAnomalyRadian ) )
-            / ( 1.0 + eccentricity * std::cos( trueAnomalyRadian ) );
-
-        // value returned in the range of -pi to +pi radians
-        double initialEccentricAnomalyRadian
-            = std::atan2( sineOfEccentricAnomaly, cosineOfEccentricAnomaly );
-
-        // get the initial mean anomaly
-        double initialSunMeanAnomalyRadian
-            = initialEccentricAnomalyRadian - eccentricity * std::sin( initialEccentricAnomalyRadian );
-
-        // get the mean motion
-        double semiMajorAxis = initialSunOrbitalElements[ 0 ];
-        double semiMajorAxisCube = semiMajorAxis * semiMajorAxis * semiMajorAxis;
-        double sunMeanMotion = std::sqrt( sunGravParameter / semiMajorAxisCube );
+                                                            0.0,
+                                                            0.0,
+                                                            180.0 };
 
         // set the time at which the perturbation has to be calculated
-        double perturbationTime = 20000.0;
-
-        // output the sun's position in body frame for a given time value
-        // get the mean anomaly for the next time value
-        double timeDifference = perturbationTime - initialTimeForSun;
-        double meanAnomalyRadian = sunMeanMotion * timeDifference + initialSunMeanAnomalyRadian;
-
-        // get the corresponding eccentric anomaly
-        double eccentricAnomalyRadian
-            = naos::convertMeanAnomalyToEccentricAnomaly( eccentricity,
-                                                          meanAnomalyRadian );
-
-        // get the corresponding true anomaly
-        double sineOfTrueAnomaly
-            = std::sqrt( 1.0 - eccentricitySquare ) * std::sin( eccentricAnomalyRadian )
-            / ( 1.0 - eccentricity * std::cos( eccentricAnomalyRadian ) );
-
-        double cosineOfTrueAnomaly
-            = ( std::cos( eccentricAnomalyRadian ) - eccentricity )
-            / ( 1.0 - eccentricity * std::cos( eccentricAnomalyRadian ) );
-
-        trueAnomalyRadian
-            = std::atan2( sineOfTrueAnomaly, cosineOfTrueAnomaly );
-
-        double trueAnomaly = naos::convertRadiansToDegree( trueAnomalyRadian );
-
-        // form the orbital elements vector
-        // basically update the orbital elements true anomaly,
-        // everything else remains the same
-        std::vector< double > sunOrbitalElements( 6, 0.0 );
-        sunOrbitalElements[ 0 ] = initialSunOrbitalElements[ 0 ];
-        sunOrbitalElements[ 1 ] = initialSunOrbitalElements[ 1 ];
-        sunOrbitalElements[ 2 ] = initialSunOrbitalElements[ 2 ];
-        sunOrbitalElements[ 3 ] = initialSunOrbitalElements[ 3 ];
-        sunOrbitalElements[ 4 ] = initialSunOrbitalElements[ 4 ];
-        sunOrbitalElements[ 5 ] = trueAnomaly;
-
-        std::vector< double > currentInertialStateVector( 6, 0.0 );
-        currentInertialStateVector
-            = naos::convertKeplerianElementsToCartesianCoordinates( sunOrbitalElements,
-                                                                    sunGravParameter );
-
-        std::vector< double > rotatingFrameStateVector( 6, 0.0 );
-        naos::convertInertialFrameVectorToBodyFrame( W,
-                                                     currentInertialStateVector,
-                                                     perturbationTime,
-                                                     rotatingFrameStateVector );
-        naos::printVector( rotatingFrameStateVector, 3 );
+        double perturbationTime = 0.0;
 
         testSunThirdBodyPerturbingAcceleration
             = naos::computeSunThirdBodyEffectAcceleration( testRegolithPositionVector,
                                                            W,
-                                                           initialTimeForSun,
-                                                           initialSunMeanAnomalyRadian,
                                                            initialSunOrbitalElements,
-                                                           perturbationTime,
-                                                           sunMeanMotion );
+                                                           perturbationTime );
 
+        std::cout << "third body perturbing acceleration test with Sun orbital elements:";
         naos::printVector( testSunThirdBodyPerturbingAcceleration, 3 );
+
+        // SRP test based on TUDAT data 1 (spacecraft around venus)
+        std::vector< double > positionVectorTargetToSun
+                        = { 0.732 * naos::oneAstronomicalUnit / std::sqrt( 2.0 ),
+                            0.732 * naos::oneAstronomicalUnit / std::sqrt( 2.0 ),
+                            0.0 };
+
+        double targetAlbedo = 0.5;
+        double incidentArea = 0.005;
+        double targetMass = 0.0022;
+        const double solarConstantTUDAT = 1.0205062450596109e+17;
+
+        testSolarRadiationPerturbingAcceleration = naos::computeSRPAcceleration(
+                                                        positionVectorTargetToSun,
+                                                        targetAlbedo,
+                                                        incidentArea,
+                                                        targetMass,
+                                                        solarConstantTUDAT );
+
+        std::vector< double > expectedSRPAcceleration = { -2.05147517201883e-05,
+                                                          -2.05147517201883e-05,
+                                                          0.0 };
+
+        std::cout << "SRP test acceleration values from TUDAT data 1:";
+        naos::printVector( testSolarRadiationPerturbingAcceleration, 3 );
+
+        std::cout << "SRP expected acceleration values for TUDAT data 1:";
+        naos::printVector( expectedSRPAcceleration, 3 );
+
+        // SRP test based on TUDAT data 2 (random point away from Sun)
+        positionVectorTargetToSun = { 94359740.25,
+                                      90831886.1,
+                                      14668782.92 };
+
+        targetAlbedo = 0.4058;
+        incidentArea = 514701.9505;
+        targetMass = 1.0;
+
+        expectedSRPAcceleration = { -3043733.21422537 / targetMass,
+                                    -2929936.30441141 / targetMass,
+                                    -473166.433773283 / targetMass };
+
+        testSolarRadiationPerturbingAcceleration = naos::computeSRPAcceleration(
+                                                        positionVectorTargetToSun,
+                                                        targetAlbedo,
+                                                        incidentArea,
+                                                        targetMass,
+                                                        solarConstantTUDAT );
+
+        std::cout << "SRP test acceleration values from TUDAT data 2:";
+        naos::printVector( testSolarRadiationPerturbingAcceleration, 3 );
+
+        std::cout << "SRP expected acceleration values for TUDAT data 2:";
+        naos::printVector( expectedSRPAcceleration, 3 );
+
+        // Conducts test(s) for SRP now based on initial sun's orbital elements
+        testRegolithPositionVector = { 0.0,
+                                       0.9 * naos::oneAstronomicalUnit,
+                                       0.0 };
+
+       initialSunOrbitalElements = { 1.0 * naos::oneAstronomicalUnit,
+                                     0.0,
+                                     0.0,
+                                     0.0,
+                                     0.0,
+                                     90.0 };
+
+        perturbationTime = 0.0;
 
         testSolarRadiationPerturbingAcceleration
             = naos::computeSolarRadiationPressureAcceleration( testRegolithPositionVector,
                                                                W,
-                                                               initialTimeForSun,
-                                                               initialSunMeanAnomalyRadian,
                                                                initialSunOrbitalElements,
-                                                               perturbationTime,
-                                                               sunMeanMotion );
+                                                               perturbationTime );
 
+        std::cout << "SRP acceleration test with Sun orbital elements:";
         naos::printVector( testSolarRadiationPerturbingAcceleration, 3 );
-
-        // compute surface gravity and perturbing accelerations
-        std::ostringstream filePath;
-        filePath << "../../data/surface_gravity_and_perturbing_acceleration/";
-        filePath << "equatorial_and_circular_case/100km_above_surface/allAccelerations.csv";
-        naos::computeGravityAndPerturbingAccelerations( alpha,
-                                                        beta,
-                                                        gamma,
-                                                        gravitationalParameter,
-                                                        W,
-                                                        filePath );
-
-        // compute accelerations for certain coordinates
-        // std::ostringstream newFilePath;
-        // newFilePath << "../../data/regolith_launched_from_leading_edge/";
-        // newFilePath << "multiple_launch_velocity_with_perturbations/";
-        // newFilePath << "perturbations_capture_case_vel_14_azi_125.csv";
-        // naos::computeGravitationalAndPerturbingAccelerationsForSpecificCoordinates(
-        //     alpha,
-        //     beta,
-        //     gamma,
-        //     gravitationalParameter,
-        //     W,
-        //     newFilePath );
 
         double wallTimeEnd = naos::getWallTime< double >( );
         double cpuTimeEnd = naos::getCPUTime< double >( );
@@ -538,17 +349,22 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         double cpuTimeStart = naos::getCPUTime< double >( );
 
         std::ostringstream databaseFilePath;
+        databaseFilePath << "../../data/regolith_launched_from_trailing_edge";
+        databaseFilePath << "/multiple_launch_velocity_with_perturbations";
+        databaseFilePath << "/simulation_time_9_months";
+        // databaseFilePath << "/7.5Density_5cmRadius";
+        databaseFilePath << "/trailingEdge_3P2Density_1cmRadius.db";
+        // databaseFilePath << "test.db";
+
+        // databaseFilePath << "../../data/VandV";
+        // databaseFilePath << "/new";
+        // databaseFilePath << "/orbital_dynamics";
+        // databaseFilePath << "/finalFateValidation.db";
+
         // databaseFilePath << "../../data/regolith_launched_from_longest_edge";
         // databaseFilePath << "/multiple_launch_velocity_with_perturbations";
         // databaseFilePath << "/simulation_time_9_months";
-        // databaseFilePath << "/3.2Density_0.1cmRadius";
-        // databaseFilePath << "/test.db";
-
-        databaseFilePath << "../../data/VandV";
-        databaseFilePath << "/new";
-        databaseFilePath << "/orbital_dynamics";
-        // databaseFilePath << "/simulation_time_9_months";
-        databaseFilePath << "/leadingEdge3.db";
+        // databaseFilePath << "/captureTest2.db";
 
         naos::executeRegolithMonteCarlo( alpha,
                                          beta,
@@ -567,93 +383,6 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
         std::cout << "Total wall time for execution = " << wallTimeEnd - wallTimeStart << std::endl;
         std::cout << "Total CPU time for execution = " << cpuTimeEnd - cpuTimeStart << std::endl;
-    }
-
-    else if( userMode.compare( "postAnalysisRestricted2BP" ) == 0 )
-    {
-        // for point mass analysis (for R2BP)
-        std::vector< double > centralBodyRotationRate { 0.0, 0.0, 0.0 };
-
-        // specify the input file path
-        std::ostringstream inputFilePath;
-        inputFilePath << "../../data/solutionrestricted2BP.csv";
-
-        // specify the output file path
-        std::ostringstream pointMassOrbitalElementsOutputFilePath;
-        pointMassOrbitalElementsOutputFilePath << "../../data/solutionrestricted2BP_orbitalElements.csv";
-
-        // post analysis, conversion of cartesian data into orbital elements
-        naos::postSimulationOrbitalElementsConversion( centralBodyRotationRate,
-                                                       gravitationalParameter,
-                                                       inputFilePath,
-                                                       pointMassOrbitalElementsOutputFilePath );
-
-        //! Calculate the jacobian
-        std::ostringstream pointMassJacobianOutputFilePath;
-        pointMassJacobianOutputFilePath << "../../data/solutionrestricted2BP_jacobian.csv";
-        naos::calculateJacobianPointMassGravity( centralBodyRotationRate,
-                                                 gravitationalParameter,
-                                                 inputFilePath,
-                                                 pointMassJacobianOutputFilePath );
-    }
-
-    else if( userMode.compare( "postAnalysisParticleAroundSpheroid" ) == 0 )
-    {
-        // specify the input file path
-        std::ostringstream inputFilePath;
-        inputFilePath << "../../data/solutionParticleAroundRotatingSpheroid.csv";
-
-        // specify the output file path
-        std::ostringstream OrbitalElementsOutputFilePath;
-        OrbitalElementsOutputFilePath << "../../data/solutionParticleAroundRotatingSpheroid_orbitalElements.csv";
-
-        // post analysis, conversion of cartesian data into orbital elements
-        naos::postSimulationOrbitalElementsConversion( W,
-                                                       gravitationalParameter,
-                                                       inputFilePath,
-                                                       OrbitalElementsOutputFilePath );
-
-        //! Calculate the jacobian
-        std::ostringstream JacobianOutputFilePath;
-        JacobianOutputFilePath << "../../data/solutionParticleAroundRotatingSpheroid_jacobian.csv";
-        naos::calculateJacobianEllipsoidPotentialModel( alpha,
-                                                        beta,
-                                                        gamma,
-                                                        W,
-                                                        gravitationalParameter,
-                                                        inputFilePath,
-                                                        JacobianOutputFilePath );
-    }
-
-    else if( userMode.compare( "postAnalysisParticleAroundUniformlyRotatingEllipsoid" ) == 0 )
-    {
-        // specify the input file path
-        std::ostringstream inputFilePath;
-        inputFilePath << "../../data/solutionParticleAroundUniformlyRotatingEllipsoid.csv";
-
-        // specify the output file path
-        std::ostringstream OrbitalElementsOutputFilePath;
-        OrbitalElementsOutputFilePath << "../../data/solutionParticleAroundUniformlyRotatingEllipsoid_orbitalElements.csv";
-
-        // post analysis, conversion of cartesian data into orbital elements
-        naos::postSimulationOrbitalElementsConversionForEllipsoid( alpha,
-                                                                   beta,
-                                                                   gamma,
-                                                                   W,
-                                                                   gravitationalParameter,
-                                                                   inputFilePath,
-                                                                   OrbitalElementsOutputFilePath );
-
-        //! Calculate the jacobian
-        std::ostringstream JacobianOutputFilePath;
-        JacobianOutputFilePath << "../../data/solutionParticleAroundUniformlyRotatingEllipsoid_jacobian.csv";
-        naos::calculateJacobianEllipsoidPotentialModel( alpha,
-                                                        beta,
-                                                        gamma,
-                                                        W,
-                                                        gravitationalParameter,
-                                                        inputFilePath,
-                                                        JacobianOutputFilePath );
     }
 
     return EXIT_SUCCESS;

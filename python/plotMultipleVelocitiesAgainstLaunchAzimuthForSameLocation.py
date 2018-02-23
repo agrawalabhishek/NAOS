@@ -66,13 +66,96 @@ phaseAngle = 'N.A.'
 try:
         # database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity_with_perturbations/phase_0/leadingEdge.db")
         # database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/phase_0/simulation_time_9_months/leadingEdge.db")
-        # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
-        database = sqlite3.connect( "../data/guarantee_escape_speed/longest_edge/normalLaunch.db" )
+        database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
+        # database = sqlite3.connect( "../data/guarantee_escape_speed/longest_edge/normalLaunch.db" )
         # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
         sys.exit(1)
+
+## sanity check for initial inertial velocities
+data2 = pd.read_sql( "SELECT    initial_velocity_x,                                             \
+                                initial_velocity_y,                                             \
+                                initial_velocity_z,                                             \
+                                ROUND( initial_velocity_magnitude ),                            \
+                                initial_position_x,                                             \
+                                initial_position_y,                                             \
+                                initial_position_z,                                             \
+                                initial_inertial_velocity_x,                                    \
+                                initial_inertial_velocity_y,                                    \
+                                initial_inertial_velocity_z,                                    \
+                                ROUND( launch_declination ),                                    \
+                                ROUND( launch_azimuth )                                         \
+                     FROM       regolith_trajectory_results                                     \
+                     WHERE      ( crash_flag = 1 )                                              \
+                     AND        ROUND( initial_velocity_magnitude ) IN (1.0, 2.0, 3.0, 4.0);",  \
+                     database )
+
+data2.columns = [ 'rotFrame_vx',                                                                \
+                  'rotFrame_vy',                                                                \
+                  'rotFrame_vz',                                                                \
+                  'initial_velocity_magnitude',                                                 \
+                  'initialPosition_x',                                                          \
+                  'initialPosition_y',                                                          \
+                  'initialPosition_z',                                                          \
+                  'inertial_vx',                                                                \
+                  'inertial_vy',                                                                \
+                  'inertial_vz',                                                                \
+                  'launch_declination',                                                         \
+                  'launch_azimuth' ]
+
+crash_rotFrame_vx                     = data2[ 'rotFrame_vx' ]
+crash_rotFrame_vy                     = data2[ 'rotFrame_vy' ]
+crash_rotFrame_vz                     = data2[ 'rotFrame_vz' ]
+crash_launchVelocity                  = data2[ 'initial_velocity_magnitude' ]
+crash_initialPosition_x               = data2[ 'initialPosition_x' ]
+crash_initialPosition_y               = data2[ 'initialPosition_y' ]
+crash_initialPosition_z               = data2[ 'initialPosition_z' ]
+crash_inertial_vx                     = data2[ 'inertial_vx' ]
+crash_inertial_vy                     = data2[ 'inertial_vy' ]
+crash_inertial_vz                     = data2[ 'inertial_vz' ]
+crash_declination                     = data2[ 'launch_declination' ]
+crash_azimuth                         = data2[ 'launch_azimuth' ]
+
+fig = plt.figure( )
+
+crash_inertialVelocityMagnitude = np.sqrt( crash_inertial_vx**2 + crash_inertial_vy**2 + crash_inertial_vz**2  )
+crash_rotFrameVelocityMagnitude = np.sqrt( crash_rotFrame_vx**2 + crash_rotFrame_vy**2 + crash_rotFrame_vz**2  )
+
+inertialVel_x = crash_rotFrame_vx + ( -Wz * crash_initialPosition_y )
+inertialVel_y = crash_rotFrame_vy + (-1)*( -Wz * crash_initialPosition_x )
+inertialVel_z = crash_rotFrame_vz + ( 0.0 )
+inertialVelMagnitude = np.sqrt( inertialVel_x**2 + inertialVel_y**2 + inertialVel_z**2 )
+
+uniqueLaunchVel = np.unique( crash_launchVelocity )
+# colorPlot = ['red', 'green', 'blue', 'brown']
+
+for index in range( 0, len( uniqueLaunchVel ) ):
+    currentLaunchVel = uniqueLaunchVel[ index ]
+    data_indices = np.where( crash_launchVelocity == currentLaunchVel )
+    data_indices = data_indices[ 0 ]
+
+    ax1 = plt.subplot(321)
+    ax1.scatter( crash_azimuth[data_indices], crash_rotFrame_vx[data_indices] )
+
+    ax2 = plt.subplot(322)
+    ax2.scatter( crash_azimuth[data_indices], crash_rotFrame_vy[data_indices] )
+
+    ax3 = plt.subplot(323)
+    ax3.scatter( crash_azimuth[data_indices], crash_rotFrame_vz[data_indices] )
+
+    ax4 = plt.subplot(324)
+    ax4.scatter( crash_azimuth[data_indices], inertialVel_y[data_indices] )
+
+    ax5 = plt.subplot(325)
+    ax5.scatter( crash_azimuth[data_indices], crash_rotFrameVelocityMagnitude[data_indices] )
+
+    ax6 = plt.subplot(326)
+    ax6.scatter( crash_azimuth[data_indices], crash_inertialVelocityMagnitude[data_indices] )
+
+plt.show( )
+sys.exit( )
 
 ## get the local directional escape speeds in rotating and inertial frame for each launch azimuth
 data4 = pd.read_sql( "SELECT    directional_escape_speed,                                   \
@@ -170,9 +253,11 @@ ax1 = plt.subplot( gs[ 0 ] )
 ax2 = plt.subplot( gs[ 1 ] )
 
 escape_inertialInitialVelocity = np.sqrt( escape_inertial_vx**2 + escape_inertial_vy**2 + escape_inertial_vz**2 )
-# ax1Handle1 = ax1.scatter( escape_azimuth, escape_inertialInitialVelocity, s=5, color=colors.cnames['orange'], label='actual speed' )
-ax1Handle1 = ax1.scatter( escape_declination, escape_inertialInitialVelocity, s=5, color=colors.cnames['orange'], label='actual speed' )
-ax1Handle2, = ax1.plot( directionalEscapeDeclination, inertialDirectionalEscapeSpeed, color=colors.cnames['red'], label='non-conservative escape speed', lw=2 )
+ax1Handle1 = ax1.scatter( escape_azimuth, escape_inertialInitialVelocity, s=5, color=colors.cnames['orange'], label='actual speed' )
+ax1Handle2, = ax1.plot( directionalEscapeAzimuth, inertialDirectionalEscapeSpeed, color=colors.cnames['red'], label='conservative escape speed', lw=2 )
+
+# ax1Handle1 = ax1.scatter( escape_declination, escape_inertialInitialVelocity, s=5, color=colors.cnames['orange'], label='actual speed' )
+# ax1Handle2, = ax1.plot( directionalEscapeDeclination, inertialDirectionalEscapeSpeed, color=colors.cnames['red'], label='non-conservative escape speed', lw=2 )
 
 ## format axis and title
 ax1.set_xlabel('Launch declination [deg]')
@@ -228,9 +313,11 @@ crash_azimuth                         = data2[ 'launch_azimuth' ]
 
 ## Plot launch azimuth versus inertial initial velocity for crash cases
 crash_inertialInitialVelocity = np.sqrt( crash_inertial_vx**2 + crash_inertial_vy**2 + crash_inertial_vz**2 )
-# ax2Handle1 = ax2.scatter( crash_azimuth, crash_inertialInitialVelocity, s=5, color=colors.cnames['purple'], label='actual speed' )
-ax2Handle1 = ax2.scatter( crash_declination, crash_inertialInitialVelocity, s=5, color=colors.cnames['purple'], label='actual speed' )
-ax2Handle2, = ax2.plot( directionalEscapeDeclination, inertialDirectionalEscapeSpeed, color=colors.cnames['red'], label='non-conservative escape speed', lw=2 )
+ax2Handle1 = ax2.scatter( crash_azimuth, crash_inertialInitialVelocity, s=5, color=colors.cnames['purple'], label='actual speed' )
+ax2Handle2, = ax2.plot( directionalEscapeAzimuth, inertialDirectionalEscapeSpeed, color=colors.cnames['red'], label='conservative escape speed', lw=2 )
+
+# ax2Handle1 = ax2.scatter( crash_declination, crash_inertialInitialVelocity, s=5, color=colors.cnames['purple'], label='actual speed' )
+# ax2Handle2, = ax2.plot( directionalEscapeDeclination, inertialDirectionalEscapeSpeed, color=colors.cnames['red'], label='non-conservative escape speed', lw=2 )
 
 ## format axis and title
 ax2.set_xlabel('Launch azimuth [deg]')
@@ -239,6 +326,10 @@ ax2.set_ylabel('$V_{initial}$ [m/s]')
 ax2.set_title( 'Reimpact' )
 ax2.legend( ).draggable( )
 ax2.grid( )
+
+print "Script time: " + str("{:,g}".format(end_time - start_time)) + "s"
+plt.show( )
+sys.exit( )
 
 ## get data for temporary capture cases
 data3 = pd.read_sql( "SELECT    initial_velocity_x,                                         \

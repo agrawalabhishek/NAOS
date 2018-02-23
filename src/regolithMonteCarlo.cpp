@@ -313,8 +313,8 @@ void executeRegolithMonteCarlo( const double alpha,
                                 const double dataSaveIntervals,
                                 std::ostringstream &databaseFilePath )
 {
-    const double launchLocationLongitude = naos::convertDegreeToRadians( 30.0 ); // [deg]
-    const double launchLocationLatitude = naos::convertDegreeToRadians( 60.0 ); // [deg]
+    const double launchLocationLongitude = naos::convertDegreeToRadians( -45.0 ); // [deg]
+    const double launchLocationLatitude = naos::convertDegreeToRadians( 45.0 ); // [deg]
     // double aXValue = 1.0;
     // double aYValue = 0.0;
     // double aZValue = 0.0;
@@ -426,14 +426,15 @@ void executeRegolithMonteCarlo( const double alpha,
     // escapeSpeedFile << "body_frame_escape_speed_minus" << std::endl;
 
     // azimuth angle iterator begins here
-    for( int azimuthIterator = 135; azimuthIterator <= 135; azimuthIterator = azimuthIterator + 45 )
+    for( int azimuthIterator = 270; azimuthIterator < 285; azimuthIterator = azimuthIterator + 1 )
     {
         // declination angle iterator begins here
-        for( int declinationIterator = 30; declinationIterator <= 30; declinationIterator = declinationIterator + 30 )
+        for( int declinationIterator = 45; declinationIterator <= 45; declinationIterator = declinationIterator + 30 )
         {
             // calculate the azimuth angle
             const double coneAngleAzimuth = naos::convertDegreeToRadians( 1.0 * azimuthIterator );
 
+            // calculate the declination angle
             const double coneAngleDeclination = naos::convertDegreeToRadians( 1.0 * declinationIterator );
 
             executeRegolithTrajectoryCalculation( alpha,

@@ -11,6 +11,7 @@ from pprint import pprint
 import sqlite3
 
 # Numerical
+import mayavi.mlab as mLab
 import numpy as np
 import pandas as pd
 from scipy.interpolate import griddata
@@ -84,8 +85,8 @@ def extractDataFromSQL( databaseConnect,
     yPositionStart_data      = data[ 'init_pos_y' ]
     zPositionStart_data      = data[ 'init_pos_z' ]
 
-    if databaseConnect:
-        databaseConnect.close( )
+    # if databaseConnect:
+    #     databaseConnect.close( )
 
     return x_data, y_data, z_data, initial_velocity_data, azimuth_data,                    \
            xPositionStart_data, yPositionStart_data, zPositionStart_data
@@ -123,192 +124,220 @@ alpha = 20000.0
 beta = 7000.0
 gamma = 7000.0
 
+commonPath = "/media/abhishek/Ashish/Thesis_Simulation_Databases/trailing_edge_perturbations_CDE/"
+
 try:
-    database1 = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
-                                   + "multiple_launch_velocity_with_perturbations/"
-                                   + "simulation_time_9_months/"
-                                   + "3.2Density_0.1cmRadius/longestEdgePerturbations.db")
+    database1 = sqlite3.connect(commonPath + "3.2Density_1cmRadius/trailingEdge_3P2Density_1cmRadius.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
         sys.exit(1)
 
 try:
-    database2 = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
-                                   + "multiple_launch_velocity_with_perturbations/"
-                                   + "simulation_time_9_months/"
-                                   + "7.5Density_1cmRadius/longestEdgePerturbations.db")
+    database2 = sqlite3.connect(commonPath + "7.5Density_1cmRadius/trailingEdge_7P5Density_1cmRadius.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
         sys.exit(1)
 
 try:
-    database3 = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
-                                   + "multiple_launch_velocity_with_perturbations/"
-                                   + "simulation_time_9_months/"
-                                   + "3.2Density_5cmRadius/longestEdgePerturbations.db")
+    database3 = sqlite3.connect(commonPath + "3.2Density_5cmRadius/trailingEdge_3P2Density_5cmRadius.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
         sys.exit(1)
 
 try:
-    database4 = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
-                                   + "multiple_launch_velocity_with_perturbations/"
-                                   + "simulation_time_9_months/"
-                                   + "7.5Density_5cmRadius/longestEdgePerturbations.db")
+    database4 = sqlite3.connect(commonPath + "7.5Density_5cmRadius/trailingEdge_7P5Density_5cmRadius.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
         sys.exit(1)
 
-try:
-    database5 = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
-                                   + "multiple_launch_velocity_with_perturbations/"
-                                   + "simulation_time_9_months/"
-                                   + "3.2Density_10cmRadius/longestEdgePerturbations.db")
+# try:
+#     database5 = sqlite3.connect("../data/regolith_launched_from_trailing_edge/"
+#                                    + "multiple_launch_velocity_with_perturbations/"
+#                                    + "simulation_time_9_months/"
+#                                    + "3.2Density_10cmRadius/trailingEdgePerturbations.db")
 
-except sqlite3.Error, e:
-        print "Error %s:" % e.args[0]
-        sys.exit(1)
+# except sqlite3.Error, e:
+#         print "Error %s:" % e.args[0]
+#         sys.exit(1)
 
-try:
-    database6 = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
-                                   + "multiple_launch_velocity_with_perturbations/"
-                                   + "simulation_time_9_months/"
-                                   + "7.5Density_10cmRadius/longestEdgePerturbations.db")
+# try:
+#     database6 = sqlite3.connect("../data/regolith_launched_from_trailing_edge/"
+#                                    + "multiple_launch_velocity_with_perturbations/"
+#                                    + "simulation_time_9_months/"
+#                                    + "7.5Density_10cmRadius/trailingEdgePerturbations.db")
 
-except sqlite3.Error, e:
-        print "Error %s:" % e.args[0]
-        sys.exit(1)
-
-print "Extracting data now...\n"
+# except sqlite3.Error, e:
+#         print "Error %s:" % e.args[0]
+#         sys.exit(1)
 
 ## Operations
-currentSolarPhase = 45.0
+solarPhase = [ 45.0, 135.0, 225.0, 315.0 ]
+# solarPhase = [ 45.0 ]
+fig = plt.figure( figsize=( 15, 15 ) )
+gs = gridspec.GridSpec( 2, 2 )
+ax2 = plt.subplot( gs[ 0 ] )
+ax3 = plt.subplot( gs[ 1 ] )
+ax4 = plt.subplot( gs[ 2 ] )
+ax5 = plt.subplot( gs[ 3 ] )
 
+# viewAzimuth = [ 45, 135, 225, 315 ] # for 3D views
+# regolithColor = [ (1.0, 0, 0), (0, 1.0, 0), (0, 0, 1.0), (0.0, 0.0, 0.0) ] # for mayavi 3D plots
+# u = np.linspace(0, 2 * np.pi, 100)
+# v = np.linspace(0, np.pi, 100)
+
+# ellipsoid_x = alpha * np.outer(np.cos(u), np.sin(v))
+# ellipsoid_y = beta * np.outer(np.sin(u), np.sin(v))
+# ellipsoid_z = gamma * np.outer(np.ones(np.size(u)), np.cos(v))
+
+plotHandles = [ax2, ax3, ax4, ax5]
 customcolormap = plt.cm.Vega20( np.linspace( 0, 1, 16 ) )
 
-fig = plt.figure( figsize=( 10, 7 ) )
-gs = gridspec.GridSpec( 1, 1 )
-ax1 = plt.subplot( gs[ 0 ] )
+for index in range( 0, len(solarPhase) ):
+    currentSolarPhase = solarPhase[ index ]
+    print "processing data for solar phase = " + str(currentSolarPhase) + " [deg]..."
+    ax1 = plotHandles[ index ]
 
-plotDatabase1 = True
-plotDatabase2 = False
-plotDatabase3 = False
-plotDatabase4 = False
-plotDatabase5 = False
-plotDatabase6 = True
+    plotDatabase1 = True
+    plotDatabase2 = False
+    plotDatabase3 = False
+    plotDatabase4 = True
+    # plotDatabase5 = False
+    # plotDatabase6 = True
 
-if plotDatabase1 == True:
-    ( x_data1, y_data1, z_data1, initial_velocity_data1, azimuth_data1,
-        xPositionStart_data1, yPositionStart_data1, zPositionStart_data1 ) = extractDataFromSQL(
-                                                                                database1,
-                                                                                currentSolarPhase )
-    ratio = areaToMassRatio( 0.1e-2, 3.2e3 )
-    # label1 = 'Olivine, $\rho$ = 3.2 [$g/cm^3$], R = 1.0 [cm], A/M = ' + str(ratio) + ' [$m^2/kg$]'
-    label1 = 'A/M = ' + str(ratio) + ' [$m^2/kg$]'
+    if plotDatabase1 == True:
+        ( x_data1, y_data1, z_data1, initial_velocity_data1, azimuth_data1,
+            xPositionStart_data1, yPositionStart_data1, zPositionStart_data1 ) = extractDataFromSQL(
+                                                                                    database1,
+                                                                                    currentSolarPhase )
+        ratio = areaToMassRatio( 1.0e-2, 3.2e3 )
+        # label1 = 'Olivine, $\rho$ = 3.2 [$g/cm^3$], R = 1.0 [cm], A/M = ' + str(ratio) + ' [$m^2/kg$]'
+        label1 = 'A/M = ' + str(ratio) + ' [$m^2/kg$]'
 
-    ## calculate lat long for end points for data1
-    endRadialDistance_data1 = np.sqrt( x_data1**2 + y_data1**2 + z_data1**2 )
-    endLongitude_data1 = np.arctan2( y_data1, x_data1 ) * 180 / np.pi
-    endLatitude_data1 = np.arcsin( z_data1 / endRadialDistance_data1 ) * 180 / np.pi
+        ## calculate lat long for end points for data1
+        endRadialDistance_data1 = np.sqrt( x_data1**2 + y_data1**2 + z_data1**2 )
+        endLongitude_data1 = np.arctan2( y_data1, x_data1 ) * 180 / np.pi
+        endLatitude_data1 = np.arcsin( z_data1 / endRadialDistance_data1 ) * 180 / np.pi
 
-    ax1.scatter( endLongitude_data1, endLatitude_data1, s=5, c='blue',                           \
-                 edgecolors='face',                                                              \
-                 marker='^',                                                                     \
-                 label=label1 )
+        ax1.scatter( endLongitude_data1, endLatitude_data1, s=5, c='blue',                           \
+                     edgecolors='face',                                                              \
+                     marker='^',                                                                     \
+                     label=label1 )
 
-if plotDatabase2 == True:
-    ( x_data2, y_data2, z_data2, initial_velocity_data2, azimuth_data2,
-        xPositionStart_data2, yPositionStart_data2, zPositionStart_data2 ) = extractDataFromSQL(
-                                                                                database2,
-                                                                                currentSolarPhase )
-    ratio = areaToMassRatio( 1.0e-2, 7.5e3 )
-    label2 = 'A/M = ' + str(ratio) + ' [$m^2/kg$]'
+        # for plotIndex in range( 0, len( viewAzimuth ) ):
+        #     mLab.figure( bgcolor = (0, 0, 0) )
+        #     mLab.mesh( ellipsoid_x, ellipsoid_y, ellipsoid_z,
+        #                color=(140.0/255.0, 140.0/255.0, 140.0/255.0) )
+        #     # mLab.points3d( xPositionStart[ 0 ], yPositionStart[ 0 ], zPositionStart[ 0 ],
+        #     #                scale_factor=500,
+        #     #                color=(0, 0, 0) )
+        #     mLab.points3d( x_data1, y_data1, z_data1,
+        #                    scale_factor=500,
+        #                    color=(0.0, 0.0, 1.0) )
+        #     mLab.view( azimuth = viewAzimuth[ plotIndex ], elevation = 75 )
 
-    ## calculate lat long for end points for data2
-    endRadialDistance_data2 = np.sqrt( x_data2**2 + y_data2**2 + z_data2**2 )
-    endLongitude_data2 = np.arctan2( y_data2, x_data2 ) * 180 / np.pi
-    endLatitude_data2 = np.arcsin( z_data2 / endRadialDistance_data2 ) * 180 / np.pi
+    if plotDatabase2 == True:
+        ( x_data2, y_data2, z_data2, initial_velocity_data2, azimuth_data2,
+            xPositionStart_data2, yPositionStart_data2, zPositionStart_data2 ) = extractDataFromSQL(
+                                                                                    database2,
+                                                                                    currentSolarPhase )
+        ratio = areaToMassRatio( 1.0e-2, 7.5e3 )
+        label2 = 'A/M = ' + str(ratio) + ' [$m^2/kg$]'
 
-    ax1.scatter( endLongitude_data2, endLatitude_data2, s=5, c='red',                            \
-                 edgecolors='face',                                                              \
-                 marker='o',                                                                     \
-                 label=label2 )
+        ## calculate lat long for end points for data2
+        endRadialDistance_data2 = np.sqrt( x_data2**2 + y_data2**2 + z_data2**2 )
+        endLongitude_data2 = np.arctan2( y_data2, x_data2 ) * 180 / np.pi
+        endLatitude_data2 = np.arcsin( z_data2 / endRadialDistance_data2 ) * 180 / np.pi
 
-if plotDatabase3 == True:
-    ( x_data3, y_data3, z_data3, initial_velocity_data3, azimuth_data3,
-        xPositionStart_data3, yPositionStart_data3, zPositionStart_data3 ) = extractDataFromSQL(
-                                                                                database3,
-                                                                                currentSolarPhase )
-    ratio = areaToMassRatio( 5.0e-2, 3.2e3 )
-    label3 = 'A/M = ' + str(ratio) + ' [$m^2/kg$]'
+        ax1.scatter( endLongitude_data2, endLatitude_data2, s=5, c='red',                            \
+                     edgecolors='face',                                                              \
+                     marker='o',                                                                     \
+                     label=label2 )
 
-    ## calculate lat long for end points for data3
-    endRadialDistance_data3 = np.sqrt( x_data3**2 + y_data3**2 + z_data3**2 )
-    endLongitude_data3 = np.arctan2( y_data3, x_data3 ) * 180 / np.pi
-    endLatitude_data3 = np.arcsin( z_data3 / endRadialDistance_data3 ) * 180 / np.pi
+    if plotDatabase3 == True:
+        ( x_data3, y_data3, z_data3, initial_velocity_data3, azimuth_data3,
+            xPositionStart_data3, yPositionStart_data3, zPositionStart_data3 ) = extractDataFromSQL(
+                                                                                    database3,
+                                                                                    currentSolarPhase )
+        ratio = areaToMassRatio( 5.0e-2, 3.2e3 )
+        label3 = 'A/M = ' + str(ratio) + ' [$m^2/kg$]'
 
-    ax1.scatter( endLongitude_data3, endLatitude_data3, s=5, c='green',                          \
-                 edgecolors='face',                                                              \
-                 marker='*',                                                                     \
-                 label=label3 )
+        ## calculate lat long for end points for data3
+        endRadialDistance_data3 = np.sqrt( x_data3**2 + y_data3**2 + z_data3**2 )
+        endLongitude_data3 = np.arctan2( y_data3, x_data3 ) * 180 / np.pi
+        endLatitude_data3 = np.arcsin( z_data3 / endRadialDistance_data3 ) * 180 / np.pi
 
-if plotDatabase4 == True:
-    ( x_data4, y_data4, z_data4, initial_velocity_data4, azimuth_data4,
-        xPositionStart_data4, yPositionStart_data4, zPositionStart_data4 ) = extractDataFromSQL(
-                                                                                database4,
-                                                                                currentSolarPhase )
-    ratio = areaToMassRatio( 5.0e-2, 7.5e3 )
-    label4 = 'A/M = ' + str(ratio) + ' [$m^2/kg$]'
+        ax1.scatter( endLongitude_data3, endLatitude_data3, s=5, c='green',                          \
+                     edgecolors='face',                                                              \
+                     marker='*',                                                                     \
+                     label=label3 )
 
-    ## calculate lat long for end points for data4
-    endRadialDistance_data4 = np.sqrt( x_data4**2 + y_data4**2 + z_data4**2 )
-    endLongitude_data4 = np.arctan2( y_data4, x_data4 ) * 180 / np.pi
-    endLatitude_data4 = np.arcsin( z_data4 / endRadialDistance_data4 ) * 180 / np.pi
+    if plotDatabase4 == True:
+        ( x_data4, y_data4, z_data4, initial_velocity_data4, azimuth_data4,
+            xPositionStart_data4, yPositionStart_data4, zPositionStart_data4 ) = extractDataFromSQL(
+                                                                                    database4,
+                                                                                    currentSolarPhase )
+        ratio = areaToMassRatio( 5.0e-2, 7.5e3 )
+        label4 = 'A/M = ' + str(ratio) + ' [$m^2/kg$]'
 
-    ax1.scatter( endLongitude_data4, endLatitude_data4, s=5, c=colors.cnames['darkorange'],      \
-                 edgecolors='face',                                                              \
-                 marker='+',                                                                     \
-                 label=label4 )
+        ## calculate lat long for end points for data4
+        endRadialDistance_data4 = np.sqrt( x_data4**2 + y_data4**2 + z_data4**2 )
+        endLongitude_data4 = np.arctan2( y_data4, x_data4 ) * 180 / np.pi
+        endLatitude_data4 = np.arcsin( z_data4 / endRadialDistance_data4 ) * 180 / np.pi
 
-if plotDatabase5 == True:
-    ( x_data5, y_data5, z_data5, initial_velocity_data5, azimuth_data5,
-        xPositionStart_data5, yPositionStart_data5, zPositionStart_data5 ) = extractDataFromSQL(
-                                                                                database5,
-                                                                                currentSolarPhase )
-    ratio = areaToMassRatio( 10e-2, 3.2e3 )
-    label5 = 'A/M = ' + str(ratio) + ' [$m^2/kg$]'
+        ax1.scatter( endLongitude_data4, endLatitude_data4, s=5, c=colors.cnames['black'],           \
+                     edgecolors='face',                                                              \
+                     marker='+',                                                                     \
+                     label=label4 )
 
-    # calculate lat long for end points for data5
-    endRadialDistance_data5 = np.sqrt( x_data5**2 + y_data5**2 + z_data5**2 )
-    endLongitude_data5 = np.arctan2( y_data5, x_data5 ) * 180 / np.pi
-    endLatitude_data5 = np.arcsin( z_data5 / endRadialDistance_data5 ) * 180 / np.pi
+    ax1.set_xlabel('longitude [degree]')
+    ax1.set_ylabel('latitude [degree]')
+    ax1.set_title("Solar phase = " + str(currentSolarPhase) + " [deg]")
+    # cbar.ax.set_ylabel( 'Regolith launch velocity [m/s]' )
+    ax1.set_xlim( -180.0, 180.0 )
+    ax1.set_yticks( np.arange( -90.0, 90.0, 15.0 ) )
+    # ax1.set_title( 'Solar phase angle = ' + str( currentSolarPhase ) + ' [deg]' )
+    ax1.grid( True )
+    ax1.legend( markerscale=4 ).draggable( )
 
-    ax1.scatter( endLongitude_data5, endLatitude_data5, s=5, c=colors.cnames['magenta'],         \
-                 edgecolors='face',                                                              \
-                 marker='s',                                                                     \
-                 label=label5 )
+# if plotDatabase5 == True:
+#     ( x_data5, y_data5, z_data5, initial_velocity_data5, azimuth_data5,
+#         xPositionStart_data5, yPositionStart_data5, zPositionStart_data5 ) = extractDataFromSQL(
+#                                                                                 database5,
+#                                                                                 currentSolarPhase )
+#     ratio = areaToMassRatio( 10e-2, 3.2e3 )
+#     label5 = 'A/M = ' + str(ratio) + ' [$m^2/kg$]'
 
-if plotDatabase6 == True:
-    ( x_data6, y_data6, z_data6, initial_velocity_data6, azimuth_data6,
-        xPositionStart_data6, yPositionStart_data6, zPositionStart_data6 ) = extractDataFromSQL(
-                                                                                database6,
-                                                                                currentSolarPhase )
-    ratio = areaToMassRatio( 10e-2, 7.5e3 )
-    label6 = 'A/M = ' + str(ratio) + ' [$m^2/kg$]'
+#     # calculate lat long for end points for data5
+#     endRadialDistance_data5 = np.sqrt( x_data5**2 + y_data5**2 + z_data5**2 )
+#     endLongitude_data5 = np.arctan2( y_data5, x_data5 ) * 180 / np.pi
+#     endLatitude_data5 = np.arcsin( z_data5 / endRadialDistance_data5 ) * 180 / np.pi
 
-    ## calculate lat long for end points for data6
-    endRadialDistance_data6 = np.sqrt( x_data6**2 + y_data6**2 + z_data6**2 )
-    endLongitude_data6 = np.arctan2( y_data6, x_data6 ) * 180 / np.pi
-    endLatitude_data6 = np.arcsin( z_data6 / endRadialDistance_data6 ) * 180 / np.pi
+#     ax1.scatter( endLongitude_data5, endLatitude_data5, s=5, c=colors.cnames['magenta'],         \
+#                  edgecolors='face',                                                              \
+#                  marker='s',                                                                     \
+#                  label=label5 )
 
-    ax1.scatter( endLongitude_data6, endLatitude_data6, s=5, c=colors.cnames['purple'],          \
-                 edgecolors='face',                                                              \
-                 marker='D',                                                                     \
-                 label=label6 )
+# if plotDatabase6 == True:
+#     ( x_data6, y_data6, z_data6, initial_velocity_data6, azimuth_data6,
+#         xPositionStart_data6, yPositionStart_data6, zPositionStart_data6 ) = extractDataFromSQL(
+#                                                                                 database6,
+#                                                                                 currentSolarPhase )
+#     ratio = areaToMassRatio( 10e-2, 7.5e3 )
+#     label6 = 'A/M = ' + str(ratio) + ' [$m^2/kg$]'
+
+#     ## calculate lat long for end points for data6
+#     endRadialDistance_data6 = np.sqrt( x_data6**2 + y_data6**2 + z_data6**2 )
+#     endLongitude_data6 = np.arctan2( y_data6, x_data6 ) * 180 / np.pi
+#     endLatitude_data6 = np.arcsin( z_data6 / endRadialDistance_data6 ) * 180 / np.pi
+
+#     ax1.scatter( endLongitude_data6, endLatitude_data6, s=5, c=colors.cnames['purple'],          \
+#                  edgecolors='face',                                                              \
+#                  marker='D',                                                                     \
+#                  label=label6 )
 
 ## calculate the lat long for starting point (same for all regoliths type in this case)
 # startRadialDistance = np.sqrt( xPositionStart_data1**2 +
@@ -385,15 +414,6 @@ if plotDatabase6 == True:
 #                            label='Launch velocity contour lines' )
 # fig.colorbar( contourplot, ax=ax1 )
 
-ax1.set_xlabel('longitude [degree]')
-ax1.set_ylabel('latitude [degree]')
-# cbar.ax.set_ylabel( 'Regolith launch velocity [m/s]' )
-ax1.set_xlim( -180.0, 180.0 )
-ax1.set_yticks( np.arange( -90.0, 90.0, 15.0 ) )
-# ax1.set_title( 'Solar phase angle = ' + str( currentSolarPhase ) + ' [deg]' )
-ax1.grid( True )
-ax1.legend( markerscale=2 ).draggable( )
-
 # Stop timer
 end_time = time.time( )
 
@@ -401,8 +421,7 @@ end_time = time.time( )
 print "Script time: " + str("{:,g}".format(end_time - start_time)) + "s"
 
 ## Show the plot
-plt.suptitle( 'Regolith crash map for different regolith types \n Ellipsoid longest edge' +
-              '\n Solar phase = ' + str(currentSolarPhase) + ' [deg]' )
+plt.suptitle( 'Regolith crash map for different regolith types, Ellipsoid trailing edge' )
 plt.show( )
 
 print ""

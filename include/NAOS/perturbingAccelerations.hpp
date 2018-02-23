@@ -34,17 +34,32 @@ namespace naos
 std::vector< double > extractSunEphemeris( const double timeValue,
                                            std::ostringstream &ephemerisFilePath );
 
+//! Third body effect function based only on position vectors as input - general function
+/*!
+ * Compute the perturbing acceleration from the thrid body effect of any perturbing body
+ */
+std::vector< double > computeThirdBodyEffect( std::vector< double > perturberPositionVector,
+                                              std::vector< double > targetPositionVector,
+                                              const double perturberGravParameter );
+
 //! Third-body effect
 /*!
  * Compute the perturbing acceleration from the thrid body effect of the sun.
  */
 std::vector< double > computeSunThirdBodyEffectAcceleration( const std::vector< double > &regolithPositionVector,
                                                              std::vector< double > &asteroidRotationVector,
-                                                             const double initialTime,
-                                                             const double initialSunMeanAnomalyRadian,
                                                              const std::vector< double > &initialSunOrbitalElements,
-                                                             const double timeValue,
-                                                             const double sunMeanMotion );
+                                                             const double timeValue );
+
+//! Solar radiation pressure general function
+/*!
+ * General computation of the perturbing acceleration from solar radition pressure.
+ */
+std::vector< double > computeSRPAcceleration( std::vector< double > &positionVectorTargetToSource,
+                                              const double targetAlbedo,
+                                              const double incidentArea,
+                                              const double targetMass,
+                                              const double solarConstant );
 
 //! Solar radiation pressure
 /*!
@@ -52,11 +67,8 @@ std::vector< double > computeSunThirdBodyEffectAcceleration( const std::vector< 
  */
 std::vector< double > computeSolarRadiationPressureAcceleration( const std::vector< double > &regolithPositionVector,
                                                                  std::vector< double > &asteroidRotationVector,
-                                                                 const double initialTime,
-                                                                 const double initialSunMeanAnomalyRadian,
                                                                  const std::vector< double > &initialSunOrbitalElements,
-                                                                 const double timeValue,
-                                                                 const double sunMeanMotion );
+                                                                 const double timeValue );
 
 } // namespace naos
 

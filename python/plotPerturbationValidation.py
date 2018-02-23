@@ -69,14 +69,10 @@ endColor        = colors.cnames["darkred"]
 ## plot for the perturbing case
 # Connect to SQLite database.
 try:
-    # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
-    #                            + "multiple_launch_velocity_with_perturbations/"
-    #                            + "simulation_time_9_months/"
-    #                            + "3.2Density_1cmRadius/longestEdgePerturbations.db")
     database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
                                + "multiple_launch_velocity_with_perturbations/"
                                + "simulation_time_9_months/"
-                               + "test.db")
+                               + "3.2Density_1cmRadius/longestEdgePerturbations.db")
     # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
     #                            + "multiple_launch_velocity_with_perturbations/"
     #                            + "simulation_time_9_months/"
@@ -118,9 +114,9 @@ data = pd.read_sql( "SELECT     ROUND( initial_velocity_magnitude ),            
                                 gravAcc_z,                                                      \
                                 time                                                            \
                      FROM       regolith_trajectory_results                                     \
-                     WHERE      ROUND( launch_azimuth ) = 45.0                                  \
-                     AND        ROUND( initial_velocity_magnitude ) = 10.0                      \
-                     AND        ROUND( initial_solar_phase_angle ) = 315.0                      \
+                     WHERE      ROUND( launch_azimuth ) = 165.0                                 \
+                     AND        ROUND( initial_velocity_magnitude ) = 8.0                       \
+                     AND        ROUND( initial_solar_phase_angle ) = 45.0                       \
                      AND        time >= " + str(lowerTime)
                                 + " AND time <= " + str(upperTime) + " ;",                      \
                      database )
@@ -180,7 +176,7 @@ t                           = data[ 'time' ]
 data2 = pd.read_csv("../data/regolith_launched_from_longest_edge/"
                     + "multiple_launch_velocity_with_perturbations/"
                     + "simulation_time_9_months/"
-                    + "3.2Density_1cmRadius/sunEphemeris_phase315.csv")
+                    + "3.2Density_1cmRadius/sunEphemeris_phase45.csv")
 
 sun_xBody           = data2["x_body_frame"].values
 sun_yBody           = data2["y_body_frame"].values
@@ -202,6 +198,8 @@ gs = gridspec.GridSpec( 2, 2 )
 ax1 = plt.subplot( gs[ 0 ] )
 ax2 = plt.subplot( gs[ 1 ] )
 ax3 = plt.subplot( gs[ 2 ] )
+
+plt.suptitle("Apparent motion of the Sun around the Asteroid")
 
 ax1.plot( ( sunKeplerSolverTime/( 24.0 * 60.0 * 60.0 ) ), sunLongitude )
 ax1.grid(True)
@@ -237,24 +235,6 @@ ax3.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False
 
 ## data indices
 print "\nSelecting data indices for regolith's simulation data...\n"
-
-## data indices based on distance of regolith from the asteroid
-# xyRange = np.sqrt( inertial_position_x**2 + inertial_position_y**2 )
-# limitLowerTrajectory = np.sqrt( 0.0e6**2 + 0.3e6**2 )
-# limitUpperTrajectory = np.sqrt( 0.5e6**2 + 0.0e6**2 )
-
-# data_indices_1 = np.where( xyRange <= limitLowerTrajectory )
-# data_indices_1 = data_indices_1[ 0 ]
-# data_indices_1 = data_indices_1[ 0::500 ]
-
-# data_indices_2 = np.where( (xyRange > limitLowerTrajectory) & (xyRange < limitUpperTrajectory) )
-# data_indices_2 = data_indices_2[ 0 ]
-# data_indices_2 = data_indices_2[ 0::200 ]
-
-# data_indices_3 = np.where( xyRange > limitUpperTrajectory )
-# data_indices_3 = data_indices_3[ 0 ]
-
-# data_indices = data_indices_1.tolist( ) + data_indices_2.tolist( ) + data_indices_3.tolist( )
 
 ## data indices based on magnitude of grav. acceleration acting on particle
 gravMagnitudeLimit = 1.0e-6
@@ -354,6 +334,93 @@ ax3.set_xlabel( 'x [m]' )
 ax3.set_ylabel( 'z [m]' )
 ax3.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False )
 
+## analysis in rotating frame
+sun_xBodyPlot = sun_xBody[ sunDataIndices ]
+sun_yBodyPlot = sun_yBody[ sunDataIndices ]
+
+regolith_xBody = position_x[ data_indices ]
+regolith_yBody = position_y[ data_indices ]
+
+stbe_xBody = solarTide_x[ data_indices ]
+stbe_yBody = solarTide_y[ data_indices ]
+
+srp_xBody = srp_x[ data_indices ]
+srp_yBody = srp_y[ data_indices ]
+
+fig = plt.figure( figsize=( 6, 6 ) )
+gs = gridspec.GridSpec( 1, 1 )
+ax1 = plt.subplot( gs[ 0 ] )
+
+ax1.plot( position_x, position_y, color=colors.cnames['purple'], lw=0.2 )
+ax1.scatter( regolith_xBody[0::20], regolith_yBody[0::20], color='blue', alpha=0.5, label='regolith' )
+
+ax1.quiver( regolith_xBody[0::20], regolith_yBody[0::20],
+            srp_xBody[0::20], srp_yBody[0::20],
+            angles='xy',
+            width=0.002,
+            headwidth=4,
+            headlength=4,
+            headaxislength=4,
+            linewidths=0.5,
+            pivot='tail',
+            color='red',
+            label="SRP" )
+
+ax1.quiver( regolith_xBody[0::20], regolith_yBody[0::20],
+            sun_xBodyPlot[0::20], sun_yBodyPlot[0::20],
+            angles='xy',
+            width=0.002,
+            headwidth=4,
+            headlength=4,
+            headaxislength=4,
+            linewidths=0.5,
+            pivot='tail',
+            color='black',
+            label="Sun's direction" )
+
+ax1.grid(True)
+ax1.set_xlabel( 'x [m]' )
+ax1.set_ylabel( 'y [m]' )
+ax1.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False )
+ax1.legend( ).draggable( )
+
+fig = plt.figure( figsize=( 6, 6 ) )
+gs = gridspec.GridSpec( 1, 1 )
+ax1 = plt.subplot( gs[ 0 ] )
+
+ax1.plot( position_x, position_y, color=colors.cnames['purple'], lw=0.2 )
+ax1.scatter( regolith_xBody[0::20], regolith_yBody[0::20], color='blue', alpha=0.5, label='regolith' )
+
+ax1.quiver( regolith_xBody[0::20], regolith_yBody[0::20],
+            stbe_xBody[0::20], stbe_yBody[0::20],
+            angles='xy',
+            width=0.002,
+            headwidth=4,
+            headlength=4,
+            headaxislength=4,
+            linewidths=0.5,
+            pivot='tail',
+            color='green',
+            label="STBE" )
+
+ax1.quiver( regolith_xBody[0::20], regolith_yBody[0::20],
+            sun_xBodyPlot[0::20], sun_yBodyPlot[0::20],
+            angles='xy',
+            width=0.002,
+            headwidth=4,
+            headlength=4,
+            headaxislength=4,
+            linewidths=0.5,
+            pivot='tail',
+            color='black',
+            label="Sun's direction" )
+
+ax1.grid(True)
+ax1.set_xlabel( 'x [m]' )
+ax1.set_ylabel( 'y [m]' )
+ax1.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False )
+ax1.legend( ).draggable( )
+
 ## analysis for inertial frame orbits
 sun_xInertialPlot = sun_xInertial[ sunDataIndices ]
 sun_yInertialPlot = sun_yInertial[ sunDataIndices ]
@@ -400,10 +467,9 @@ stbe_zInertial = -muSun * ( RminusD_zInertial / RminusD_MagnitudeCubeInertial + 
 
 # set up the figure now
 fig = plt.figure( figsize=( 7, 10 ) )
-gs = gridspec.GridSpec( 3, 1 )
+gs = gridspec.GridSpec( 2, 1 )
 ax1 = plt.subplot( gs[ 0 ] )
 ax2 = plt.subplot( gs[ 1 ] )
-ax3 = plt.subplot( gs[ 2 ] )
 plt.suptitle( 'Ellipsoid longest edge, Inertial frame plot\n'
               + '$V_{launch}$ = ' + str( initialVelocityMagnitude[ 0 ] ) + ' [m/s], '
               + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '
@@ -416,11 +482,9 @@ ax1.plot( inertial_position_x, inertial_position_y,
           color=trajectoryColor, linewidth=0.5, label='Regolith trajectory' )
 ax2.plot( inertial_position_x, inertial_position_y,
           color=trajectoryColor, linewidth=0.5, label='Regolith trajectory' )
-ax3.plot( inertial_position_x, inertial_position_y,
-          color=trajectoryColor, linewidth=0.5, label='Regolith trajectory' )
 
 # mark the regolith points and draw the srp vector
-inertialSRPSanityCheckFlag = False
+inertialSRPSanityCheckFlag = True
 
 regolith_xInertialPlot = regolith_xInertialPlot.tolist( )
 regolith_yInertialPlot = regolith_yInertialPlot.tolist( )
@@ -467,20 +531,20 @@ for index in range( 0, len( regolith_xInertialPlot ), plotStepSize ):
                 color='green',
                 label='STBE' if index == 0 else '_nolegend_' )
 
-    ax3.quiver( regolith_xInertialPlot[index], regolith_yInertialPlot[index],
-                totalPerturbingAcc_xInertial[index], totalPerturbingAcc_yInertial[index],
-                angles='xy',
-                width=0.002,
-                headwidth=4,
-                headlength=4,
-                headaxislength=4,
-                linewidths=0.5,
-                pivot='tail',
-                color='black',
-                label='Total perturbing acceleration' if index == 0 else '_nolegend_' )
-
     if inertialSRPSanityCheckFlag == True:
         ax1.quiver( regolith_xInertialPlot[index], regolith_yInertialPlot[index],
+                    sun_xInertialPlot[index], sun_yInertialPlot[index],
+                    angles='xy',
+                    width=0.002,
+                    headwidth=4,
+                    headlength=4,
+                    headaxislength=4,
+                    linewidths=0.5,
+                    pivot='tail',
+                    color='black',
+                    label="Sun's direction" if index == 0 else "_nolegend_" )
+
+        ax2.quiver( regolith_xInertialPlot[index], regolith_yInertialPlot[index],
                     sun_xInertialPlot[index], sun_yInertialPlot[index],
                     angles='xy',
                     width=0.002,
@@ -508,14 +572,6 @@ ax2.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False
 # ax2.axis('equal')
 ax2.legend( ).draggable( )
 
-ax3.grid(True)
-# ax3.set_title( 'With Solar perturbations' )
-ax3.set_xlabel( 'x [m]' )
-ax3.set_ylabel( 'y [m]' )
-ax3.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False )
-# ax3.axis('equal')
-ax3.legend( ).draggable( )
-
 ## plot just the srp vector
 fig = plt.figure( figsize=( 6, 6 ) )
 ax1 = plt.subplot( 111 )
@@ -539,6 +595,18 @@ ax1.quiver( regolith_xInertialPlot, regolith_yInertialPlot,
             pivot='tail',
             color='red',
             label='SRP' )
+
+ax1.quiver( regolith_xInertialPlot, regolith_yInertialPlot,
+            sun_xInertialPlot, sun_yInertialPlot,
+            angles='xy',
+            width=0.002,
+            headwidth=4,
+            headlength=4,
+            headaxislength=4,
+            linewidths=0.5,
+            pivot='tail',
+            color='black',
+            label="Sun's direction" )
 
 ax1.grid(True)
 # ax1.set_title( 'With Solar perturbations' )
@@ -580,36 +648,8 @@ ax1.quiver( regolith_xInertialPlot, regolith_yInertialPlot,
             color='green',
             label='STBE' )
 
-ax1.grid(True)
-# ax1.set_title( 'With Solar perturbations' )
-ax1.set_xlabel( 'x [m]' )
-ax1.set_ylabel( 'y [m]' )
-ax1.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False )
-# ax1.axis('equal')
-ax1.legend( ).draggable( )
-
-upperTimeDays = t[ len(t) - 1 ] / ( 24.0 * 60.0 * 60.0 )
-plt.suptitle( 'Ellipsoid longest edge, Inertial frame plot\n'
-              + '$V_{launch}$ = ' + str( initialVelocityMagnitude[ 0 ] ) + ' [m/s], '
-              + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '
-              + 'Solar phase = ' + str( solarPhase[ 0 ] ) + ' [deg]\n'
-              + 'Time = ' + str( lowerTimeDays ) + ' to ' + str( upperTimeDays ) + ' [days]',
-              fontsize=10 )
-
-## plot the total perturbing vector
-fig = plt.figure( figsize=( 6, 6 ) )
-ax1 = plt.subplot( 111 )
-
-ax1.plot( inertial_position_x, inertial_position_y,
-          color=trajectoryColor, linewidth=0.5, label='Regolith trajectory' )
-
-ax1.text( inertial_position_x[ 0 ], inertial_position_y[ 0 ], 'start', color='green', fontsize=12 )
-ax1.text( inertial_position_x[ len( inertial_position_x ) - 1 ],
-          inertial_position_y[ len( inertial_position_x ) - 1 ],
-          'end', color='red', fontsize=12 )
-
 ax1.quiver( regolith_xInertialPlot, regolith_yInertialPlot,
-            totalPerturbingAcc_xInertial, totalPerturbingAcc_yInertial,
+            sun_xInertialPlot, sun_yInertialPlot,
             angles='xy',
             width=0.002,
             headwidth=4,
@@ -618,7 +658,7 @@ ax1.quiver( regolith_xInertialPlot, regolith_yInertialPlot,
             linewidths=0.5,
             pivot='tail',
             color='black',
-            label='SRP+STBE' )
+            label="Sun's direction" )
 
 ax1.grid(True)
 # ax1.set_title( 'With Solar perturbations' )
@@ -628,193 +668,6 @@ ax1.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False
 # ax1.axis('equal')
 ax1.legend( ).draggable( )
 
-upperTimeDays = t[ len(t) - 1 ] / ( 24.0 * 60.0 * 60.0 )
-plt.suptitle( 'Ellipsoid longest edge, Inertial frame plot\n'
-              + '$V_{launch}$ = ' + str( initialVelocityMagnitude[ 0 ] ) + ' [m/s], '
-              + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '
-              + 'Solar phase = ' + str( solarPhase[ 0 ] ) + ' [deg]\n'
-              + 'Time = ' + str( lowerTimeDays ) + ' to ' + str( upperTimeDays ) + ' [days]',
-              fontsize=10 )
-
-## plot point mass gravity acceleration in inertial XY plot along with total perturbation vector
-fig = plt.figure( figsize=( 6, 6 ) )
-ax1 = plt.subplot( 111 )
-
-# point mass gravity calculations
-farAwayRangeMagnitude = np.sqrt( np.square( regolith_xInertialPlot ) \
-                               + np.square( regolith_yInertialPlot ) \
-                               + np.square( regolith_zInertialPlot ) )
-farAwayRangeMagnitudeCube = farAwayRangeMagnitude**3
-
-pointMass_xGravAcc = []
-pointMass_yGravAcc = []
-pointMass_zGravAcc = []
-for index in range( 0, len( farAwayRangeMagnitudeCube ) ):
-    pointMass_xGravAcc.append( ( -1.0 * mu * regolith_xInertialPlot[ index ] ) \
-                                 / ( farAwayRangeMagnitudeCube[ index ] ) )
-
-    pointMass_yGravAcc.append( ( -1.0 * mu * regolith_yInertialPlot[ index ] ) \
-                                 / ( farAwayRangeMagnitudeCube[ index ] ) )
-
-    pointMass_zGravAcc.append( ( -1.0 * mu * regolith_zInertialPlot[ index ] ) \
-                                 / ( farAwayRangeMagnitudeCube[ index ] ) )
-
-ax1.plot( inertial_position_x, inertial_position_y,
-          color=trajectoryColor, linewidth=0.5, label='Regolith trajectory' )
-
-ax1.text( inertial_position_x[ 0 ], inertial_position_y[ 0 ], 'start', color='green', fontsize=12 )
-ax1.text( inertial_position_x[ len( inertial_position_x ) - 1 ],
-          inertial_position_y[ len( inertial_position_x ) - 1 ],
-          'end', color='red', fontsize=12 )
-
-ax1.quiver( regolith_xInertialPlot, regolith_yInertialPlot,
-            totalPerturbingAcc_xInertial, totalPerturbingAcc_yInertial,
-            angles='xy',
-            width=0.002,
-            headwidth=4,
-            headlength=4,
-            headaxislength=4,
-            linewidths=0.5,
-            pivot='tail',
-            color='black',
-            label='SRP+STBE' )
-
-ax1.quiver( regolith_xInertialPlot, regolith_yInertialPlot,
-            pointMass_xGravAcc, pointMass_yGravAcc,
-            angles='xy',
-            width=0.002,
-            headwidth=4,
-            headlength=4,
-            headaxislength=4,
-            linewidths=0.5,
-            pivot='tail',
-            color='orange',
-            label='gravity' )
-
-ax1.grid( True )
-ax1.set_xlabel( 'x [m]' )
-ax1.set_ylabel( 'y [m]' )
-ax1.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False )
-ax1.legend( ).draggable( )
-upperTimeDays = t[ len(t) - 1 ] / ( 24.0 * 60.0 * 60.0 )
-plt.suptitle( 'Ellipsoid longest edge, Inertial frame plot\n'
-              + '$V_{launch}$ = ' + str( initialVelocityMagnitude[ 0 ] ) + ' [m/s], '
-              + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '
-              + 'Solar phase = ' + str( solarPhase[ 0 ] ) + ' [deg]\n'
-              + 'Time = ' + str( lowerTimeDays ) + ' to ' + str( upperTimeDays ) + ' [days]',
-              fontsize=10 )
-
-## plot just the gravity vector for when the particle is far away from the asteroid
-fig = plt.figure( figsize=( 6, 6 ) )
-ax1 = plt.subplot( 111 )
-
-ax1.plot( inertial_position_x, inertial_position_y,
-          color=trajectoryColor, linewidth=0.5, label='Regolith trajectory' )
-
-ax1.text( inertial_position_x[ 0 ], inertial_position_y[ 0 ], 'start', color='green', fontsize=12 )
-ax1.text( inertial_position_x[ len( inertial_position_x ) - 1 ],
-          inertial_position_y[ len( inertial_position_x ) - 1 ],
-          'end', color='red', fontsize=12 )
-
-ax1.quiver( regolith_xInertialPlot, regolith_yInertialPlot,
-            pointMass_xGravAcc, pointMass_yGravAcc,
-            angles='xy',
-            width=0.002,
-            headwidth=4,
-            headlength=4,
-            headaxislength=4,
-            linewidths=0.5,
-            pivot='tail',
-            color='orange',
-            label='gravity' )
-
-ax1.grid( True )
-ax1.set_xlabel( 'x [m]' )
-ax1.set_ylabel( 'y [m]' )
-ax1.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False )
-ax1.legend( ).draggable( )
-upperTimeDays = t[ len(t) - 1 ] / ( 24.0 * 60.0 * 60.0 )
-plt.suptitle( 'Ellipsoid longest edge, Inertial frame plot\n'
-              + '$V_{launch}$ = ' + str( initialVelocityMagnitude[ 0 ] ) + ' [m/s], '
-              + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '
-              + 'Solar phase = ' + str( solarPhase[ 0 ] ) + ' [deg]\n'
-              + 'Time = ' + str( lowerTimeDays ) + ' to ' + str( upperTimeDays ) + ' [days]',
-              fontsize=10 )
-
-## plot the net acceleration i.e. gravity plus all the perturbations
-fig = plt.figure( figsize=( 6, 6 ) )
-ax1 = plt.subplot( 111 )
-
-ax1.plot( inertial_position_x, inertial_position_y,
-          color=trajectoryColor, linewidth=0.5, label='Regolith trajectory' )
-
-ax1.text( inertial_position_x[ 0 ], inertial_position_y[ 0 ], 'start', color='green', fontsize=12 )
-ax1.text( inertial_position_x[ len( inertial_position_x ) - 1 ],
-          inertial_position_y[ len( inertial_position_x ) - 1 ],
-          'end', color='red', fontsize=12 )
-
-totalAcceleration_xInertial = map( add, pointMass_xGravAcc, totalPerturbingAcc_xInertial )
-totalAcceleration_yInertial = map( add, pointMass_yGravAcc, totalPerturbingAcc_yInertial )
-totalAcceleration_zInertial = map( add, pointMass_zGravAcc, totalPerturbingAcc_zInertial )
-
-ax1.quiver( regolith_xInertialPlot, regolith_yInertialPlot,
-            totalAcceleration_xInertial, totalAcceleration_yInertial,
-            angles='xy',
-            width=0.002,
-            headwidth=4,
-            headlength=4,
-            headaxislength=4,
-            linewidths=0.5,
-            pivot='tail',
-            color=colors.cnames['royalblue'],
-            label='Total acceleration' )
-
-ax1.grid( True )
-ax1.set_xlabel( 'x [m]' )
-ax1.set_ylabel( 'y [m]' )
-ax1.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False )
-ax1.legend( ).draggable( )
-upperTimeDays = t[ len(t) - 1 ] / ( 24.0 * 60.0 * 60.0 )
-plt.suptitle( 'Ellipsoid longest edge, Inertial frame plot\n'
-              + '$V_{launch}$ = ' + str( initialVelocityMagnitude[ 0 ] ) + ' [m/s], '
-              + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '
-              + 'Solar phase = ' + str( solarPhase[ 0 ] ) + ' [deg]\n'
-              + 'Time = ' + str( lowerTimeDays ) + ' to ' + str( upperTimeDays ) + ' [days]',
-              fontsize=10 )
-
-# sanity check
-fig = plt.figure( figsize=( 6, 6 ) )
-ax1 = plt.subplot( 111 )
-
-timeToPlot = t[ data_indices ] / ( 24.0 * 60.0 * 60.0 )
-
-totalPerturbingMagnitude = np.sqrt( np.square( totalPerturbingAcc_xInertial ) + \
-                                    np.square( totalPerturbingAcc_yInertial ) + \
-                                    np.square( totalPerturbingAcc_zInertial ) )
-
-gravityMagnitude = np.sqrt( np.square( pointMass_xGravAcc ) + \
-                            np.square( pointMass_yGravAcc ) + \
-                            np.square( pointMass_zGravAcc ) )
-
-totalAccelerationMagnitude = np.sqrt( np.square( totalAcceleration_xInertial ) + \
-                                      np.square( totalAcceleration_yInertial ) + \
-                                      np.square( totalAcceleration_zInertial ) )
-
-# print pointMass_xGravAcc
-# print pointMass_yGravAcc
-# print pointMass_zGravAcc
-# print gravityMagnitude
-
-ax1.scatter( timeToPlot, totalPerturbingMagnitude, color='black', label='Total perturbing acceleration' )
-ax1.scatter( timeToPlot, gravityMagnitude, color='orange', label='Gravitational acceleration' )
-ax1.scatter( timeToPlot, totalAccelerationMagnitude, color=colors.cnames['royalblue'], label='Net acceleration' )
-
-ax1.grid( True )
-ax1.set_xlabel( 'Time [days]' )
-ax1.set_ylabel( 'Magnitude [$m / s^2$]' )
-ax1.set_yscale( 'log' )
-# ax1.ticklabel_format( style='sci', axis='both', scilimits=(0,0), useOffset=False )
-ax1.legend( ).draggable( )
 upperTimeDays = t[ len(t) - 1 ] / ( 24.0 * 60.0 * 60.0 )
 plt.suptitle( 'Ellipsoid longest edge, Inertial frame plot\n'
               + '$V_{launch}$ = ' + str( initialVelocityMagnitude[ 0 ] ) + ' [m/s], '

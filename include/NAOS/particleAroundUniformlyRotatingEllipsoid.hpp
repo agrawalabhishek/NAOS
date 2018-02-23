@@ -29,40 +29,6 @@
 namespace naos
 {
 
-//! particle around ellipsoid integration
-/*!
- * integrate the equations of motion for a particle around an ellipsoid. The gravitational accelerations
- * calculated using the ellipsoid gravitational potential model.
- */
-void executeParticleAroundEllipsoid( const double alpha,
-                                     const double beta,
-                                     const double gamma,
-                                     const double gravParameter,
-                                     std::vector< double > asteroidRotationVector,
-                                     std::vector< double > &initialOrbitalElements,
-                                     const double initialStepSize,
-                                     const double startTime,
-                                     const double endTime,
-                                     std::ostringstream &outputFilePath,
-                                     const int dataSaveIntervals );
-
-//! Trajectory calculation for regolith around an asteroid (modelled as ellipsoid here)
-/*!
- * Same as the previous function, except that the initial conditions are now given as a cartesian
- * state. The initial cartesian state should be given in body fixed frame of the asteroid.
- */
-void singleRegolithTrajectoryCalculator( const double alpha,
-                                         const double beta,
-                                         const double gamma,
-                                         const double gravParameter,
-                                         std::vector< double > asteroidRotationVector,
-                                         std::vector< double > &initialCartesianStateVector,
-                                         const double initialStepSize,
-                                         const double startTime,
-                                         const double endTime,
-                                         std::ostringstream &outputFilePath,
-                                         const int dataSaveIntervals );
-
 //! Trajectory calculation for regolith around an asteroid (data saved in SQL db)
 /*!
  * Same as the previous function, except that the initial conditions are now given as a cartesian
@@ -81,20 +47,13 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                  const double initialStepSize,
                                                  const double startTime,
                                                  const double endTime,
-                                                 const double initialSunMeanAnomalyRadian,
-                                                 const double initialTimeForSun,
                                                  const std::vector< double > initialSunOrbitalElements,
-                                                 const double sunMeanMotion,
                                                  SQLite::Statement &databaseQuery,
                                                  const double dataSaveIntervals );
 
 //! computes the (modified) solar phase angle
-double computeSolarPhaseAngle( const double regolithArgumentOfPeriapsis,
-                               const double currentTime,
-                               const double initialSunMeanAnomalyRadian,
-                               const double initialTimeForSun,
-                               const std::vector< double > initialSunOrbitalElements,
-                               const double sunMeanMotion );
+double computeSolarPhaseAngle( const double currentTime,
+                               const std::vector< double > initialSunOrbitalElements );
 
 //! convert body frame state vector to inertial frame for a uniformly rotating case
 /*!

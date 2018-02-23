@@ -294,9 +294,88 @@ double convertMeanAnomalyToEccentricAnomaly( const double eccentricity,
     return eccentricAnomaly;
 }
 
-//! sun-asteroid Restricted two body problem integration
+//! sun-asteroid two body problem
 /*!
- * integrate the equations of motion for the sun around the asteroid.
+ * Compute apparent state vector for the sun around the asteroid for any given time value.
+ */
+void computeSunStateVector( std::vector< double > &asteroidRotationVector,
+                            const std::vector< double > &initialSunOrbitalElements,
+                            const double timeValue,
+                            std::vector< double > &sunStateVectorInertialFrame,
+                            std::vector< double > &sunStateVectorBodyFrame )
+{
+    // get the initial eccentric anomaly
+    double trueAnomalyRadian = naos::convertDegreeToRadians( initialSunOrbitalElements[ 5 ] );
+    double eccentricity = initialSunOrbitalElements[ 1 ];
+    double eccentricitySquare = eccentricity * eccentricity;
+
+    double sineOfEccentricAnomaly
+        = ( std::sqrt( 1.0 - eccentricitySquare ) * std::sin( trueAnomalyRadian ) )
+        / ( 1.0 + eccentricity * std::cos( trueAnomalyRadian ) );
+
+    double cosineOfEccentricAnomaly
+        = ( eccentricity + std::cos( trueAnomalyRadian ) )
+        / ( 1.0 + eccentricity * std::cos( trueAnomalyRadian ) );
+
+    // value returned in the range of -pi to +pi radians
+    double initialEccentricAnomalyRadian
+        = std::atan2( sineOfEccentricAnomaly, cosineOfEccentricAnomaly );
+
+    // get the initial mean anomaly
+    double initialSunMeanAnomalyRadian
+        = initialEccentricAnomalyRadian - eccentricity * std::sin( initialEccentricAnomalyRadian );
+
+    // get the mean motion
+    double semiMajorAxis = initialSunOrbitalElements[ 0 ];
+    double semiMajorAxisCube = semiMajorAxis * semiMajorAxis * semiMajorAxis;
+    double sunMeanMotion = std::sqrt( naos::sunGravParameter / semiMajorAxisCube );
+
+    // get the mean anomaly for the current time value
+    double meanAnomalyRadian = sunMeanMotion * timeValue + initialSunMeanAnomalyRadian;
+
+    // get the corresponding eccentric anomaly
+    double eccentricAnomalyRadian
+        = naos::convertMeanAnomalyToEccentricAnomaly( eccentricity,
+                                                      meanAnomalyRadian );
+
+    // get the corresponding true anomaly
+    double sineOfTrueAnomaly
+        = std::sqrt( 1.0 - eccentricitySquare ) * std::sin( eccentricAnomalyRadian )
+        / ( 1.0 - eccentricity * std::cos( eccentricAnomalyRadian ) );
+
+    double cosineOfTrueAnomaly
+        = ( std::cos( eccentricAnomalyRadian ) - eccentricity )
+        / ( 1.0 - eccentricity * std::cos( eccentricAnomalyRadian ) );
+
+    trueAnomalyRadian
+        = std::atan2( sineOfTrueAnomaly, cosineOfTrueAnomaly );
+
+    double trueAnomaly = naos::convertRadiansToDegree( trueAnomalyRadian );
+
+    // form the orbital elements vector
+    // basically update the orbital elements true anomaly,
+    // everything else remains the same
+    std::vector< double > sunOrbitalElements( 6, 0.0 );
+    sunOrbitalElements[ 0 ] = initialSunOrbitalElements[ 0 ];
+    sunOrbitalElements[ 1 ] = initialSunOrbitalElements[ 1 ];
+    sunOrbitalElements[ 2 ] = initialSunOrbitalElements[ 2 ];
+    sunOrbitalElements[ 3 ] = initialSunOrbitalElements[ 3 ];
+    sunOrbitalElements[ 4 ] = initialSunOrbitalElements[ 4 ];
+    sunOrbitalElements[ 5 ] = trueAnomaly;
+
+    sunStateVectorInertialFrame
+        = naos::convertKeplerianElementsToCartesianCoordinates( sunOrbitalElements,
+                                                                naos::sunGravParameter );
+
+    naos::convertInertialFrameVectorToBodyFrame( asteroidRotationVector,
+                                                 sunStateVectorInertialFrame,
+                                                 timeValue,
+                                                 sunStateVectorBodyFrame );
+}
+
+//! sun-asteroid two body problem
+/*!
+ * Apparent motion for the sun around the asteroid.
  */
 void executeSunAsteroidKeplerSolver( const double gravParameter,
                                      const std::vector< double > &asteroidRotationVector,

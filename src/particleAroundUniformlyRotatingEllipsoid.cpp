@@ -15,6 +15,7 @@
 #include <stdexcept>
 
 #include <boost/numeric/odeint.hpp>
+#include <boost/numeric/odeint/stepper/bulirsch_stoer.hpp>
 #include <SQLiteCpp/SQLiteCpp.h>
 #include <sqlite3.h>
 
@@ -100,10 +101,7 @@ private:
     const double beta;
     const double gamma;
     std::vector< double > asteroidRotationVector;
-    const double initialTime;
-    const double initialMeanAnomalyRadian;
     const std::vector< double > initialSunOrbitalElements;
-    const double sunMeanMotion;
 
 public:
     // Default constructor with member initializer list
@@ -113,19 +111,13 @@ public:
                const double aBeta,
                const double aGamma,
                std::vector< double > &anAsteroidRotationVector,
-               const double anInitialTime,
-               const double anInitialMeanAnomalyRadian,
-               const std::vector< double > &anInitialSunOrbitalElements,
-               const double aSunMeanMotion )
+               const std::vector< double > &anInitialSunOrbitalElements )
             : gravParameter( aGravParameter ),
               alpha( aAlpha ),
               beta( aBeta ),
               gamma( aGamma ),
               asteroidRotationVector( anAsteroidRotationVector ),
-              initialTime( anInitialTime ),
-              initialMeanAnomalyRadian( anInitialMeanAnomalyRadian ),
-              initialSunOrbitalElements( anInitialSunOrbitalElements ),
-              sunMeanMotion( aSunMeanMotion )
+              initialSunOrbitalElements( anInitialSunOrbitalElements )
     { }
     void operator() ( const std::vector< double > &stateVector,
                       std::vector< double > &dXdt,
@@ -152,22 +144,16 @@ public:
         sunThirdBodyEffectAcceleration
             = computeSunThirdBodyEffectAcceleration( regolithPositionVector,
                                                      asteroidRotationVector,
-                                                     initialTime,
-                                                     initialMeanAnomalyRadian,
                                                      initialSunOrbitalElements,
-                                                     currentTime,
-                                                     sunMeanMotion );
+                                                     currentTime );
 
         // compute perturbing acceleration from the solar radiation pressure
         std::vector< double > solarRadiationPressureAcceleration( 3, 0.0 );
         solarRadiationPressureAcceleration
             = computeSolarRadiationPressureAcceleration( regolithPositionVector,
                                                          asteroidRotationVector,
-                                                         initialTime,
-                                                         initialMeanAnomalyRadian,
                                                          initialSunOrbitalElements,
-                                                         currentTime,
-                                                         sunMeanMotion );
+                                                         currentTime );
 
         double zRotation = asteroidRotationVector[ 2 ];
 
@@ -220,502 +206,9 @@ struct pushBackStateAndTime
     }
 };
 
-//! particle around ellipsoid integration
-/*!
- * integrate the equations of motion for a particle around an ellipsoid. The gravitational accelerations
- * calculated using the ellipsoid gravitational potential model.
- */
-void executeParticleAroundEllipsoid( const double alpha,
-                                     const double beta,
-                                     const double gamma,
-                                     const double gravParameter,
-                                     std::vector< double > asteroidRotationVector,
-                                     std::vector< double > &initialOrbitalElements,
-                                     const double initialStepSize,
-                                     const double startTime,
-                                     const double endTime,
-                                     std::ostringstream &outputFilePath,
-                                     const int dataSaveIntervals )
-{
-    //! open the output csv file to save data. Declare file headers.
-    std::ofstream outputFile;
-    outputFile.open( outputFilePath.str( ) );
-    outputFile << "x" << ",";
-    outputFile << "y" << ",";
-    outputFile << "z" << ",";
-    outputFile << "vx" << ",";
-    outputFile << "vy" << ",";
-    outputFile << "vz" << ",";
-    outputFile << "jacobi" << ",";
-    outputFile << "t" << std::endl;
-    outputFile.precision( 16 );
-
-    //! convert the initial orbital elements to cartesian state
-    std::vector< double > initialStateInertial( 6, 0.0 );
-    initialStateInertial = convertKeplerianElementsToCartesianCoordinates( initialOrbitalElements,
-                                                                           gravParameter );
-
-    //! account for non-zero start time value and calculate the initial state in body frame
-    double phi = asteroidRotationVector[ zPositionIndex ] * startTime;
-
-    std::vector< double > initialState( 6, 0.0 );
-
-    // get the initial body frame position
-    initialState[ xPositionIndex ]
-            = initialStateInertial[ xPositionIndex ] * std::cos( phi )
-            + initialStateInertial[ yPositionIndex ] * std::sin( phi );
-
-    initialState[ yPositionIndex ]
-            = -1.0 * initialStateInertial[ xPositionIndex ] * std::sin( phi )
-            + initialStateInertial[ yPositionIndex ] * std::cos( phi );
-
-    initialState[ zPositionIndex ] = initialStateInertial[ zPositionIndex ];
-
-    // get the initial body frame velocity
-    std::vector< double > inertialPositionVector = { initialStateInertial[ xPositionIndex ],
-                                                     initialStateInertial[ yPositionIndex ],
-                                                     initialStateInertial[ zPositionIndex ] };
-
-    std::vector< double > omegaCrossPosition( 3, 0.0 );
-    omegaCrossPosition = crossProduct( asteroidRotationVector, inertialPositionVector );
-
-    double xBodyFrameVelocityInInertialComponents
-                = initialStateInertial[ xVelocityIndex ] - omegaCrossPosition[ 0 ];
-
-    double yBodyFrameVelocityInInertialComponents
-                = initialStateInertial[ yVelocityIndex ] - omegaCrossPosition[ 1 ];
-
-    double zBodyFrameVelocityInInertialComponents
-                = initialStateInertial[ zVelocityIndex ] - omegaCrossPosition[ 2 ];
-
-    initialState[ xVelocityIndex ]
-            = xBodyFrameVelocityInInertialComponents * std::cos( phi )
-            + yBodyFrameVelocityInInertialComponents * std::sin( phi );
-
-    initialState[ yVelocityIndex ]
-            = -1.0 * xBodyFrameVelocityInInertialComponents * std::sin( phi )
-            + yBodyFrameVelocityInInertialComponents * std::cos( phi );
-
-    initialState[ zVelocityIndex] = zBodyFrameVelocityInInertialComponents;
-
-    // set up boost odeint
-    const double absoluteTolerance = 1.0e-15;
-    const double relativeTolerance = 1.0e-15;
-    typedef boost::numeric::odeint::runge_kutta_fehlberg78< std::vector< double > > stepperType;
-
-    // state step size guess (at each step this initial guess will be used)
-    double stepSizeGuess = initialStepSize;
-
-    // initialize the ode system
-    const double zRotation = asteroidRotationVector[ zPositionIndex ];
-    equationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
-                                                                             alpha,
-                                                                             beta,
-                                                                             gamma,
-                                                                             zRotation );
-
-    // initialize current state vector and time
-    std::vector< double > currentStateVector = initialState;
-    double currentTime = startTime;
-    double intermediateEndTime = currentTime + dataSaveIntervals;
-
-    //! get the initial jacobi integral
-    double xVelocitySquare = initialState[ xVelocityIndex ] * initialState[ xVelocityIndex ];
-    double yVelocitySquare = initialState[ yVelocityIndex ] * initialState[ yVelocityIndex ];
-    double zVelocitySquare = initialState[ zVelocityIndex ] * initialState[ zVelocityIndex ];
-
-    double xPositionSquare = initialState[ xPositionIndex ] * initialState[ xPositionIndex ];
-    double yPositionSquare = initialState[ yPositionIndex ] * initialState[ yPositionIndex ];
-
-    double omegaSquare = asteroidRotationVector[ zPositionIndex ] * asteroidRotationVector[ zPositionIndex ];
-
-    double bodyFrameGravPotential;
-    computeEllipsoidGravitationalPotential( alpha,
-                                            beta,
-                                            gamma,
-                                            gravParameter,
-                                            initialState[ xPositionIndex ],
-                                            initialState[ yPositionIndex ],
-                                            initialState[ zPositionIndex ],
-                                            bodyFrameGravPotential );
-
-    double jacobiIntegral
-        = 0.5 * ( xVelocitySquare + yVelocitySquare + zVelocitySquare )
-        - 0.5 * omegaSquare * ( xPositionSquare + yPositionSquare )
-        - bodyFrameGravPotential;
-
-    // save the initial state vector
-    outputFile << currentStateVector[ xPositionIndex ] << ",";
-    outputFile << currentStateVector[ yPositionIndex ] << ",";
-    outputFile << currentStateVector[ zPositionIndex ] << ",";
-    outputFile << currentStateVector[ xVelocityIndex ] << ",";
-    outputFile << currentStateVector[ yVelocityIndex ] << ",";
-    outputFile << currentStateVector[ zVelocityIndex ] << ",";
-    outputFile << jacobiIntegral << ",";
-    outputFile << currentTime << std::endl;
-
-    // start the integration outer loop
-    while( intermediateEndTime <= endTime )
-    {
-        // perform integration, integrated result stored in currentStateVector
-        size_t steps = boost::numeric::odeint::integrate_adaptive(
-                            make_controlled( absoluteTolerance, relativeTolerance, stepperType( ) ),
-                            particleAroundEllipsoidProblem,
-                            currentStateVector,
-                            currentTime,
-                            intermediateEndTime,
-                            stepSizeGuess );
-
-        // update the time variables
-        currentTime = intermediateEndTime;
-        intermediateEndTime = currentTime + dataSaveIntervals;
-
-        //! get the jacobi integral
-        xVelocitySquare = currentStateVector[ xVelocityIndex ] * currentStateVector[ xVelocityIndex ];
-        yVelocitySquare = currentStateVector[ yVelocityIndex ] * currentStateVector[ yVelocityIndex ];
-        zVelocitySquare = currentStateVector[ zVelocityIndex ] * currentStateVector[ zVelocityIndex ];
-
-        xPositionSquare = currentStateVector[ xPositionIndex ] * currentStateVector[ xPositionIndex ];
-        yPositionSquare = currentStateVector[ yPositionIndex ] * currentStateVector[ yPositionIndex ];
-
-        omegaSquare = asteroidRotationVector[ zPositionIndex ] * asteroidRotationVector[ zPositionIndex ];
-
-        bodyFrameGravPotential;
-        computeEllipsoidGravitationalPotential( alpha,
-                                                beta,
-                                                gamma,
-                                                gravParameter,
-                                                currentStateVector[ xPositionIndex ],
-                                                currentStateVector[ yPositionIndex ],
-                                                currentStateVector[ zPositionIndex ],
-                                                bodyFrameGravPotential );
-
-        jacobiIntegral
-            = 0.5 * ( xVelocitySquare + yVelocitySquare + zVelocitySquare )
-            - 0.5 * omegaSquare * ( xPositionSquare + yPositionSquare )
-            - bodyFrameGravPotential;
-
-        // save data
-        outputFile << currentStateVector[ xPositionIndex ] << ",";
-        outputFile << currentStateVector[ yPositionIndex ] << ",";
-        outputFile << currentStateVector[ zPositionIndex ] << ",";
-        outputFile << currentStateVector[ xVelocityIndex ] << ",";
-        outputFile << currentStateVector[ yVelocityIndex ] << ",";
-        outputFile << currentStateVector[ zVelocityIndex ] << ",";
-        outputFile << jacobiIntegral << ",";
-        outputFile << currentTime << std::endl;
-
-    } // end of outer while loop for integration
-
-    outputFile.close( );
-}
-
-//! Trajectory calculation for regolith around an asteroid (modelled as ellipsoid here)
-/*!
- * Same as the previous function, except that the initial conditions are now given as a cartesian
- * state. The initial cartesian state should be given in body fixed frame of the asteroid.
- */
-void singleRegolithTrajectoryCalculator( const double alpha,
-                                         const double beta,
-                                         const double gamma,
-                                         const double gravParameter,
-                                         std::vector< double > asteroidRotationVector,
-                                         std::vector< double > &initialCartesianStateVector,
-                                         const double initialStepSize,
-                                         const double startTime,
-                                         const double endTime,
-                                         std::ostringstream &outputFilePath,
-                                         const int dataSaveIntervals )
-{
-    //! open the output csv file to save data. Declare file headers.
-    std::ofstream outputFile;
-    outputFile.open( outputFilePath.str( ) );
-    outputFile << "x" << ",";
-    outputFile << "y" << ",";
-    outputFile << "z" << ",";
-    outputFile << "vx" << ",";
-    outputFile << "vy" << ",";
-    outputFile << "vz" << ",";
-    outputFile << "t" << std::endl;
-    outputFile.precision( 16 );
-
-    //! get the initial cartesian state vector in a seperate container
-    std::vector< double > initialState = initialCartesianStateVector;
-
-    // set up boost odeint
-    const double absoluteTolerance = 1.0e-15;
-    const double relativeTolerance = 1.0e-15;
-    typedef boost::numeric::odeint::runge_kutta_fehlberg78< std::vector< double > > stepperType;
-
-    // state step size guess (at each step this initial guess will be used)
-    double stepSizeGuess = initialStepSize;
-
-    // initialize the ode system
-    const double zRotation = asteroidRotationVector[ zPositionIndex ];
-    equationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
-                                                                             alpha,
-                                                                             beta,
-                                                                             gamma,
-                                                                             zRotation );
-
-    // initialize current state vector and time
-    std::vector< double > currentStateVector = initialState;
-    double currentTime = startTime;
-    double intermediateEndTime = currentTime + dataSaveIntervals;
-
-    // save the initial state vector
-    outputFile << currentStateVector[ xPositionIndex ] << ",";
-    outputFile << currentStateVector[ yPositionIndex ] << ",";
-    outputFile << currentStateVector[ zPositionIndex ] << ",";
-    outputFile << currentStateVector[ xVelocityIndex ] << ",";
-    outputFile << currentStateVector[ yVelocityIndex ] << ",";
-    outputFile << currentStateVector[ zVelocityIndex ] << ",";
-    outputFile << currentTime << std::endl;
-
-    // start the integration outer loop
-    while( intermediateEndTime <= endTime )
-    {
-        // save the last know state vector for when the particle is outside the asteroid
-        std::vector< double > lastStateVector = currentStateVector;
-
-        // perform integration, integrated result stored in currentStateVector
-        size_t steps = boost::numeric::odeint::integrate_adaptive(
-                            make_controlled( absoluteTolerance, relativeTolerance, stepperType( ) ),
-                            particleAroundEllipsoidProblem,
-                            currentStateVector,
-                            currentTime,
-                            intermediateEndTime,
-                            stepSizeGuess );
-
-        //! check if the particle is on an escape trajectory or not
-        // check for energy if the particle is far away from the asteroid
-        double radialDistance
-            = std::sqrt( currentStateVector[ xPositionIndex ] * currentStateVector[ xPositionIndex ]
-                    + currentStateVector[ yPositionIndex ] * currentStateVector[ yPositionIndex ]
-                    + currentStateVector[ zPositionIndex ] * currentStateVector[ zPositionIndex ] );
-
-        if( radialDistance >= 10.0 * alpha )
-        {
-            // before calculating energy, convert the body frame state vector into inertial frame state vector
-            double rotationAngle = asteroidRotationVector[ zPositionIndex ] * intermediateEndTime;
-
-            std::vector< double > inertialState( 6, 0.0 );
-
-            // get the inertial position
-            inertialState[ xPositionIndex ]
-                        = currentStateVector[ xPositionIndex ] * std::cos( rotationAngle )
-                        - currentStateVector[ yPositionIndex ] * std::sin( rotationAngle );
-
-            inertialState[ yPositionIndex ]
-                        = currentStateVector[ xPositionIndex ] * std::sin( rotationAngle )
-                        + currentStateVector[ yPositionIndex ] * std::cos( rotationAngle );
-
-            inertialState[ zPositionIndex ] = currentStateVector[ zPositionIndex ];
-
-            // get the omega cross position vector for use in the transport theorem
-            std::vector< double > bodyFramePositionVector = { currentStateVector[ xPositionIndex ],
-                                                              currentStateVector[ yPositionIndex ],
-                                                              currentStateVector[ zPositionIndex ] };
-
-            std::vector< double > omegaCrossPosition( 3, 0.0 );
-            omegaCrossPosition = crossProduct( asteroidRotationVector, bodyFramePositionVector );
-
-            // use the transport theorem to get the body frame velocity in inertial coordinates
-            double xBodyFrameVelocityInertialCoordinates
-                        = currentStateVector[ xVelocityIndex ] + omegaCrossPosition[ 0 ];
-
-            double yBodyFrameVelocityInertialCoordinates
-                        = currentStateVector[ yVelocityIndex ] + omegaCrossPosition[ 1 ];
-
-            double zBodyFrameVelocityInertialCoordinates
-                        = currentStateVector[ zVelocityIndex ] + omegaCrossPosition[ 2 ];
-
-            // use the rotation matrix to get the velocity in the inertial frame
-            inertialState[ xVelocityIndex ]
-                        = xBodyFrameVelocityInertialCoordinates * std::cos( rotationAngle )
-                        - yBodyFrameVelocityInertialCoordinates * std::sin( rotationAngle );
-
-            inertialState[ yVelocityIndex ]
-                        = xBodyFrameVelocityInertialCoordinates * std::sin( rotationAngle )
-                        + yBodyFrameVelocityInertialCoordinates * std::cos( rotationAngle );
-
-            inertialState[ zVelocityIndex ] = zBodyFrameVelocityInertialCoordinates;
-
-            // calculate the orbital elements and check the sign of the eccentricity
-            std::vector< double > orbitalElements( 6, 0.0 );
-            convertCartesianCoordinatesToKeplerianElements( inertialState,
-                                                            gravParameter,
-                                                            orbitalElements );
-            bool eccentricityFlag = false;
-            if( orbitalElements[ 1 ] < 0.0 || orbitalElements[ 1 ] >= 1.0 )
-            {
-                eccentricityFlag = true;
-            }
-
-            // calculate energy and check the sign
-            std::vector< double > inertialPositionVector = { inertialState[ xPositionIndex ],
-                                                             inertialState[ yPositionIndex ],
-                                                             inertialState[ zPositionIndex ] };
-
-            std::vector< double > inertialVelocityVector = { inertialState[ xVelocityIndex ],
-                                                             inertialState[ yVelocityIndex ],
-                                                             inertialState[ zVelocityIndex ] };
-
-            double inertialVelocityMagnitude = vectorNorm( inertialVelocityVector );
-
-            double inertialPositionMagnitude = vectorNorm( inertialPositionVector );
-
-            double gravPotential;
-            computeEllipsoidGravitationalPotential( alpha,
-                                                    beta,
-                                                    gamma,
-                                                    gravParameter,
-                                                    inertialPositionVector[ xPositionIndex ],
-                                                    inertialPositionVector[ yPositionIndex ],
-                                                    inertialPositionVector[ zPositionIndex ],
-                                                    gravPotential );
-            double particleEnergy
-                    = inertialVelocityMagnitude * inertialVelocityMagnitude / 2.0
-                    - gravPotential;
-
-            bool energyFlag = false;
-            if( particleEnergy > 0.0 )
-            {
-                energyFlag = true;
-            }
-
-            // check the eccentricity and energy flags
-            if( eccentricityFlag && energyFlag )
-            {
-                // particle is on an escape trajectory, save data and stop integration
-                // update the time variables
-                currentTime = intermediateEndTime;
-
-                // save data
-                outputFile << currentStateVector[ xPositionIndex ] << ",";
-                outputFile << currentStateVector[ yPositionIndex ] << ",";
-                outputFile << currentStateVector[ zPositionIndex ] << ",";
-                outputFile << currentStateVector[ xVelocityIndex ] << ",";
-                outputFile << currentStateVector[ yVelocityIndex ] << ",";
-                outputFile << currentStateVector[ zVelocityIndex ] << ",";
-                outputFile << currentTime << std::endl;
-
-                break;
-            }
-        }
-
-        //! check if the particle is inside the surface of the asteroid
-        double xSquare = currentStateVector[ xPositionIndex ] * currentStateVector[ xPositionIndex ];
-        double ySquare = currentStateVector[ yPositionIndex ] * currentStateVector[ yPositionIndex ];
-        double zSquare = currentStateVector[ zPositionIndex ] * currentStateVector[ zPositionIndex ];
-
-        double crashCheck = xSquare / ( alpha * alpha )
-                            + ySquare / ( beta * beta )
-                            + zSquare / ( gamma * gamma )
-                            - 1.0;
-
-        if( crashCheck == 0.0 )
-        {
-            // particle is on the surface of the asteroid, save data and stop integration
-            // update the time variables
-            currentTime = intermediateEndTime;
-
-            // save data
-            outputFile << currentStateVector[ xPositionIndex ] << ",";
-            outputFile << currentStateVector[ yPositionIndex ] << ",";
-            outputFile << currentStateVector[ zPositionIndex ] << ",";
-            outputFile << currentStateVector[ xVelocityIndex ] << ",";
-            outputFile << currentStateVector[ yVelocityIndex ] << ",";
-            outputFile << currentStateVector[ zVelocityIndex ] << ",";
-            outputFile << currentTime << std::endl;
-
-            break;
-        }
-
-        if( crashCheck < 0.0 )
-        {
-            double stepSize = 1.0;
-
-            // const double machinePrecision = std::numeric_limits< double >::epsilon( );
-            const double machinePrecision = 1.0e-15;
-
-            // if the particle is on the surface of the asteroid, then the while condition
-            // will be false, for all other cases it will be true. Within the while loop, the
-            // inside or outside differnetiation takes place.
-            while( std::fabs( crashCheck ) > machinePrecision )
-            {
-                // std::cout << "crash check value = " << crashCheck << std::endl;
-                if( crashCheck < 0.0 ) // particle is still inside the surface
-                {
-                    // std::cout << "particle inside the surface" << std::endl << std::endl;
-                    // particle is inside the surface of the asteroid. restart the integration from last
-                    // known state external to the asteroid
-                    currentStateVector = lastStateVector;
-                    stepSize = 0.5 * stepSize;
-                }
-                else // particle is outside the asteroid at the end of last integration step
-                {
-                    // std::cout << "particle outside the surface" << std::endl << std::endl;
-                    lastStateVector = currentStateVector;
-                    currentTime = intermediateEndTime;
-                }
-
-                typedef boost::numeric::odeint::runge_kutta_fehlberg78< std::vector< double > > errorStepperType;
-                intermediateEndTime =  boost::numeric::odeint::integrate_n_steps(
-                                                errorStepperType( ),
-                                                particleAroundEllipsoidProblem,
-                                                currentStateVector,
-                                                currentTime,
-                                                stepSize,
-                                                1 );
-
-                xSquare = currentStateVector[ xPositionIndex ] * currentStateVector[ xPositionIndex ];
-                ySquare = currentStateVector[ yPositionIndex ] * currentStateVector[ yPositionIndex ];
-                zSquare = currentStateVector[ zPositionIndex ] * currentStateVector[ zPositionIndex ];
-
-                crashCheck = xSquare / ( alpha * alpha )
-                            + ySquare / ( beta * beta )
-                            + zSquare / ( gamma * gamma )
-                            - 1.0;
-            }
-
-            // particle is on the surface of the asteroid, save data and stop integration
-            // update the time variables
-            currentTime = intermediateEndTime;
-
-            // save data
-            outputFile << currentStateVector[ xPositionIndex ] << ",";
-            outputFile << currentStateVector[ yPositionIndex ] << ",";
-            outputFile << currentStateVector[ zPositionIndex ] << ",";
-            outputFile << currentStateVector[ xVelocityIndex ] << ",";
-            outputFile << currentStateVector[ yVelocityIndex ] << ",";
-            outputFile << currentStateVector[ zVelocityIndex ] << ",";
-            outputFile << currentTime << std::endl;
-
-            break;
-        }
-
-        // update the time variables
-        currentTime = intermediateEndTime;
-        intermediateEndTime = currentTime + dataSaveIntervals;
-
-        // save data
-        outputFile << currentStateVector[ xPositionIndex ] << ",";
-        outputFile << currentStateVector[ yPositionIndex ] << ",";
-        outputFile << currentStateVector[ zPositionIndex ] << ",";
-        outputFile << currentStateVector[ xVelocityIndex ] << ",";
-        outputFile << currentStateVector[ yVelocityIndex ] << ",";
-        outputFile << currentStateVector[ zVelocityIndex ] << ",";
-        outputFile << currentTime << std::endl;
-
-    } // end of outer while loop for integration
-
-    outputFile.close( );
-}
-
 //! convert body frame state vector to inertial frame for a uniformly rotating case
 /*!
- * this function cnverts a given state vector in asteroid body frame coordinates to inertial frame.
+ * this function converts a given state vector in asteroid body frame coordinates to inertial frame.
  * The body frame is rotating uniformly with respect to the inertial frame about the z axis.
  */
 void convertBodyFrameVectorToInertialFrame( const std::vector< double > &asteroidRotationVector,
@@ -865,28 +358,42 @@ void jacobiChecker( const double currentJacobi,
 }
 
 //! Computes the solar phase angle at a given time instance
-double computeSolarPhaseAngle( const double regolithArgumentOfPeriapsis,
-                               const double currentTime,
-                               const double initialSunMeanAnomalyRadian,
-                               const double initialTimeForSun,
-                               const std::vector< double > initialSunOrbitalElements,
-                               const double sunMeanMotion )
+double computeSolarPhaseAngle( const double currentTime,
+                               const std::vector< double > initialSunOrbitalElements )
 {
-    // radian conversion
-    // double regolithArgumentOfPeriapsisRadian = convertDegreeToRadians( regolithArgumentOfPeriapsis );
-
-    // calculate the sun's longitude for the current time instance
-    // double timeDifference = ( currentTime - initialTimeForSun );
-    double timeDifference = ( currentTime );
-    double meanAnomalyRadian = sunMeanMotion * timeDifference + initialSunMeanAnomalyRadian;
-
+    // get the initial eccentric anomaly
+    double trueAnomalyRadian = naos::convertDegreeToRadians( initialSunOrbitalElements[ 5 ] );
     double eccentricity = initialSunOrbitalElements[ 1 ];
     double eccentricitySquare = eccentricity * eccentricity;
 
+    double sineOfEccentricAnomaly
+        = ( std::sqrt( 1.0 - eccentricitySquare ) * std::sin( trueAnomalyRadian ) )
+        / ( 1.0 + eccentricity * std::cos( trueAnomalyRadian ) );
+
+    double cosineOfEccentricAnomaly
+        = ( eccentricity + std::cos( trueAnomalyRadian ) )
+        / ( 1.0 + eccentricity * std::cos( trueAnomalyRadian ) );
+
+    // value returned in the range of -pi to +pi radians
+    double initialEccentricAnomalyRadian
+        = std::atan2( sineOfEccentricAnomaly, cosineOfEccentricAnomaly );
+
+    // get the initial mean anomaly
+    double initialSunMeanAnomalyRadian
+        = initialEccentricAnomalyRadian - eccentricity * std::sin( initialEccentricAnomalyRadian );
+
+    // get the mean motion
+    double semiMajorAxis = initialSunOrbitalElements[ 0 ];
+    double semiMajorAxisCube = semiMajorAxis * semiMajorAxis * semiMajorAxis;
+    double sunMeanMotion = std::sqrt( naos::sunGravParameter / semiMajorAxisCube );
+
+    // get the mean anomaly for the current time value
+    double meanAnomalyRadian = sunMeanMotion * currentTime + initialSunMeanAnomalyRadian;
+
     // get the corresponding eccentric anomaly
     double eccentricAnomalyRadian
-        = convertMeanAnomalyToEccentricAnomaly( eccentricity,
-                                                meanAnomalyRadian );
+        = naos::convertMeanAnomalyToEccentricAnomaly( eccentricity,
+                                                      meanAnomalyRadian );
 
     // get the corresponding true anomaly
     double sineOfTrueAnomaly
@@ -897,7 +404,7 @@ double computeSolarPhaseAngle( const double regolithArgumentOfPeriapsis,
         = ( std::cos( eccentricAnomalyRadian ) - eccentricity )
         / ( 1.0 - eccentricity * std::cos( eccentricAnomalyRadian ) );
 
-    double trueAnomalyRadian
+    trueAnomalyRadian
         = std::atan2( sineOfTrueAnomaly, cosineOfTrueAnomaly );
 
     double trueAnomaly = naos::convertRadiansToDegree( trueAnomalyRadian );
@@ -907,16 +414,7 @@ double computeSolarPhaseAngle( const double regolithArgumentOfPeriapsis,
         trueAnomaly = trueAnomaly + 360.0;
     }
 
-    // double longitudeOfSun = trueAnomalyRadian;
-
-    // double longitudeOfSun = naos::convertDegreeToRadians( initialSunOrbitalElements[ 5 ] );
-
-    // double solarPhaseAngle = naos::PI - ( longitudeOfSun - regolithArgumentOfPeriapsisRadian );
-
-    // double solarPhaseAngle = longitudeOfSun;
-
     double solarPhaseAngle = trueAnomaly;
-    // solarPhaseAngle = std::fmod( solarPhaseAngle, 360.0 );
 
     return solarPhaseAngle;
 }
@@ -940,10 +438,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                  const double initialStepSize,
                                                  const double startTime,
                                                  const double endTime,
-                                                 const double initialSunMeanAnomalyRadian,
-                                                 const double initialTimeForSun,
                                                  const std::vector< double > initialSunOrbitalElements,
-                                                 const double sunMeanMotion,
                                                  SQLite::Statement &databaseQuery,
                                                  const double dataSaveIntervals )
 {
@@ -1023,56 +518,47 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
     std::cout << "Current launch velocity = " << initialVelocityMagnitude;
 
     // set up boost odeint
-    const double absoluteTolerance = 1.0e-15;
-    const double relativeTolerance = 1.0e-15;
-    typedef boost::numeric::odeint::runge_kutta_fehlberg78< std::vector< double > > stepperType;
+    // const double absoluteTolerance = 1.0e-8;
+    // const double relativeTolerance = 1.0e-4;
+    const double absoluteTolerance = 1.0e-12;
+    const double relativeTolerance = 1.0e-6;
+    typedef boost::numeric::odeint::bulirsch_stoer< std::vector< double > > controlledStepperType;
+
+    // const double absoluteTolerance = 1.0e-12;
+    // const double relativeTolerance = 1.0e-6;
+    // typedef boost::numeric::odeint::runge_kutta_dopri5< std::vector< double > > stepperType;
+    // typedef boost::numeric::odeint::runge_kutta_fehlberg78< std::vector< double > > stepperType;
 
     // state step size guess (at each step this initial guess will be used)
     double stepSizeGuess = initialStepSize;
 
     // initialize the ode system
-    const double zRotation = asteroidRotationVector[ zPositionIndex ];
-    equationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
-                                                                             alpha,
-                                                                             beta,
-                                                                             gamma,
-                                                                             zRotation );
+    // const double zRotation = asteroidRotationVector[ zPositionIndex ];
+    // equationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
+    //                                                                          alpha,
+    //                                                                          beta,
+    //                                                                          gamma,
+    //                                                                          zRotation );
 
     // initialize the (perturbed) ode system
     // Note - initial time for sun's position (corresponding true anomaly for sun) is independant of
     // start time for regolith trajectory simulation
-    // perturbedEquationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem( gravParameter,
-    //                                                                                   alpha,
-    //                                                                                   beta,
-    //                                                                                   gamma,
-    //                                                                                   asteroidRotationVector,
-    //                                                                                   initialTimeForSun,
-    //                                                                                   initialSunMeanAnomalyRadian,
-    //                                                                                   initialSunOrbitalElements,
-    //                                                                                   sunMeanMotion );
-
-    // compute the (initial) solar phase angle
-    double initialArgumentOfPeriapsisForRegolith
-        = naos::convertDegreeToRadians( initialOrbitalElements[ 4 ] );
+    perturbedEquationsOfMotionParticleAroundEllipsoid particleAroundEllipsoidProblem(
+                                                                gravParameter,
+                                                                alpha,
+                                                                beta,
+                                                                gamma,
+                                                                asteroidRotationVector,
+                                                                initialSunOrbitalElements );
 
     double initialLongitudeOfSun
         = naos::convertDegreeToRadians( initialSunOrbitalElements[ 5 ] );
 
-    // double solarPhaseAngle
-    //     = naos::PI - ( initialLongitudeOfSun - initialArgumentOfPeriapsisForRegolith );
     double solarPhaseAngle = initialLongitudeOfSun;
 
     solarPhaseAngle = naos::convertRadiansToDegree( solarPhaseAngle );
     solarPhaseAngle = std::fmod( solarPhaseAngle, 360.0 );
     double initialSolarPhaseAngle = solarPhaseAngle;
-
-    // std::cout << std::endl;
-    // std::cout << "solar longitude = " << initialSunOrbitalElements[ 5 ];
-    // std::cout << std::endl;
-    // std::cout << "regolith initial AOP = " << initialOrbitalElements[ 4 ];
-    // std::cout << std::endl;
-    // std::cout << "solar phase angle = " << solarPhaseAngle;
-    // printVector( initialOrbitalElements, 6 );
 
     // initialize current state vector and time
     double variableDataSaveInterval = dataSaveIntervals;
@@ -1098,22 +584,16 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                                                         currentStateVector[ zPositionIndex ] };
     currentSRPComponents = computeSolarRadiationPressureAcceleration( positionVectorForRegolith,
                                                                       asteroidRotationVector,
-                                                                      initialTimeForSun,
-                                                                      initialSunMeanAnomalyRadian,
                                                                       initialSunOrbitalElements,
-                                                                      currentTime,
-                                                                      sunMeanMotion );
+                                                                      currentTime );
 
     // get solar tidal effect perturbations for the current time
     std::vector< double > currentSolarTidalEffectComponents( 3, 0.0 );
     currentSolarTidalEffectComponents
         = computeSunThirdBodyEffectAcceleration( positionVectorForRegolith,
                                                  asteroidRotationVector,
-                                                 initialTimeForSun,
-                                                 initialSunMeanAnomalyRadian,
                                                  initialSunOrbitalElements,
-                                                 currentTime,
-                                                 sunMeanMotion );
+                                                 currentTime );
 
     // get gravitational acceleration for the current time
     std::vector< double > gravAcceleration( 3, 0.0 );
@@ -1218,15 +698,32 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
         double previousJacobi = jacobiIntegral;
 
         // perform integration, integrated result stored in currentStateVector
+        // adaptive integration - runge_kutta controlled error type
+        // size_t steps = boost::numeric::odeint::integrate_adaptive(
+        //                     make_controlled( absoluteTolerance, relativeTolerance, stepperType( ) ),
+        //                     particleAroundEllipsoidProblem,
+        //                     currentStateVector,
+        //                     currentTime,
+        //                     intermediateEndTime,
+        //                     stepSizeGuess );
+
+        // adaptive integration with bulirsch-stoer
         size_t steps = boost::numeric::odeint::integrate_adaptive(
-                            make_controlled( absoluteTolerance, relativeTolerance, stepperType( ) ),
+                            controlledStepperType( absoluteTolerance, relativeTolerance ),
                             particleAroundEllipsoidProblem,
                             currentStateVector,
                             currentTime,
                             intermediateEndTime,
                             stepSizeGuess );
-        // std::cout << std::endl;
-        // std::cout << "Integration steps = " << steps;
+
+        // fixed step-size integration
+        // intermediateEndTime = boost::numeric::odeint::integrate_n_steps(
+        //                             stepperType( ),
+        //                             particleAroundEllipsoidProblem,
+        //                             currentStateVector,
+        //                             currentTime,
+        //                             1.0,
+        //                             100 );
 
         double radialDistance
             = std::sqrt( currentStateVector[ xPositionIndex ] * currentStateVector[ xPositionIndex ]
@@ -1247,6 +744,12 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             + ( zCoordinate * zCoordinate ) / ( outerGamma * outerGamma );
 
         //! reduce the data save interval variable if the particle is near the asteroid
+        // if( radialDistance <= 2.0 * alpha && radialDistance > 1.1 * alpha )
+        // {
+        //     // reduce the data save step size
+        //     variableDataSaveInterval = 10.0;
+        // }
+        // else if( radialDistance <= 1.1 * alpha )
         if( boundaryCheck <= 1.0 )
         {
             // reduce the data save step size
@@ -1259,7 +762,7 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
         }
         else
         {
-            // use the original high value for data save intervals
+            // use the original value for data save intervals
             variableDataSaveInterval = dataSaveIntervals;
         }
 
@@ -1358,12 +861,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                 crashFlag = 0;
 
                 // compute the current solar phase angle
-                solarPhaseAngle = computeSolarPhaseAngle( orbitalElements[ 4 ],
-                                                          currentTime,
-                                                          initialSunMeanAnomalyRadian,
-                                                          initialTimeForSun,
-                                                          initialSunOrbitalElements,
-                                                          sunMeanMotion );
+                solarPhaseAngle = computeSolarPhaseAngle( currentTime,
+                                                          initialSunOrbitalElements );
 
                 // get SRP components for the current time
                 positionVectorForRegolith = { currentStateVector[ xPositionIndex ],
@@ -1372,21 +871,15 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                 currentSRPComponents
                     = computeSolarRadiationPressureAcceleration( positionVectorForRegolith,
                                                                  asteroidRotationVector,
-                                                                 initialTimeForSun,
-                                                                 initialSunMeanAnomalyRadian,
                                                                  initialSunOrbitalElements,
-                                                                 currentTime,
-                                                                 sunMeanMotion );
+                                                                 currentTime );
 
                 // get solar tidal effect perturbations for the current time
                 currentSolarTidalEffectComponents
                     = computeSunThirdBodyEffectAcceleration( positionVectorForRegolith,
                                                              asteroidRotationVector,
-                                                             initialTimeForSun,
-                                                             initialSunMeanAnomalyRadian,
                                                              initialSunOrbitalElements,
-                                                             currentTime,
-                                                             sunMeanMotion );
+                                                             currentTime );
 
                 // get gravitational acceleration for the current time
                 computeEllipsoidGravitationalAcceleration( alpha,
@@ -1552,12 +1045,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                 - bodyFrameGravPotential;
 
             // compute solar phase angle
-            solarPhaseAngle = computeSolarPhaseAngle( orbitalElements[ 4 ],
-                                                      currentTime,
-                                                      initialSunMeanAnomalyRadian,
-                                                      initialTimeForSun,
-                                                      initialSunOrbitalElements,
-                                                      sunMeanMotion );
+            solarPhaseAngle = computeSolarPhaseAngle( currentTime,
+                                                      initialSunOrbitalElements );
 
             // get SRP components for the current time
             positionVectorForRegolith = { currentStateVector[ xPositionIndex ],
@@ -1566,21 +1055,15 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             currentSRPComponents
                 = computeSolarRadiationPressureAcceleration( positionVectorForRegolith,
                                                              asteroidRotationVector,
-                                                             initialTimeForSun,
-                                                             initialSunMeanAnomalyRadian,
                                                              initialSunOrbitalElements,
-                                                             currentTime,
-                                                             sunMeanMotion );
+                                                             currentTime );
 
             // get solar tidal effect perturbations for the current time
             currentSolarTidalEffectComponents
                 = computeSunThirdBodyEffectAcceleration( positionVectorForRegolith,
                                                          asteroidRotationVector,
-                                                         initialTimeForSun,
-                                                         initialSunMeanAnomalyRadian,
                                                          initialSunOrbitalElements,
-                                                         currentTime,
-                                                         sunMeanMotion );
+                                                         currentTime );
 
             // get gravitational acceleration for the current time
             computeEllipsoidGravitationalAcceleration( alpha,
@@ -1780,12 +1263,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
                 - bodyFrameGravPotential;
 
             // compute solar phase angle
-            solarPhaseAngle = computeSolarPhaseAngle( orbitalElements[ 4 ],
-                                                      currentTime,
-                                                      initialSunMeanAnomalyRadian,
-                                                      initialTimeForSun,
-                                                      initialSunOrbitalElements,
-                                                      sunMeanMotion );
+            solarPhaseAngle = computeSolarPhaseAngle( currentTime,
+                                                      initialSunOrbitalElements );
 
             // get SRP components for the current time
             positionVectorForRegolith = { currentStateVector[ xPositionIndex ],
@@ -1794,21 +1273,15 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             currentSRPComponents
                 = computeSolarRadiationPressureAcceleration( positionVectorForRegolith,
                                                              asteroidRotationVector,
-                                                             initialTimeForSun,
-                                                             initialSunMeanAnomalyRadian,
                                                              initialSunOrbitalElements,
-                                                             currentTime,
-                                                             sunMeanMotion );
+                                                             currentTime );
 
             // get solar tidal effect perturbations for the current time
             currentSolarTidalEffectComponents
                 = computeSunThirdBodyEffectAcceleration( positionVectorForRegolith,
                                                          asteroidRotationVector,
-                                                         initialTimeForSun,
-                                                         initialSunMeanAnomalyRadian,
                                                          initialSunOrbitalElements,
-                                                         currentTime,
-                                                         sunMeanMotion );
+                                                         currentTime );
 
             // get gravitational acceleration for the current time
             computeEllipsoidGravitationalAcceleration( alpha,
@@ -1961,12 +1434,8 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
             - bodyFrameGravPotential;
 
         // compute solar phase angle
-        solarPhaseAngle = computeSolarPhaseAngle( orbitalElements[ 4 ],
-                                                  currentTime,
-                                                  initialSunMeanAnomalyRadian,
-                                                  initialTimeForSun,
-                                                  initialSunOrbitalElements,
-                                                  sunMeanMotion );
+        solarPhaseAngle = computeSolarPhaseAngle( currentTime,
+                                                  initialSunOrbitalElements );
 
         // get SRP components for the current time
         positionVectorForRegolith = { currentStateVector[ xPositionIndex ],
@@ -1975,21 +1444,15 @@ void executeSingleRegolithTrajectoryCalculation( const double alpha,
         currentSRPComponents
             = computeSolarRadiationPressureAcceleration( positionVectorForRegolith,
                                                          asteroidRotationVector,
-                                                         initialTimeForSun,
-                                                         initialSunMeanAnomalyRadian,
                                                          initialSunOrbitalElements,
-                                                         currentTime,
-                                                         sunMeanMotion );
+                                                         currentTime );
 
         // get solar tidal effect perturbations for the current time
         currentSolarTidalEffectComponents
             = computeSunThirdBodyEffectAcceleration( positionVectorForRegolith,
                                                      asteroidRotationVector,
-                                                     initialTimeForSun,
-                                                     initialSunMeanAnomalyRadian,
                                                      initialSunOrbitalElements,
-                                                     currentTime,
-                                                     sunMeanMotion );
+                                                     currentTime );
 
         // get gravitational acceleration for the current time
         computeEllipsoidGravitationalAcceleration( alpha,

@@ -92,133 +92,58 @@ std::vector< double > extractSunEphemeris( const double timeValue,
     return bodyFrameStateVectorAndTime;
 }
 
-//! Third-body effect
+//! Third body effect function based only on position vectors as input - general function
 /*!
- * Compute the perturbing acceleration from the thrid body effect of the sun.
+ * Compute the perturbing acceleration from the thrid body effect of any perturbing body
  */
-std::vector< double > computeSunThirdBodyEffectAcceleration( const std::vector< double > &regolithPositionVector,
-                                                             std::vector< double > &asteroidRotationVector,
-                                                             const double initialTime,
-                                                             const double initialSunMeanAnomalyRadian,
-                                                             const std::vector< double > &initialSunOrbitalElements,
-                                                             const double timeValue,
-                                                             const double sunMeanMotion )
+std::vector< double > computeThirdBodyEffect( std::vector< double > perturberPositionVector,
+                                              std::vector< double > targetPositionVector,
+                                              const double perturberGravParameter )
 {
-    // extract body frame state vector for the sun's motion around the asteroid for the given time
-    // value
-    // std::ostringstream sunAsteroidFilePath;
-    // sunAsteroidFilePath << "../../data/sun_asteroid_2BP/sunAsteroid2BP.csv";
+    // gravitational parameter of the perturbing body
+    const double mu = perturberGravParameter;
 
-    // std::vector< double > bodyFrameStateVector( 7, 0.0 );
-    // bodyFrameStateVector = extractSunEphemeris( timeValue, sunAsteroidFilePath );
+    double perturberPositionVectorMagnitude = vectorNorm( perturberPositionVector );
 
-    // accessed 3 jan 2016 from:
-    // http://ssd.jpl.nasa.gov/?constants
-    const double sunGravParameter = 1.32712440018 * 1.0e+20;
-
-    // solve the kepler problem to get the sun's position for the required time value
-    // get the mean anomaly for the time value
-    // double timeDifference = std::fabs( timeValue - initialTime );
-    double timeDifference = std::fabs( timeValue );
-    double meanAnomalyRadian = sunMeanMotion * timeDifference + initialSunMeanAnomalyRadian;
-
-    double eccentricity = initialSunOrbitalElements[ 1 ];
-    double eccentricitySquare = eccentricity * eccentricity;
-
-    // get the corresponding eccentric anomaly
-    double eccentricAnomalyRadian
-        = convertMeanAnomalyToEccentricAnomaly( eccentricity,
-                                                meanAnomalyRadian );
-
-    // get the corresponding true anomaly
-    double sineOfTrueAnomaly
-        = std::sqrt( 1.0 - eccentricitySquare ) * std::sin( eccentricAnomalyRadian )
-        / ( 1.0 - eccentricity * std::cos( eccentricAnomalyRadian ) );
-
-    double cosineOfTrueAnomaly
-        = ( std::cos( eccentricAnomalyRadian ) - eccentricity )
-        / ( 1.0 - eccentricity * std::cos( eccentricAnomalyRadian ) );
-
-    double trueAnomalyRadian
-        = std::atan2( sineOfTrueAnomaly, cosineOfTrueAnomaly );
-
-    double trueAnomaly = naos::convertRadiansToDegree( trueAnomalyRadian );
-
-    if( trueAnomaly < 0.0 )
-    {
-        trueAnomaly = trueAnomaly + 360.0;
-    }
-
-    // form the orbital elements vector
-    // basically update the orbital elements true anomaly,
-    // everything else remains the same
-    std::vector< double > orbitalElements( 6, 0.0 );
-    orbitalElements[ 0 ] = initialSunOrbitalElements[ 0 ];
-    orbitalElements[ 1 ] = initialSunOrbitalElements[ 1 ];
-    orbitalElements[ 2 ] = initialSunOrbitalElements[ 2 ];
-    orbitalElements[ 3 ] = initialSunOrbitalElements[ 3 ];
-    orbitalElements[ 4 ] = initialSunOrbitalElements[ 4 ];
-    orbitalElements[ 5 ] = trueAnomaly;
-
-    // get the inertial state vector from the updated orbital elements vector
-    std::vector< double > currentInertialStateVector( 6, 0.0 );
-    currentInertialStateVector
-        = convertKeplerianElementsToCartesianCoordinates( orbitalElements,
-                                                          sunGravParameter );
-
-    // get the asteroid-body frame state vector for the Sun
-    std::vector< double > sunStateVectorInRotatingFrame( 6, 0.0 );
-    convertInertialFrameVectorToBodyFrame( asteroidRotationVector,
-                                           currentInertialStateVector,
-                                           timeValue,
-                                           sunStateVectorInRotatingFrame );
-
-    // form the body frame position vector of the sun
-    std::vector< double > sunPositionVector = { sunStateVectorInRotatingFrame[ xPositionIndex ],
-                                                sunStateVectorInRotatingFrame[ yPositionIndex ],
-                                                sunStateVectorInRotatingFrame[ zPositionIndex ] };
-
-    double sunPositionVectorMagnitude = vectorNorm( sunPositionVector );
-
-    double sunPositionVectorMagnitudeCube
-        = sunPositionVectorMagnitude * sunPositionVectorMagnitude * sunPositionVectorMagnitude;
+    double perturberPositionVectorMagnitudeCube
+        = perturberPositionVectorMagnitude * perturberPositionVectorMagnitude * perturberPositionVectorMagnitude;
 
     // compute the perturbing acceleration
-    std::vector< double > regolithPositionFromSun( 3, 0.0 );
-    regolithPositionFromSun[ xPositionIndex ]
-        = regolithPositionVector[ xPositionIndex ] - sunPositionVector[ xPositionIndex ];
+    std::vector< double > targetPositionFromPerturber( 3, 0.0 );
+    targetPositionFromPerturber[ xPositionIndex ]
+        = targetPositionVector[ xPositionIndex ] - perturberPositionVector[ xPositionIndex ];
 
-    regolithPositionFromSun[ yPositionIndex ]
-        = regolithPositionVector[ yPositionIndex ] - sunPositionVector[ yPositionIndex ];
+    targetPositionFromPerturber[ yPositionIndex ]
+        = targetPositionVector[ yPositionIndex ] - perturberPositionVector[ yPositionIndex ];
 
-    regolithPositionFromSun[ zPositionIndex ]
-        = regolithPositionVector[ zPositionIndex ] - sunPositionVector[ zPositionIndex ];
+    targetPositionFromPerturber[ zPositionIndex ]
+        = targetPositionVector[ zPositionIndex ] - perturberPositionVector[ zPositionIndex ];
 
-    double regolithPositionFromSunMagnitude = vectorNorm( regolithPositionFromSun );
+    double targetPositionFromPerturberMagnitude = vectorNorm( targetPositionFromPerturber );
 
-    double regolithPositionFromSunMagnitudeCube
-        = regolithPositionFromSunMagnitude * regolithPositionFromSunMagnitude * regolithPositionFromSunMagnitude;
+    double targetPositionFromPerturberMagnitudeCube
+        = targetPositionFromPerturberMagnitude * targetPositionFromPerturberMagnitude * targetPositionFromPerturberMagnitude;
 
     std::vector< double > accelerationTermOne( 3, 0.0 );
     std::vector< double > accelerationTermTwo( 3, 0.0 );
 
     accelerationTermOne[ xPositionIndex ]
-        = ( -1.0 * sunGravParameter / regolithPositionFromSunMagnitudeCube ) * regolithPositionFromSun[ xPositionIndex ];
+        = ( -1.0 * mu / targetPositionFromPerturberMagnitudeCube ) * targetPositionFromPerturber[ xPositionIndex ];
 
     accelerationTermOne[ yPositionIndex ]
-        = ( -1.0 * sunGravParameter / regolithPositionFromSunMagnitudeCube ) * regolithPositionFromSun[ yPositionIndex ];
+        = ( -1.0 * mu / targetPositionFromPerturberMagnitudeCube ) * targetPositionFromPerturber[ yPositionIndex ];
 
     accelerationTermOne[ zPositionIndex ]
-        = ( -1.0 * sunGravParameter / regolithPositionFromSunMagnitudeCube ) * regolithPositionFromSun[ zPositionIndex ];
+        = ( -1.0 * mu / targetPositionFromPerturberMagnitudeCube ) * targetPositionFromPerturber[ zPositionIndex ];
 
     accelerationTermTwo[ xPositionIndex ]
-        = ( -1.0 * sunGravParameter / sunPositionVectorMagnitudeCube ) * sunPositionVector[ xPositionIndex ];
+        = ( -1.0 * mu / perturberPositionVectorMagnitudeCube ) * perturberPositionVector[ xPositionIndex ];
 
     accelerationTermTwo[ yPositionIndex ]
-        = ( -1.0 * sunGravParameter / sunPositionVectorMagnitudeCube ) * sunPositionVector[ yPositionIndex ];
+        = ( -1.0 * mu / perturberPositionVectorMagnitudeCube ) * perturberPositionVector[ yPositionIndex ];
 
     accelerationTermTwo[ zPositionIndex ]
-        = ( -1.0 * sunGravParameter / sunPositionVectorMagnitudeCube ) * sunPositionVector[ zPositionIndex ];
+        = ( -1.0 * mu / perturberPositionVectorMagnitudeCube ) * perturberPositionVector[ zPositionIndex ];
 
     std::vector< double > thirdBodyPerturbingAcceleration( 3, 0.0 );
     thirdBodyPerturbingAcceleration[ xPositionIndex ]
@@ -233,105 +158,111 @@ std::vector< double > computeSunThirdBodyEffectAcceleration( const std::vector< 
     return thirdBodyPerturbingAcceleration;
 }
 
-//! Solar radiation pressure
+//! Third-body effect
 /*!
- * comupte the perturbing acceleration from solar radition pressure.
+ * Compute the perturbing acceleration from the thrid body effect of the sun.
  */
-std::vector< double > computeSolarRadiationPressureAcceleration( const std::vector< double > &regolithPositionVector,
-                                                                 std::vector< double > &asteroidRotationVector,
-                                                                 const double initialTime,
-                                                                 const double initialSunMeanAnomalyRadian,
-                                                                 const std::vector< double > &initialSunOrbitalElements,
-                                                                 const double timeValue,
-                                                                 const double sunMeanMotion )
+std::vector< double > computeSunThirdBodyEffectAcceleration( const std::vector< double > &regolithPositionVector,
+                                                             std::vector< double > &asteroidRotationVector,
+                                                             const std::vector< double > &initialSunOrbitalElements,
+                                                             const double timeValue )
 {
-    // accessed 3 jan 2016 from:
-    // http://ssd.jpl.nasa.gov/?constants
-    const double sunGravParameter = 1.32712440018 * 1.0e+20;
-
-    // solve the kepler problem to get the sun's position for the required time value
-    // get the mean anomaly for the time value
-    // double timeDifference = std::fabs( timeValue - initialTime );
-    double timeDifference = std::fabs( timeValue );
-    double meanAnomalyRadian = sunMeanMotion * timeDifference + initialSunMeanAnomalyRadian;
-
-    double eccentricity = initialSunOrbitalElements[ 1 ];
-    double eccentricitySquare = eccentricity * eccentricity;
-
-    // get the corresponding eccentric anomaly
-    double eccentricAnomalyRadian
-        = convertMeanAnomalyToEccentricAnomaly( eccentricity,
-                                                meanAnomalyRadian );
-
-    // get the corresponding true anomaly
-    double sineOfTrueAnomaly
-        = std::sqrt( 1.0 - eccentricitySquare ) * std::sin( eccentricAnomalyRadian )
-        / ( 1.0 - eccentricity * std::cos( eccentricAnomalyRadian ) );
-
-    double cosineOfTrueAnomaly
-        = ( std::cos( eccentricAnomalyRadian ) - eccentricity )
-        / ( 1.0 - eccentricity * std::cos( eccentricAnomalyRadian ) );
-
-    double trueAnomalyRadian
-        = std::atan2( sineOfTrueAnomaly, cosineOfTrueAnomaly );
-
-    double trueAnomaly = naos::convertRadiansToDegree( trueAnomalyRadian );
-
-    if( trueAnomaly < 0.0 )
-    {
-        trueAnomaly = trueAnomaly + 360.0;
-    }
-
-    // form the orbital elements vector
-    // basically update the orbital elements true anomaly,
-    // everything else remains the same
-    std::vector< double > orbitalElements( 6, 0.0 );
-    orbitalElements[ 0 ] = initialSunOrbitalElements[ 0 ];
-    orbitalElements[ 1 ] = initialSunOrbitalElements[ 1 ];
-    orbitalElements[ 2 ] = initialSunOrbitalElements[ 2 ];
-    orbitalElements[ 3 ] = initialSunOrbitalElements[ 3 ];
-    orbitalElements[ 4 ] = initialSunOrbitalElements[ 4 ];
-    orbitalElements[ 5 ] = trueAnomaly;
-
-    // get the inertial state vector from the updated orbital elements vector
-    std::vector< double > currentInertialStateVector( 6, 0.0 );
-    currentInertialStateVector
-        = convertKeplerianElementsToCartesianCoordinates( orbitalElements,
-                                                          sunGravParameter );
-
-    // get the asteroid-body frame state vector for the Sun
+    std::vector< double > sunStateVectorInertialFrame( 6, 0.0 );
     std::vector< double > sunStateVectorInRotatingFrame( 6, 0.0 );
-    convertInertialFrameVectorToBodyFrame( asteroidRotationVector,
-                                           currentInertialStateVector,
-                                           timeValue,
-                                           sunStateVectorInRotatingFrame );
+    computeSunStateVector( asteroidRotationVector,
+                           initialSunOrbitalElements,
+                           timeValue,
+                           sunStateVectorInertialFrame,
+                           sunStateVectorInRotatingFrame );
 
     // form the body frame position vector of the sun
     std::vector< double > sunPositionVector = { sunStateVectorInRotatingFrame[ xPositionIndex ],
                                                 sunStateVectorInRotatingFrame[ yPositionIndex ],
                                                 sunStateVectorInRotatingFrame[ zPositionIndex ] };
 
-    // regolith position from sun
-    std::vector< double > regolithPositionFromSun( 3, 0.0 );
-    regolithPositionFromSun[ xPositionIndex ]
+    // grav parameter of Sun
+    const double mu = naos::sunGravParameter;
+
+    std::vector< double > thirdBodyPerturbingAcceleration( 3, 0.0 );
+    thirdBodyPerturbingAcceleration = computeThirdBodyEffect( sunPositionVector,
+                                                              regolithPositionVector,
+                                                              mu );
+
+    return thirdBodyPerturbingAcceleration;
+}
+
+//! Solar radiation pressure general function
+/*!
+ * General computation of the perturbing acceleration from solar radition pressure.
+ */
+std::vector< double > computeSRPAcceleration( std::vector< double > &positionVectorTargetToSource,
+                                              const double targetAlbedo,
+                                              const double incidentArea,
+                                              const double targetMass,
+                                              const double solarConstant )
+{
+    double targetSunDistance = vectorNorm( positionVectorTargetToSource );
+
+    double targetSunDistanceCube
+        = targetSunDistance * targetSunDistance * targetSunDistance;
+
+    const double areaToMassRatio = incidentArea / targetMass;
+
+    // compute the acceleration
+    const double multiplicationConstant = -1.0 * ( 1.0 + targetAlbedo ) * solarConstant * areaToMassRatio;
+
+    std::vector< double > solarRadiationPerturbingAcceleration( 3, 0.0 );
+
+    solarRadiationPerturbingAcceleration[ xPositionIndex ]
+        = multiplicationConstant * positionVectorTargetToSource[ xPositionIndex ] / targetSunDistanceCube;
+
+    solarRadiationPerturbingAcceleration[ yPositionIndex ]
+        = multiplicationConstant * positionVectorTargetToSource[ yPositionIndex ] / targetSunDistanceCube;
+
+    solarRadiationPerturbingAcceleration[ zPositionIndex ]
+        = multiplicationConstant * positionVectorTargetToSource[ zPositionIndex ] / targetSunDistanceCube;
+
+    return solarRadiationPerturbingAcceleration;
+}
+
+//! Solar radiation pressure
+/*!
+ * comupte the perturbing acceleration from solar radition pressure.
+ */
+std::vector< double > computeSolarRadiationPressureAcceleration( const std::vector< double > &regolithPositionVector,
+                                                                 std::vector< double > &asteroidRotationVector,
+                                                                 const std::vector< double > &initialSunOrbitalElements,
+                                                                 const double timeValue )
+{
+    std::vector< double > sunStateVectorInertialFrame( 6, 0.0 );
+    std::vector< double > sunStateVectorInRotatingFrame( 6, 0.0 );
+    computeSunStateVector( asteroidRotationVector,
+                           initialSunOrbitalElements,
+                           timeValue,
+                           sunStateVectorInertialFrame,
+                           sunStateVectorInRotatingFrame );
+
+    // form the body frame position vector of the sun
+    std::vector< double > sunPositionVector = { sunStateVectorInRotatingFrame[ xPositionIndex ],
+                                                sunStateVectorInRotatingFrame[ yPositionIndex ],
+                                                sunStateVectorInRotatingFrame[ zPositionIndex ] };
+
+    // position vector regolith to Sun
+    std::vector< double > positionVectorRegolithToSun( 3, 0.0 );
+    positionVectorRegolithToSun[ xPositionIndex ]
         = -1.0 * regolithPositionVector[ xPositionIndex ] + sunPositionVector[ xPositionIndex ];
 
-    regolithPositionFromSun[ yPositionIndex ]
+    positionVectorRegolithToSun[ yPositionIndex ]
         = -1.0 * regolithPositionVector[ yPositionIndex ] + sunPositionVector[ yPositionIndex ];
 
-    regolithPositionFromSun[ zPositionIndex ]
+    positionVectorRegolithToSun[ zPositionIndex ]
         = -1.0 * regolithPositionVector[ zPositionIndex ] + sunPositionVector[ zPositionIndex ];
-
-    double regolithPositionFromSunMagnitude = vectorNorm( regolithPositionFromSun );
-
-    double regolithPositionFromSunMagnitudeCube
-        = regolithPositionFromSunMagnitude * regolithPositionFromSunMagnitude * regolithPositionFromSunMagnitude;
-
-    // specify the albedo value, for max acceleration from SRP, set rho=1
-    const double rho = 1.0;
 
     // specify the solar constant value in SI units [kg m/s^2]
     const double solarConstant = 1.0e17;
+
+    // specify the albedo value, for max acceleration from SRP, set rho=1
+    const double rho = 1.0;
 
     // specify the area to mass ratio for the regolith
     const double regolithGrainDensity = 3.2 * 1.0e3;
@@ -343,21 +274,13 @@ std::vector< double > computeSolarRadiationPressureAcceleration( const std::vect
     const double regolithMass = ( 4.0 / 3.0 ) * naos::PI *
         ( regolithGrainRadius * regolithGrainRadius * regolithGrainRadius ) * regolithGrainDensity;
 
-    const double areaToMassRatio = regolithCrossSectionalArea / regolithMass;
-
-    // compute the acceleration
-    const double multiplicationConstant = -1.0 * ( 1.0 + rho ) * solarConstant * areaToMassRatio;
-
     std::vector< double > solarRadiationPerturbingAcceleration( 3, 0.0 );
 
-    solarRadiationPerturbingAcceleration[ xPositionIndex ]
-        = multiplicationConstant * regolithPositionFromSun[ xPositionIndex ] / regolithPositionFromSunMagnitudeCube;
-
-    solarRadiationPerturbingAcceleration[ yPositionIndex ]
-        = multiplicationConstant * regolithPositionFromSun[ yPositionIndex ] / regolithPositionFromSunMagnitudeCube;
-
-    solarRadiationPerturbingAcceleration[ zPositionIndex ]
-        = multiplicationConstant * regolithPositionFromSun[ zPositionIndex ] / regolithPositionFromSunMagnitudeCube;
+    solarRadiationPerturbingAcceleration = computeSRPAcceleration( positionVectorRegolithToSun,
+                                                                   rho,
+                                                                   regolithCrossSectionalArea,
+                                                                   regolithMass,
+                                                                   solarConstant );
 
     return solarRadiationPerturbingAcceleration;
 }

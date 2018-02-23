@@ -60,72 +60,64 @@ mu = 876514
 ## Operations
 # Connect to SQLite database.
 try:
-        # database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity_with_perturbations/phase_45/leadingEdge.db")
-        # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
-        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db")
-        # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
-        #                            + "multiple_launch_velocity_with_perturbations/"
-        #                            + "simulation_time_9_months/"
-        #                            + "3.2Density_1cmSize/longestEdgePerturbations.db")
+    database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
+                               + "multiple_launch_velocity_with_perturbations/"
+                               + "simulation_time_9_months/"
+                               + "longestEdge_3P2Density_1cmRadius.db")
+                               # + "3.2Density_1cmSize/longestEdgePerturbations.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
         sys.exit(1)
 
-phaseAngle = 315.0
-
-## get data for escape cases
-data = pd.read_sql( "SELECT     trajectory_id                                               \
-                     FROM       regolith_trajectory_results                                 \
-                     WHERE      start_flag = 1                                              \
-                     AND        ROUND( solar_phase_angle ) = "+ str(phaseAngle) + ";",      \
-                     database )
-
-data.columns = [ 'trajectory_id' ]
-
-trajectory_id = data[ 'trajectory_id' ]
-trajectory_id = tuple( trajectory_id.tolist( ) )
+print "Extracting data now...\n"
 
 data1 = pd.read_sql( "SELECT    ROUND( initial_velocity_magnitude ),                        \
+                                ROUND( initial_solar_phase_angle ),                         \
                                 ROUND( launch_azimuth )                                     \
                      FROM       regolith_trajectory_results                                 \
-                     WHERE      ( escape_flag = 1 )                                         \
-                     AND        trajectory_id IN " + str(trajectory_id) + ";",              \
+                     WHERE      ( escape_flag = 1 );",                                      \
                      database )
 
 data1.columns = [ 'vel_mag',                                                                \
+                  'solar_phase_angle',                                                      \
                   'launch_azimuth' ]
 
 escape_velocity_magnitude              = data1[ 'vel_mag' ]
 escape_azimuth                         = data1[ 'launch_azimuth' ]
+escape_solarPhase                      = data1[ 'solar_phase_angle' ]
 
 ## get data for re-impact cases
 data2 = pd.read_sql( "SELECT    ROUND( initial_velocity_magnitude ),                        \
+                                ROUND( initial_solar_phase_angle ),                         \
                                 ROUND( launch_azimuth )                                     \
                      FROM       regolith_trajectory_results                                 \
-                     WHERE      ( crash_flag = 1 )                                          \
-                     AND        trajectory_id IN " + str(trajectory_id) + ";",              \
+                     WHERE      ( crash_flag = 1 );",                                       \
                      database )
 
 data2.columns = [ 'vel_mag',                                                                \
+                  'solar_phase_angle',                                                      \
                   'launch_azimuth' ]
 
 crash_velocity_magnitude              = data2[ 'vel_mag' ]
 crash_azimuth                         = data2[ 'launch_azimuth' ]
+crash_solarPhase                      = data2[ 'solar_phase_angle' ]
 
 ## get data for temporary capture cases
 data3 = pd.read_sql( "SELECT    ROUND( initial_velocity_magnitude ),                        \
+                                ROUND( initial_solar_phase_angle ),                         \
                                 ROUND( launch_azimuth )                                     \
                      FROM       regolith_trajectory_results                                 \
-                     WHERE      ( end_flag = 1 )                                            \
-                     AND        trajectory_id IN " + str(trajectory_id) + ";",              \
+                     WHERE      ( end_flag = 1 );",                                         \
                      database )
 
 data3.columns = [ 'vel_mag',                                                                \
+                  'solar_phase_angle',                                                      \
                   'launch_azimuth' ]
 
 capture_velocity_magnitude              = data3[ 'vel_mag' ]
 capture_azimuth                         = data3[ 'launch_azimuth' ]
+capture_solarPhase                      = data3[ 'solar_phase_angle' ]
 
 if database:
     database.close( )
@@ -139,41 +131,48 @@ print "Processing data now...\n"
 ## plot the histogram for number of particles escaped and reimpacted versus
 ## initial launch velocity
 fig = plt.figure( )
-ax3 = fig.add_subplot( 111 )
+gs = gridspec.GridSpec( 2, 2 )
+ax1 = plt.subplot( gs[ 0 ] )
+ax2 = plt.subplot( gs[ 1 ] )
+ax3 = plt.subplot( gs[ 2 ] )
+ax4 = plt.subplot( gs[ 3 ] )
 
-distinct_escape_velocities          = len( np.unique( escape_velocity_magnitude ) )
-distinct_crash_velocities           = len( np.unique( crash_velocity_magnitude ) )
-distinct_capture_velocities         = len( np.unique( capture_velocity_magnitude ) )
-
-escape_crash_intersection           = np.intersect1d( escape_velocity_magnitude, crash_velocity_magnitude )
-capture_escape_crash_intersection   = np.intersect1d( escape_crash_intersection, crash_velocity_magnitude )
-common_velocities                   = len( capture_escape_crash_intersection )
-
-all_distinct_velocities = distinct_escape_velocities + distinct_crash_velocities + distinct_capture_velocities - common_velocities
-
-# ax3.hist( [crash_velocity_magnitude, escape_velocity_magnitude, capture_velocity_magnitude],
-#           bins=range(1, all_distinct_velocities+2),
-#           histtype='bar',
-#           color=['orange', 'crimson', 'green'],
-#           label=['reimpact', 'escape', 'capture'],
-#           align='left', alpha=0.7 )
+plotHandles = [ ax1, ax2, ax3, ax4 ]
 
 all_distinct_velocities = 16
 
-ax3.hist( [crash_velocity_magnitude, escape_velocity_magnitude],
-          bins=range(1, all_distinct_velocities+2),
-          histtype='bar',
-          color=['orange', 'crimson'],
-          label=['reimpact', 'escape'],
-          align='left', alpha=0.7 )
+uniqueSolarPhase = np.unique( escape_solarPhase )
+for index in range( 0, len( uniqueSolarPhase ) ):
+    currentPlotHandle = plotHandles[ index ]
+    currentSolarPhase = uniqueSolarPhase[ index ]
 
-ax3.set_xlim( 0, all_distinct_velocities+1 )
-ax3.xaxis.set_ticks( np.arange(0, all_distinct_velocities+1, 1) )
-ax3.set_xlabel( '$V_{initial}$ [m/s]' )
-ax3.set_ylabel( 'Number of particles' )
-ax3.set_title( 'Final fate histogram against multiple launch velocities' )
-ax3.legend( ).draggable( )
-ax3.grid( )
+    currentEscapeDataIndices = np.where( escape_solarPhase == currentSolarPhase )
+    currentEscapeDataIndices = currentEscapeDataIndices[ 0 ]
+
+    currentCrashDataIndices = np.where( crash_solarPhase == currentSolarPhase )
+    currentCrashDataIndices = currentCrashDataIndices[ 0 ]
+
+    currentCaptureDataIndices = np.where( capture_solarPhase == currentSolarPhase )
+    currentCaptureDataIndices = currentCaptureDataIndices[ 0 ]
+
+    escape_velocity_magnitude_plot = escape_velocity_magnitude[ currentEscapeDataIndices ]
+    crash_velocity_magnitude_plot  = crash_velocity_magnitude[ currentCrashDataIndices ]
+    capture_velocity_magnitude_plot = capture_velocity_magnitude[ currentCaptureDataIndices ]
+
+    currentPlotHandle.hist( [crash_velocity_magnitude_plot, escape_velocity_magnitude_plot, capture_velocity_magnitude_plot],
+                             bins=range(1, all_distinct_velocities+2),
+                             histtype='bar',
+                             color=['orange', 'crimson', 'green'],
+                             label=['reimpact', 'escape', 'capture'],
+                             align='left', alpha=0.7 )
+
+    currentPlotHandle.set_xlim( 0, all_distinct_velocities+1 )
+    currentPlotHandle.xaxis.set_ticks( np.arange(0, all_distinct_velocities+1, 1) )
+    currentPlotHandle.set_xlabel( '$V_{initial}$ [m/s]' )
+    currentPlotHandle.set_ylabel( 'Number of particles' )
+    currentPlotHandle.set_title( 'Solar phase angle = ' + str(currentSolarPhase) + '[deg]' )
+    currentPlotHandle.legend( ).draggable( )
+    currentPlotHandle.grid( )
 
 if database:
     database.close( )
@@ -185,6 +184,7 @@ end_time = time.time( )
 print "Script time: " + str("{:,g}".format(end_time - start_time)) + "s"
 
 ## Show the plot
+plt.suptitle( 'Regolith final fate histogram, Ellipsoid longest edge' )
 plt.show( )
 
 print ""

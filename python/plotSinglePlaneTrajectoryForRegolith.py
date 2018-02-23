@@ -53,8 +53,7 @@ def plotEllipse( semiMajor, semiMinor, angleRange, plotHandle ):
                                            + ( semiMajor * np.sin( angleRange ) )**2 )
         x = r * np.cos( angleRange )
         y = r * np.sin( angleRange )
-        plotHandle.plot( x, y )
-        plotHandle.grid( )
+        plotHandle.plot( x, y, label='Asteroid at regolith launch' )
 
 # Start timer.
 start_time = time.time( )
@@ -71,18 +70,16 @@ start_time = time.time( )
 # t = data[ 't' ].values
 
 ## ellipsoidal shape model parameters for the asteroid
-alpha = 10000.0
-beta = 10000.0
-gamma = 10000.0
+alpha = 20000.0
+beta = 7000.0
+gamma = 7000.0
 Wz = 0.00033118202125129593
-
-phaseAngle = 'N.A.'
 
 # Connect to SQLite database.
 try:
         # database = sqlite3.connect("../data/regolith_launched_from_leading_edge/multiple_launch_velocity/phase_0/simulation_time_9_months/leadingEdge.db")
-        database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
-        # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db")
+        # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/spherical_asteroid/longestEdge.db" )
+        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/multiple_launch_velocity/simulation_time_9_months/longestEdge.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -98,8 +95,8 @@ data = pd.read_sql( "SELECT     position_x,                                     
                                 ROUND( launch_azimuth ),                            \
                                 time                                                \
                      FROM       regolith_trajectory_results                         \
-                     WHERE      ROUND( launch_azimuth ) = 33.0                      \
-                     AND        ROUND( initial_velocity_magnitude ) = 20;",         \
+                     WHERE      ROUND( launch_azimuth ) = 270.0                     \
+                     AND        ROUND( initial_velocity_magnitude ) = 5;",          \
                      database )
 
 data.columns = [ 'x',                                                   \
@@ -122,22 +119,24 @@ inertial_z          = data[ 'inertial_z' ]
 launchAzimuth       = data[ 'launch_azimuth' ]
 t                   = data[ 'time' ]
 
+t = t.tolist( )
+
 # get the end point for a data array
 endIndex = np.size( x )
 
-string1 = 'Particle trajectory projection around asteroid Eros (Body fixed frame) \n'
+string1 = 'Particle trajectory (Rotating frame) \n'
 string2 = '$V_{initial}$=' + str( velocityMagnitude[ 0 ] ) + '[m/s], '
 string3 = 'Launch azimuth=' + str( launchAzimuth[ 0 ] ) + '[deg], '
 string4 = 'time=' + str( t[ endIndex-1 ] / (60.0*60.0) ) + '[hrs] \n'
-string5 = 'Phase angle = ' + str( phaseAngle ) + ' [deg]'
-topTitleBodyFrame = string1 + string2 + string3 + string4 + string5
+# string5 = 'Phase angle = ' + str( phaseAngle ) + ' [deg]'
+topTitleBodyFrame = string1 + string2 + string3 + string4
 
-string1 = 'Particle trajectory projection around asteroid Eros (Inertial frame) \n'
+string1 = 'Particle trajectory (Inertial frame) \n'
 string2 = '$V_{initial}$=' + str( velocityMagnitude[ 0 ] ) + '[m/s], '
 string3 = 'Launch azimuth=' + str( launchAzimuth[ 0 ] ) + '[deg], '
 string4 = 'time=' + str( t[ endIndex-1 ] / (60.0*60.0) ) + '[hrs] \n'
-string5 = 'Phase angle = ' + str( phaseAngle ) + ' [deg]'
-topTitleInertialFrame = string1 + string2 + string3 + string4 + string5
+# string5 = 'Phase angle = ' + str( phaseAngle ) + ' [deg]'
+topTitleInertialFrame = string1 + string2 + string3 + string4
 
 ## Set up the figure
 fig = plt.figure( )
@@ -184,12 +183,22 @@ plt.suptitle( topTitleInertialFrame )
 gs = gridspec.GridSpec( 1, 1 )
 ax1 = plt.subplot( gs[ 0 ] )
 
+acwRotationAngle = Wz * t[ -1 ] * 180.0 / np.pi
+ellipse2 = mpatches.Ellipse( ( 0.0, 0.0 ), 40.0e3, 14.0e3, acwRotationAngle, alpha=1.0,
+                             fill=False,
+                             edgecolor='black',
+                             label='Asteroid at simulation end' )
+ax1.add_patch( ellipse2 )
+ax1.plot( [], [] )
+
+ax1.set_aspect( 1 )
+
 ###############################################################
 ######################## XY Projection ########################
 
 plotEllipse( alpha, beta, theta, ax1 )
 
-ax1.plot( inertial_x, inertial_y, color=trajectoryColor )
+ax1.plot( inertial_x, inertial_y, color=trajectoryColor, label='Regolith trajectory' )
 
 ## indicate starting point
 ax1.text( inertial_x[0], inertial_y[0], 'start', size=12, color=startColor )
@@ -202,6 +211,7 @@ ax1.set_xlabel('x [m]')
 ax1.set_ylabel('y [m]')
 ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
 ax1.grid( True )
+ax1.legend( ).draggable( )
 ax1.axis('equal')
 
 ## close the database

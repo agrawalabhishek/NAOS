@@ -63,6 +63,16 @@ double computeSunAsteroidEnergy( const std::vector< double > &inertialStateVecto
 double convertMeanAnomalyToEccentricAnomaly( const double eccentricity,
                                              const double meanAnomaly );
 
+//! sun-asteroid two body problem
+/*!
+ * Compute apparent state vector for the sun around the asteroid for any given time value.
+ */
+void computeSunStateVector( std::vector< double > &asteroidRotationVector,
+                            const std::vector< double > &initialSunOrbitalElements,
+                            const double timeValue,
+                            std::vector< double > &sunStateVectorInertialFrame,
+                            std::vector< double > &sunStateVectorBodyFrame );
+
 //! sun-asteroid Restricted two body problem integration
 /*!
  * integrate the equations of motion for the sun around the asteroid.

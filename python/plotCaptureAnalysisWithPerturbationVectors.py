@@ -67,7 +67,7 @@ try:
        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
                                    + "multiple_launch_velocity/"
                                    + "simulation_time_9_months/"
-                                   + "longestEdge_v2.db")
+                                   + "longestEdge.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -94,8 +94,8 @@ data = pd.read_sql( "SELECT     position_x,                                     
                                 ROUND( launch_azimuth ),                            \
                                 time                                                \
                      FROM       regolith_trajectory_results                         \
-                     WHERE      ROUND( launch_azimuth ) = 45.0                      \
-                     AND        ROUND( initial_velocity_magnitude ) = 10.0;",       \
+                     WHERE      ROUND( launch_azimuth ) = 225.0                     \
+                     AND        ROUND( initial_velocity_magnitude ) = 5.0;",        \
                      database )
 
 data.columns = [ 'x',                                                   \
@@ -182,10 +182,12 @@ ax1.axis('equal')
 ## plot for the perturbing case
 # Connect to SQLite database.
 try:
-    database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
-                               + "multiple_launch_velocity_with_perturbations/"
-                               + "simulation_time_9_months/"
-                               + "3.2Density_1cmSize/longestEdgePerturbations.db")
+    # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
+    #                            + "multiple_launch_velocity_with_perturbations/"
+    #                            + "simulation_time_9_months/"
+    #                            + "3.2Density_1cmSize/longestEdgePerturbations.db")
+    commonPath = "/media/abhishek/Ashish/Thesis_Simulation_Databases/longest_edge_perturbations_CDE/"
+    database = sqlite3.connect(commonPath + "3.2Density_1cmRadius/longestEdge_3P2Density_1cmRadius.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -196,12 +198,12 @@ print "Extracting data for the perturbing case now...\n"
 # manually set time for data extraction
 lowerTimeDays = 0.0
 lowerTime = lowerTimeDays * 24.0 * 60.0 * 60.0
-upperTimeDays = 50.0
+upperTimeDays = 270.0
 upperTime = upperTimeDays * 24.0 * 60.0 * 60.0
 
 # auto set time from the non-perturbing results
-upperTime = t_noSolarPerturbations[ endIndex-1 ]
-upperTimeDays = upperTime / ( 24.0 * 60.0 * 60.0 )
+# upperTime = t_noSolarPerturbations[ endIndex-1 ]
+# upperTimeDays = upperTime / ( 24.0 * 60.0 * 60.0 )
 
 data = pd.read_sql( "SELECT     ROUND( initial_velocity_magnitude ),                            \
                                 ROUND( launch_azimuth ),                                        \
@@ -230,8 +232,8 @@ data = pd.read_sql( "SELECT     ROUND( initial_velocity_magnitude ),            
                                 total_energy,                                                   \
                                 ROUND( time )                                                   \
                      FROM       regolith_trajectory_results                                     \
-                     WHERE      ROUND( launch_azimuth ) = 45.0                                  \
-                     AND        ROUND( initial_velocity_magnitude ) = 10.0                      \
+                     WHERE      ROUND( launch_azimuth ) = 225.0                                 \
+                     AND        ROUND( initial_velocity_magnitude ) = 5.0                       \
                      AND        ROUND( initial_solar_phase_angle ) = 45.0                       \
                      AND        time >= " + str(lowerTime)
                                 + " AND time <= " + str(upperTime) + " ;",                      \
@@ -299,7 +301,7 @@ total_energy_pert           = data[ 'total_energy' ]
 data2 = pd.read_csv("../data/regolith_launched_from_longest_edge/"
                     + "multiple_launch_velocity_with_perturbations/"
                     + "simulation_time_9_months/"
-                    + "3.2Density_1cmSize/sunEphemeris_phase45.csv")
+                    + "3.2Density_1cmRadius/sunEphemeris_phase45.csv")
 
 sun_xBody           = data2["x_body_frame"].values
 sun_yBody           = data2["y_body_frame"].values

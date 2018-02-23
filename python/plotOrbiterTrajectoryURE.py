@@ -66,19 +66,23 @@ Wz = 0.00033118202125129593
 
 # Connect to SQLite database.
 try:
-        # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
-        #                            + "multiple_launch_velocity_with_perturbations/"
-        #                            + "simulation_time_9_months/"
-        #                            + "3.2Density_1cmRadius/longestEdgePerturbations.db")
+        database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
+                                   + "multiple_launch_velocity_with_perturbations/"
+                                   + "simulation_time_9_months/"
+                                   + "3.2Density_1cmRadius/longestEdge_3P2Density_1cmRadius.db")
         # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
         #                            + "multiple_launch_velocity_with_perturbations/"
         #                            + "simulation_time_9_months/"
         #                            + "test.db")
-        database = sqlite3.connect("../data/guarantee_escape_speed/"
-                                   + "longest_edge/"
-                                   + "normalLaunch.db")
+        # database = sqlite3.connect("../data/guarantee_escape_speed/"
+        #                            + "longest_edge/"
+        #                            + "normalLaunch.db")
         # database = sqlite3.connect( "../data/regolith_launched_from_longest_edge/"
         #                             + "spherical_asteroid/longestEdge.db" )
+        # database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
+        #                            + "multiple_launch_velocity/"
+        #                            + "simulation_time_9_months/"
+        #                            + "longestEdge.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -99,13 +103,15 @@ data = pd.read_sql( "SELECT     position_x,                                     
                                 inertial_position_z,                                            \
                                 ROUND( launch_azimuth ),                                        \
                                 ROUND( launch_declination ),                                    \
+                                eccentricity,                                                   \
+                                total_energy,                                                   \
                                 time                                                            \
                      FROM       regolith_trajectory_results                                     \
                      WHERE      ROUND( initial_solar_phase_angle ) = " + str(solarPhase) + "    \
                      AND        time >= " + str(lowerTime)
                                 + " AND time <= " + str(upperTime) + "                          \
-                     AND        ROUND( launch_declination ) = 0.0                               \
-                     AND        ROUND( initial_velocity_magnitude ) = 9.0;",                    \
+                     AND        ROUND( launch_azimuth ) = 5.0                                   \
+                     AND        ROUND( initial_velocity_magnitude ) = 5.0;",                    \
                      database )
 
 # data = pd.read_sql( "SELECT     position_x,                                                     \
@@ -117,6 +123,8 @@ data = pd.read_sql( "SELECT     position_x,                                     
 #                                 inertial_position_z,                                            \
 #                                 ROUND( launch_azimuth ),                                        \
 #                                 ROUND( launch_declination ),                                    \
+#                                 eccentricity,                                                   \
+#                                 total_energy,                                                   \
 #                                 time                                                            \
 #                      FROM       regolith_trajectory_results                                     \
 #                      WHERE      ROUND( launch_azimuth ) = 246.0                                 \
@@ -132,6 +140,8 @@ data.columns = [ 'x',                                                   \
                  'inertial_z',                                          \
                  'launch_azimuth',                                      \
                  'launch_declination',                                  \
+                 'eccentricity',                                        \
+                 'total_energy',                                        \
                  'time' ]
 
 if database:
@@ -146,6 +156,8 @@ inertial_y          = data[ 'inertial_y' ]
 inertial_z          = data[ 'inertial_z' ]
 launchAzimuth       = data[ 'launch_azimuth' ]
 launchDeclination   = data[ 'launch_declination' ]
+eccentricity        = data[ 'eccentricity' ]
+totalEnergy         = data[ 'total_energy' ]
 t                   = data[ 'time' ]
 
 print "Processing data now...\n"
@@ -188,6 +200,23 @@ rangeCheck = np.sqrt( x**2 + y**2 + z**2 )
 #     plt.show( )
 #     sys.exit( )
 
+# eccentricity and energy check for capture cases
+fig = plt.figure( )
+ax1 = plt.subplot(211)
+ax2 = plt.subplot(212)
+ax1.plot( t, eccentricity )
+ax2.plot( t, totalEnergy )
+
+ax1.grid(True)
+ax1.set_ylabel('Eccentricity')
+
+ax2.grid(True)
+ax2.set_ylabel('Energy')
+
+# plt.show( )
+# sys.exit( )
+
+# range plot
 fig = plt.figure( )
 ax1 = plt.subplot(111)
 ax1.plot( t, rangeCheck )
@@ -489,25 +518,38 @@ ax3.grid( True )
 fig = plt.figure( figsize=(6, 6) )
 gs = gridspec.GridSpec( 1, 1 )
 ax2 = plt.subplot( gs[ 0 ], projection = '3d' )
-ax2.plot( inertial_x, inertial_y, inertial_z, zdir = 'z', color=trajectoryColor, linewidth=0.5 )
 
-ax2.text( inertial_x[0], inertial_y[0], inertial_z[0], 'start', size=10, zorder=1, color='black' )
-ax2.text( inertial_x[endIndex-1], inertial_y[endIndex-1], inertial_z[endIndex-1],
-          'end', size=10, zorder=1, color='black' )
+surf2 = ax2.plot_surface( ellipsoid_x, ellipsoid_y, ellipsoid_z,
+                         rstride=5, cstride=5, alpha=1.0,
+                         color=colors.cnames["darkgray"] )
+surf2.set_linewidth( 1.0 )
+# surf2.set_edgecolor( 'black' )
 
-ax2.set_xlabel('x [m]')
-ax2.set_ylabel('y [m]')
-ax2.set_zlabel('z [m]')
-ax2.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useoffset=False)
-ax2.set_title( 'Ellipsoid longest edge, Inertial frame trajectory\n'
-               + '$V_{launch}$ = ' + str( velocityMagnitude[ 0 ] ) + ' [m/s], '                 \
-               + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '                   \
-               + 'Solar phase = ' + str( solarPhase ) + ' [deg]\n'                              \
-               + 'Time = ' + str( lowerTime ) + ' to '                                          \
-               + str( upperTime / (24.0 * 60.0 * 60.0) ) + ' [days]',                           \
-               fontsize=10 )
-ax2.grid( )
-# ax2.axis('equal')
+ax2.plot( inertial_x, inertial_y, inertial_z, zdir = 'z', color=trajectoryColor, linewidth=2.0 )
+
+# ax2.text( inertial_x[0], inertial_y[0], inertial_z[0], 'start', size=10, zorder=1, color='black' )
+# ax2.text( inertial_x[endIndex-1], inertial_y[endIndex-1], inertial_z[endIndex-1],
+#           'end', size=10, zorder=1, color='black' )
+
+# ax2.set_xlabel('x [m]')
+# ax2.set_ylabel('y [m]')
+# ax2.set_zlabel('z [m]')
+# ax2.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useoffset=False)
+# ax2.set_title( 'Ellipsoid longest edge, Inertial frame trajectory\n'
+#                + '$V_{launch}$ = ' + str( velocityMagnitude[ 0 ] ) + ' [m/s], '                 \
+#                + 'Launch azimuth = ' + str( launchAzimuth[ 0 ] ) + ' [deg], '                   \
+#                + 'Solar phase = ' + str( solarPhase ) + ' [deg]\n'                              \
+#                + 'Time = ' + str( lowerTime ) + ' to '                                          \
+#                + str( upperTime / (24.0 * 60.0 * 60.0) ) + ' [days]',                           \
+#                fontsize=10 )
+# ax2.grid( )
+# ax2.set_aspect(True)
+# limits = max( max( inertial_x.tolist(), inertial_y.tolist(), inertial_z.tolist() ) )
+# ax2.set_xlim( [ -20000.0, 20000.0 ] )
+# ax2.set_ylim( [ -20000.0, 20000.0 ] )
+# ax2.set_zlim( [ -0.5e5, 0.5e5 ] )
+ax2.axis('equal')
+ax2.set_axis_off( )
 
 if database:
     database.close( )

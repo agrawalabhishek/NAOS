@@ -64,7 +64,9 @@ try:
         database = sqlite3.connect("../data/regolith_launched_from_longest_edge/"
                                    + "multiple_launch_velocity_with_perturbations/"
                                    + "simulation_time_9_months/"
-                                   + "3.2Density_1cmSize/longestEdgePerturbations.db")
+                                   # + "3.2Density_1cmSize/"
+                                   + "longestEdge_3P2Density_1cmRadius.db")
+                                   # + "longestEdgePerturbations.db")
 
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
@@ -173,7 +175,7 @@ ax1.axhline( y=3.0 * alpha, color='blue', label='MAO' )
 ax1.axhline( y=5.0 * alpha, color='orange', label='HAO' )
 ax1.axhline( y=7.0 * alpha, color='green', label='UHAO' )
 
-ax1.set_ylabel('Altitude [m]')
+ax1.set_ylabel('Range [m]')
 ax1.set_xlabel('Time [Days]')
 ax1.set_yscale('log')
 # ax1.set_xscale('log')
@@ -212,7 +214,7 @@ ax2.axhline( y=3.0 * alpha, color='blue', label='MAO' )
 ax2.axhline( y=5.0 * alpha, color='orange', label='HAO' )
 ax2.axhline( y=7.0 * alpha, color='green', label='UHAO' )
 
-ax2.set_ylabel('Altitude [m]')
+ax2.set_ylabel('Range [m]')
 ax2.set_xlabel('Time [Days]')
 ax2.set_yscale('log')
 ax2.set_xscale('log')

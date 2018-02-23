@@ -59,12 +59,6 @@ muAsteroid = 876514
 muSun = 1.32712440018 * 1.0e+20
 AU = 149597870700.0
 
-def plotCircle( radius, plotHandle ):
-        angleRange = np.linspace( 0.0, 2.0*np.pi, 360.0 )
-        x = radius * np.cos( angleRange )
-        y = radius * np.sin( angleRange )
-        plotHandle.plot( x, y )
-
 ## Operations
 # Connect to SQLite database.
 try:
@@ -75,6 +69,8 @@ try:
 except sqlite3.Error, e:
         print "Error %s:" % e.args[0]
         sys.exit(1)
+
+phaseAngle = 'N.A.'
 
 fig = plt.figure( )
 gs = gridspec.GridSpec( 1, 2 )
@@ -89,7 +85,7 @@ data1 = pd.read_sql( "SELECT    trajectory_id,                                  
                                 crash_flag,                                                     \
                                 escape_flag                                                     \
                      FROM       regolith_trajectory_results                                     \
-                     WHERE      ROUND( initial_velocity_magnitude ) = 8                         \
+                     WHERE      ROUND( initial_velocity_magnitude ) = 5                         \
                      AND        ROUND( launch_azimuth ) IN " + str( launch_azimuth_range ) + "  \
                      AND        ( crash_flag = 1 OR escape_flag = 1 );",                        \
                      database )
@@ -106,8 +102,10 @@ trajectory_id_list = trajectory_id.tolist( )
 trajectory_id_tuple = tuple( trajectory_id_list )
 
 data2 = pd.read_sql( "SELECT    trajectory_id,                                                  \
+                                sma,                                                            \
                                 eccentricity,                                                   \
-                                aop,                                                            \
+                                inclination,                                                    \
+                                time,                                                           \
                                 ROUND( initial_velocity_magnitude ),                            \
                                 ROUND( launch_azimuth )                                         \
                      FROM       regolith_trajectory_results                                     \
@@ -115,14 +113,18 @@ data2 = pd.read_sql( "SELECT    trajectory_id,                                  
                      database )
 
 data2.columns = [ 'trajectory_id',                                                      \
+                  'sma',                                                                \
                   'eccentricity',                                                       \
-                  'aop',                                                                \
+                  'inclination',                                                        \
+                  'time',                                                               \
                   'vel_mag',                                                            \
                   'launch_azimuth' ]
 
 data2_trajectory_id = data2[ 'trajectory_id' ]
+sma                 = data2[ 'sma' ]
 eccentricity        = data2[ 'eccentricity' ]
-aop                 = data2[ 'aop' ]
+inclination         = data2[ 'inclination' ]
+t                   = data2[ 'time' ]
 velocity_magnitude  = data2[ 'vel_mag' ]
 launch_azimuth      = data2[ 'launch_azimuth' ]
 
@@ -137,78 +139,64 @@ colors = plt.cm.Vega20( np.linspace( 0, 1, len( unique_launch_azimuth ) ) )
 loopCount = 0
 
 for index in ( range( 0, len( unique_launch_azimuth ) ) ):
-    loopCount = loopCount + 1
-    print "loop Count = " + str( loopCount )
     current_launch_azimuth = unique_launch_azimuth[ index ]
     current_launch_azimuth_indices = np.where( launch_azimuth == current_launch_azimuth )
     current_launch_azimuth_indices = current_launch_azimuth_indices[ 0 ]
 
+    currentTraj_sma = sma[ current_launch_azimuth_indices ]
+    currentTraj_sma = currentTraj_sma / ( 1000.0 )
+    smaPlot = currentTraj_sma.tolist( )
+
+    currentTraj_time = t[ current_launch_azimuth_indices ]
+    currentTraj_time = currentTraj_time / ( 60.0 * 60.0 )
+    timePlot = currentTraj_time.tolist( )
+
     currentTraj_eccentricity = eccentricity[ current_launch_azimuth_indices ]
-    currentTraj_AOP = aop[ current_launch_azimuth_indices ]
+    eccentricityPlot = currentTraj_eccentricity.tolist( )
+
+    currentTraj_inclination = inclination[ current_launch_azimuth_indices ]
+    inclinationPlot = currentTraj_inclination.tolist( )
 
     current_trajectory_id = data2_trajectory_id[ current_launch_azimuth_indices ]
     current_trajectory_id = np.unique( current_trajectory_id )
-    print "Trajectory ID = " + str( current_trajectory_id[ 0 ] )
     trajectory_id_index = np.where( trajectory_id == current_trajectory_id[ 0 ] )
     trajectory_id_index = trajectory_id_index[ 0 ]
 
     current_crash_flag_value = crash_flag[ trajectory_id_index ]
     current_crash_flag_value =  current_crash_flag_value.tolist( )
-    print "Reimpact flag value = " + str( current_crash_flag_value )
 
     current_escape_flag_value = escape_flag[ trajectory_id_index ]
     current_escape_flag_value = current_escape_flag_value.tolist( )
-    print "Escape flag value = " + str( current_escape_flag_value )
-    print "\n"
-
-    e_cos_w = currentTraj_eccentricity * np.cos( currentTraj_AOP * np.pi / 180.0 )
-    e_cos_w = e_cos_w.tolist( )
-    e_sin_w = currentTraj_eccentricity * np.sin( currentTraj_AOP * np.pi / 180.0 )
-    e_sin_w = e_sin_w.tolist( )
 
     if current_crash_flag_value[ 0 ] == 1:
-        # ax1.scatter( e_cos_w, e_sin_w, s=5, c=colors[index],    \
-        #              edgecolors='face',                         \
-        #              label='Launch azimuth = ' + str(current_launch_azimuth) + '[deg]' )
-        ax1.scatter( e_cos_w, e_sin_w, s=5, c=colors[index],    \
+        # ax1.scatter( timePlot, smaPlot, s=5, c=colors[index],                                   \
+        #              edgecolors='face' )
+        # ax1.text( timePlot[0], smaPlot[0], str(current_launch_azimuth),                         \
+        #           size=10, zorder=1, color='black', rotation='vertical', va='bottom' )
+        ax1.scatter( smaPlot, inclinationPlot, s=5, c=colors[index],                           \
                      edgecolors='face' )
-        ax1.scatter( e_cos_w[ len(e_cos_w)-1 ], e_sin_w[ len(e_sin_w)-1 ],  \
-                     s=7, c='black', edgecolors='face' )
-        ax1.text( e_cos_w[0], e_sin_w[0], str(current_launch_azimuth), \
+        ax1.text( smaPlot[0], inclinationPlot[0], str(current_launch_azimuth),                 \
                   size=10, zorder=1, color='black', rotation='vertical', va='bottom' )
-        # ax1.scatter( currentTraj_eccentricity, currentTraj_AOP, s=5, c=colors[index],    \
-        #              edgecolors='face',                                                  \
-        #              label='Launch azimuth = ' + str(current_launch_azimuth) + '[deg]' )
-
     elif current_escape_flag_value[ 0 ] == 1:
-        # ax2.scatter( e_cos_w, e_sin_w, s=5, c=colors[index],    \
-        #              edgecolors='face',                         \
-        #              label='Launch azimuth = ' + str(current_launch_azimuth) + '[deg]' )
-        ax2.scatter( e_cos_w, e_sin_w, s=5, c=colors[index],    \
+        # ax2.scatter( timePlot, smaPlot, s=5, c=colors[index],                                   \
+        #              edgecolors='face' )
+        # ax2.text( timePlot[0], smaPlot[0], str(current_launch_azimuth),                         \
+        #           size=10, zorder=1, color='black', rotation='vertical', va='bottom' )
+        ax2.scatter( smaPlot, inclinationPlot, s=5, c=colors[index],                           \
                      edgecolors='face' )
-        ax2.scatter( e_cos_w[ len(e_cos_w)-1 ], e_sin_w[ len(e_sin_w)-1 ], \
-                     s=7, c='black', edgecolors='face' )
-        ax2.text( e_cos_w[0], e_sin_w[0], str(current_launch_azimuth), \
+        ax2.text( smaPlot[0], inclinationPlot[0], str(current_launch_azimuth),                 \
                   size=10, zorder=1, color='black', rotation='vertical', va='bottom' )
-        # ax2.scatter( currentTraj_eccentricity, currentTraj_AOP, s=5, c=colors[index],    \
-        #              edgecolors='face',                                                  \
-        #              label='Launch azimuth = ' + str(current_launch_azimuth) + '[deg]' )
 
-## plot the circle for eccentricity=1
-# circle = plt.Circle( ( 0.0, 0.0 ), 1.0, fill=False)
-# ax1.add_artist( circle )
-# ax2.add_artist( circle )
-plotCircle( 1.0, ax1 )
-plotCircle( 1.0, ax2 )
-
-ax1.set_ylabel('$e.sin(\omega)$')
-ax1.set_xlabel('$e.cos(\omega)$')
+ax1.set_ylabel('Eccentricity')
+ax1.set_xlabel('Semi-major axis [km]')
+ax1.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useoffset=False)
 ax1.grid(True)
 ax1.set_title('Reimpact case')
 # ax1.legend( markerscale=10 ).draggable( )
 
-ax2.set_ylabel('$e.sin(\omega)$')
-ax2.set_xlabel('$e.cos(\omega)$')
+ax2.set_ylabel('Eccentricity')
+ax2.set_xlabel('Semi-major axis [km]')
+ax2.ticklabel_format(style='sci', axis='both', scilimits=(0,0), useoffset=False)
 ax2.grid(True)
 ax2.set_title('Escape case')
 # ax2.legend( markerscale=10 ).draggable( )
@@ -218,7 +206,8 @@ if database:
     database.close( )
 
 ## set global plot title
-plt.suptitle( 'Eccentricity vector plot, $V_{launch}$ = ' + str( velocity_magnitude[ 0 ] ) + ' [m/s]' )
+plt.suptitle( 'Semi-major axis variation with time \n Ellipsoidal asteroid case, $V_{launch}$ = '
+              + str( velocity_magnitude[ 0 ] ) + ' [m/s]' )
 
 # Stop timer
 end_time = time.time( )
